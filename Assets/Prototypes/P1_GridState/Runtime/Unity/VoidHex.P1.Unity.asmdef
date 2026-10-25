@@ -1,0 +1,16 @@
+{
+    "name": "VoidHex.P1.Unity",
+    "rootNamespace": "VoidHex.P1.Unity",
+    "references": [
+        "VoidHex.P1.Domain"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

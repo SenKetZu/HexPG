@@ -1,278 +1,309 @@
 # 03 — Prototipos: alcance, exclusiones y decisiones
 
-> Cada sección es la página que se defiende en 5 minutos. La matriz de tests está en
-> `04-trazabilidad.md`.
+> Los tres prototipos corresponden **literalmente** a los tres desafíos declarados en
+> `Void Hex Tactics - Arquitectura (Resumen Ejecutivo).pdf` (§ DESAFÍO 1, 2 y 3).
+> Cada sección es lo que se defiende en 5 minutos: problema → promesa → evidencia → decisión → exclusión.
 
 ---
 
-## P1 — Grilla hexagonal y pathfinding
+## P1 — Exposición y sincronización del estado de la grilla
 
-**Problema del TP1:** matemática de la grilla hexagonal y pathfinding con costo variable
-(`GDD.md` §4.3.1 y §4.3.2; `DIAGRAMS.md` §6).
-**Solución del TP1 implementada:** Solución C — coordenadas cúbicas $q+r+s=0$ en C# puro,
-separadas del render.
+**Problema declarado (PDF, Desafío 1):** ¿cómo exponer el mapa (asteroides, ocupación) a IA,
+comandos y UI sin un *God Object* ni *polling* en `Update()`?
+**Solución declarada:** **segregación de interfaces (ISP) + Observer**.
+**Qué implementa el TP2:** dos contratos C# puros —`IGridQueryService` (lectura síncrona) e
+`IGridStatePublisher` (eventos)— implementados por un único `GridModel`, con una vista que
+redibuja solo al recibir un evento.
 
 ### Alcance comprometido
 
-Dado un mapa finito de celdas transitables con costo y celdas bloqueadas, `FindPath` devuelve la
-ruta de **costo mínimo** entre dos celdas dentro de un presupuesto `maxCost`, o un resultado
-`Unreachable` explícito. Se incluye distancia, vecinos, rango y línea de visión.
+Un mapa finito de celdas con terreno y ocupación. La IA/pathfinding consultan el estado de forma
+síncrona; la vista se suscribe y se redibuja **exclusivamente** ante mutaciones reales. Ningún
+consumidor de los contratos puede mutar el mapa. No hay `Update()` consultando el modelo.
 
 ### Comportamientos
 
 | ID | Comportamiento |
 | --- | --- |
-| B1.1 | `Distance` es simétrica, vale 0 entre iguales y cumple el invariante $q+r+s=0$ |
-| B1.2 | `Neighbors` devuelve exactamente las 6 celdas adyacentes dentro del mapa, y la relación es simétrica |
-| B1.3 | `FindPath` devuelve la ruta de costo mínimo (el costo de entrar a una celda es su `MovementCost`; la celda inicial no se paga) |
-| B1.4 | Si el objetivo es alcanzable pero excede `maxCost`, devuelve `Unreachable` con motivo `BudgetExceeded` (no una ruta parcial) |
-| B1.5 | Si el objetivo está bloqueado o no existe, devuelve `Unreachable` con motivo explícito, sin lanzar excepción |
-| B1.6 | Dos ejecuciones con la misma entrada devuelven la misma ruta (desempate determinista) |
-| B1.7 | `HasLineOfSight` bloquea si una celda intermedia bloquea; los extremos no bloquean |
-| B1.8 | El mapa no se muta durante la búsqueda (misma cantidad y costos antes y después) |
+| B1.1 | `IGridStatePublisher` expone **solo eventos** (verificado por reflexión) |
+| B1.2 | `IGridQueryService` **no** expone ninguna operación de mutación (verificado por reflexión) |
+| B1.3 | Escribir una celda con el mismo valor **no** emite evento (no hay mutación real) |
+| B1.4 | Escribir una celda con otro valor emite **exactamente un** evento con coordenada y tipo |
+| B1.5 | Cambiar la ocupación emite un evento de ocupación, y solo si cambió |
+| B1.6 | Un suscriptor que se da de baja deja de recibir eventos |
+| B1.7 | El pathfinding depende solo de `IGridQueryService`: calcula sin poder mutar ni notificar |
+| B1.8 | `FindPath` devuelve la ruta de **costo mínimo** con costo de movimiento variable |
+| B1.9 | Si el costo excede `maxCost`, devuelve `BudgetExceeded` (nunca una ruta parcial) |
+| B1.10 | Objetivo bloqueado o inexistente devuelve un motivo explícito, sin excepción |
+| B1.11 | Dos búsquedas con la misma entrada devuelven la misma ruta (determinismo) |
+| B1.12 | La línea de visión se bloquea por celdas intermedias; los extremos nunca bloquean |
+| B1.13 | El presentador redibuja 0 veces sin mutación y una vez por cada mutación real |
 
 ### Supuestos
 
-- Coordenadas axiales `(q, r)` dentro de un mapa acotado (≤ 12×12) definido por el prototipo.
-- `MovementCost >= 1` para celdas transitables; los bloqueos se representan por costo infinito
-  explícito, no por `null`.
-- Los bloqueos son estáticos durante la búsqueda (una sola consulta).
-- Un solo agente: las unidades no bloquean el paso entre sí dentro de este prototipo.
+- Mapa acotado (12×12 en la demo) definido por el prototipo.
+- `MovementCost >= 1` en celdas transitables; los bloqueos son costo infinito explícito.
+- Los bloqueos son estáticos durante la búsqueda; un solo agente, sin colisión entre unidades.
+- Un único hilo: los eventos se emiten en el hilo que muta (el principal).
 
 ### Exclusiones (y por qué)
 
 | Exclusión | Justificación | Cómo se extendería |
 | --- | --- | --- |
-| Alturas / mapas 3D, varias capas | El TP1 no las modela; agregarlas cambia la representación, no la decisión de diseño | `HexCoordinates` + nivel `y` y `Neighbors` por capa |
-| Movimiento diagonal / arcos de disparo curvos | No existen en grillas hexagonales; cubrirlos sería modelar otro problema | Regla de adyacencia en `HexGrid` |
-| Mapas grandes y optimización (JPS, buckets) | Con ≤ 12×12 el costo no es el problema; el TP1 promete claridad, no throughput | Cambiar el `IPriorityQueue` interno sin tocar el contrato |
-| Niebla de guerra / información parcial | Es un sistema de presentación y conocimiento, ajeno a la geometría | Capa de `VisibilityService` sobre `HexGrid` |
-| Los blockers como unidades móviles | Requiere un modelo de turnos (P2), que este prototipo no tiene | Recalcular rutas por evento de movimiento |
-| Renderizado con Tilemap | El render es una vista sin reglas; no hay comportamiento que testear | `HexGridRenderer` ya consume el dominio |
+| Alturas / mapas 3D multicapa | El desafío es de exposición de estado, no de geometría 3D | `HexCoordinates` + nivel `y`, vecinos por capa |
+| Niebla de guerra / información parcial | Es un sistema de conocimiento, ajeno a la exposición del estado | `IVisibilityService` sobre `IGridQueryService` |
+| Unidades móviles como bloqueos | Necesita un modelo de turnos, que es el prototipo P2 | Suscribirse a `Changed` y recalcular rutas |
+| Render con Tilemap | La vista es el **consumidor** que se demuestra; el tilemap no cambia la propiedad | `GridPresenter` ya consume el contrato |
+| Mapas grandes y optimización | Con 12×12 el costo no es el problema; el desafío es el acoplamiento | Cambiar la cola de prioridad sin tocar el contrato |
+| Event Bus global | El PDF lo descarta: dependencias ocultas y no resuelve lecturas síncronas | — (anti-objetivo) |
 
 ### Contratos
 
 ```csharp
-// Dominio puro. No hay null: la ausencia es un resultado explícito.
-PathResult FindPath(HexCoordinates start, HexCoordinates goal, int maxCost);
-
-readonly struct PathResult
+// Lectura síncrona: la consumen IA, comandos y pathfinding.
+public interface IGridQueryService
 {
-    bool IsFound;                 // true solo si hay ruta completa
-    IReadOnlyList<HexCoordinates> Path; // vacía si IsFound == false
-    int TotalCost;
-    PathFailure Failure;          // None | Unreachable | BudgetExceeded | InvalidStart | InvalidGoal
+    bool Contains(HexCoordinates c);
+    bool TryGetCell(HexCoordinates c, out HexCell cell);
+    bool IsPassable(HexCoordinates c);
+    int MovementCostToEnter(HexCoordinates c);
+    bool HasLineOfSight(HexCoordinates from, HexCoordinates to);
+}
+
+// Notificación reactiva: la consume solo la presentación.
+public interface IGridStatePublisher
+{
+    event Action<GridChange> Changed;
+}
+
+// Único dueño del estado: las mutaciones NO están en ninguna interfaz.
+public sealed class GridModel : IGridQueryService, IGridStatePublisher
+{
+    public bool SetCell(HexCell cell);                  // true solo si cambió
+    public bool SetOccupied(HexCoordinates c, bool on);  // true solo si cambió
 }
 ```
 
-- **Precondiciones:** `maxCost >= 0`; el mapa debe existir. Mapa `null` ⇒ `ArgumentNullException`
-  (error del programador, no estado de juego).
-- **Garantías:** si `IsFound`, `Path[0] == start`, `Path[^1] == goal`, sin celdas bloqueadas y
-  `TotalCost <= maxCost`.
-- **Quién muta:** nadie. `HexGrid` se construye una vez y se consulta; el pathfinder no escribe.
-- **Determinismo:** orden de vecinos fijo (`NE, E, SE, SW, W, NW`) y desempate por
-  `(f, g, orden de inserción)`.
+- **Precondiciones:** dimensiones > 0 (excepción si no); `GetCell` de una celda inexistente es
+  error del programador ⇒ `ArgumentOutOfRangeException`; una ruta inválida **no** es error ⇒ resultado.
+- **Garantías:** un `Set*` que devuelve `false` no emite evento; un evento corresponde a una
+  mutación efectiva; `PathResult.IsFound` implica extremos correctos y ninguna celda bloqueada.
+- **Quién muta:** solo `GridModel`, y solo a través de métodos que no están en los contratos.
+- **Ausencia:** `TryGetCell` / `PathResult` con `PathFailure`; nunca `null`.
 
 ### Propiedad de diseño y demostración
 
-| Promesa | Evidencia |
+| Promesa del PDF | Evidencia |
 | --- | --- |
-| Lógica independiente de Unity | Toda la suite de P1 corre en Edit Mode sin escena; el `.asmdef` del dominio tiene `noEngineReferences: true` |
-| Extensibilidad sin tocar el algoritmo | Test con un `ICellCostProvider` alternativo (terreno "lento"): A* no se modifica |
-| Determinismo | B1.6 corre la búsqueda 2 veces y compara ruta y costo |
+| ISP: la vista no puede alterar reglas; la IA no escucha eventos | Tests de reflexión B1.1/B1.2 + tipos en los constructores (`Pathfinder(IGridQueryService)`) |
+| Render 100% reactivo, cero CPU en `Update()` | `GridPresenter` no tiene `Update`; B1.13 cuenta redibujos |
+| Testeable sin gráficos | Toda la suite de P1 corre en Edit Mode; `noEngineReferences: true` en el dominio |
 
-### Escena de demo
-
-`P1_HexGrid.unity`: mapa de 12×12 con celdas bloqueadas, selección de origen y destino por clic,
-ruta resaltada y mensaje de rechazo (`Unreachable` / `BudgetExceeded`).
+**Demo en vivo:** crear el `GridModel`, bloquear una celda y mostrar un único log de redibujo;
+luego reescribir la misma celda y mostrar que **no** hay log.
 
 ---
 
-## P2 — Turnos, economía de PA y patrón comando
+## P2 — Flujo de acciones intercaladas y sincronización
 
-**Problema del TP1:** flujo de turnos, PA y ejecución de comandos intercalados
-(`GDD.md` §4.3.1 Problema 2; `DIAGRAMS.md` §3, §4, §7, §9).
-**Solución del TP1 implementada:** FSM + `ICommand`, con los ajustes de `01-arquitectura.md` §5.
+**Problema declarado (PDF, Desafío 2):** ¿cómo alternar PA (mover → atacar → mover) validando en
+C# e invocando animaciones en Unity de forma asíncrona?
+**Solución declarada:** **pipeline de `ICommand` + ejecución asíncrona** (UniTask / Task).
+**Qué implementa el TP2:** comandos inmutables que validan PA y ejecutan la lógica al instante en
+el Core, y un puerto `ICommandPresentation` que reproduce la animación **después**, con una cola
+que impide intercalar comandos a mitad de una animación.
 
 ### Alcance comprometido
 
-Un turno de un jugador con un pozo de PA que se recarga al inicio. El jugador intercala comandos
-(mover, atacar, escudo) en cualquier orden; cada comando se valida **antes** de ejecutarse, se
-aplica exactamente una vez, y puede deshacerse restaurando el estado anterior exacto. La FSM
-impide transiciones fuera de fase.
+Un turno con pozo de PA que se recarga al inicio. El jugador intercala comandos (mover, atacar,
+escudo) en cualquier orden. La validación y el efecto son **instantáneos**; la animación se espera
+de forma asíncrona sin condicionar la regla. Los comandos enviados durante una animación se
+serializan. Agregar una variante no modifica el pipeline.
 
 ### Comportamientos
 
 | ID | Comportamiento |
 | --- | --- |
-| B2.1 | Al iniciar el turno, los PA se recargan a `MaxActionPoints` (no se acumulan entre turnos) |
-| B2.2 | Se pueden intercalar 3 comandos válidos en un turno y el PA final es exactamente el esperado |
-| B2.3 | Un comando sin PA suficiente se rechaza con `NotEnoughActionPoints(required, available)` y el estado queda **idéntico** |
-| B2.4 | Un comando aceptado aplica su efecto exactamente una vez (sin doble aplicación) |
-| B2.5 | `Undo` restaura el snapshot anterior (PA, celda, escudos, hull enemigo) y el historial se consume una sola vez |
-| B2.6 | La FSM acepta solo transiciones declaradas; una transición inválida devuelve motivo y no cambia de estado |
-| B2.7 | Un comando en fase incorrecta se rechaza con `WrongPhase` sin efectos |
-| B2.8 | Se emite un evento por comando aceptado y **ninguno** por comando rechazado (validado en Play Mode) |
+| B2.1 | Un comando sin PA suficiente se rechaza con `NotEnoughActionPoints` y el estado queda idéntico |
+| B2.2 | Un comando rechazado **no** dispara animación |
+| B2.3 | Un comando aceptado aplica su efecto **antes** de que la animación termine (estado ya mutado, `Phase = Executing`) |
+| B2.4 | Al completarse la animación, la fase vuelve a `PlayerTurn` |
+| B2.5 | Un segundo comando enviado durante la animación **espera** (cola); no se intercala |
+| B2.6 | Tres comandos intercalados gastan exactamente los PA esperados |
+| B2.7 | Una variante nueva (`ShieldCommand`) funciona sin tocar el pipeline (OCP) |
+| B2.8 | `EndTurn` recarga los PA al máximo, sin acumular |
+| B2.9 | Durante el turno enemigo, un comando se rechaza con `WrongPhase` y no anima |
+| B2.10 | Play Mode: el adaptador de Unity ejecuta la secuencia, completa las animaciones y no bloquea la lógica |
 
 ### Supuestos
 
-- Un jugador y un objetivo (dummy) con hull; no hay múltiples unidades ni iniciativa.
-- El costo en PA de cada comando lo define el comando, no el estado.
-- El turno enemigo ejecuta una **lista de comandos prefijada** (guion), no IA.
-- El fin de turno no aplica anomalías gravitacionales ni efectos de terreno (fuera de alcance).
-- La animación es instantánea para los tests (el dominio no espera frames).
+- Un jugador y un enemigo fijo; el costo en PA lo declara cada comando.
+- El turno enemigo se activa por método; no hay IA (fuera de alcance).
+- La animación es un contador de frames en el adaptador; no hay arte.
+- Un solo hilo (contexto de sincronización de Unity).
 
 ### Exclusiones (y por qué)
 
 | Exclusión | Justificación | Cómo se extendería |
 | --- | --- | --- |
-| IA de decisiones enemigas | El problema es el flujo de turnos y comandos, no la búsqueda de decisiones | El turno enemigo ya consume una cola de `ICommand`; se enchufa un planificador |
-| Animaciones y espera real | El dominio no debe depender de frames; la animación es Presentación | Evento `CommandResolved` → animación → callback al `TurnSession` |
-| Condiciones de victoria/derrota | No hacen falta para probar la economía de PA y la FSM; agregan estados no testeados | Nuevos estados en la FSM + regla al final del `Resolution` |
-| Efectos de terreno (anomalías, nebulosas) | Son reglas de otro sistema (entorno) y mezclan dos problemas | `ITurnEndEffect` aplicado en `Resolution` |
-| Guardado / carga de turno | No es una propiedad del diseño evaluada | Serializar `TurnState` + historial |
-| Multijugador / red | Cambia el modelo de autoridad y el alcance completo | Comandos serializables y `TurnSession` autoritativa |
+| Undo / Redo | El PDF lo menciona como *habilitador*, no como requisito del prototipo; agregarlo exige un historial y su propia suite | Historial de estados antes/después en el pipeline |
+| IA de decisiones | El desafío es el flujo de comandos, no la búsqueda de jugadas | El pipeline acepta cualquier `ICommand`; se encola el plan de la IA |
+| Animaciones y arte reales | No demuestran la propiedad; además acoplan tiempos | `ShipView` ya es el punto de sustitución |
+| Condiciones de victoria/derrota | Agregan estados no testeados y no aportan al desafío | Regla al final del turno + fase nueva |
+| Efectos de terreno | Son reglas del prototipo P1 / otro sistema | Comando que consulte `IGridQueryService` |
+| Red / multijugador | Cambia el modelo de autoridad y el alcance completo | Comandos serializables y pipeline autoritativo |
 
 ### Contratos
 
 ```csharp
-// Estado inmutable: el turno entero son 4 enteros.
-readonly struct TurnState
-{
-    int PlayerCell; int ActionPoints; int Shields; int EnemyHull;
-    TurnState WithActionPoints(int ap); // y análogos
-}
-
-// Validar y ejecutar son pasos separados y explícitos.
-interface ICommand
+public interface ICommand
 {
     int ActionPointCost { get; }
-    CommandValidation Validate(TurnState state);   // Allowed | Rejected(reason, required, available)
-    TurnState Execute(TurnState state);            // solo si Validate fue Allowed
+    string VisualKey { get; }                     // dato para la vista, no comportamiento
+    CommandValidation Validate(ShipModel model);
+    ShipModel Execute(ShipModel model);           // instantáneo; precondición: Validate == Allowed
 }
 
-// Único dueño del estado y del historial. Capa Aplicación (C# puro).
-sealed class TurnSession
+public interface ICommandPresentation
 {
-    TurnState State { get; }
-    CommandOutcome Submit(ICommand command);       // valida, aplica, apila snapshot, emite evento
-    UndoResult UndoLast();                         // restaura snapshot o HistorialVacío
+    Task PlayAsync(CommandExecution execution);   // puerto: el Core no espera frames
+}
+
+public sealed class CommandProcessor
+{
+    ShipModel State { get; }                      // único dueño del estado
+    TurnPhase Phase { get; }                      // PlayerTurn | Executing | EnemyTurn
+    Task<CommandOutcome> SubmitAsync(ICommand command);
+    void EndTurn();
 }
 ```
 
-- **Precondiciones:** `command != null`; `ActionPointCost >= 0`.
-- **Garantías:** un `Submit` rechazado no muta `State` ni el historial; `UndoLast` deja el estado
-  bit a bit igual al previo al último comando aceptado.
-- **Quién muta:** solo `TurnSession`. Los comandos son funciones puras sobre `TurnState`.
-- **Ausencia:** `UndoResult` explícito (`Undone` / `NothingToUndo`), nunca `null`.
+- **Precondiciones:** `command != null` y `ActionPointCost >= 0` (excepciones si no);
+  `Execute` solo se invoca tras `Validate` exitoso.
+- **Garantías:** un rechazo no muta `State` ni llama a la presentación; un comando aceptado aplica
+  el efecto una sola vez; `Phase` vuelve a `PlayerTurn` incluso si la presentación falla.
+- **Quién muta:** solo `CommandProcessor`. `ShipModel` es inmutable (`With…`).
+- **Ausencia:** `CommandOutcome` con `IsAccepted` y `CommandValidation` con motivo; nunca `null`.
 
 ### Propiedad de diseño y demostración
 
-| Promesa | Evidencia |
+| Promesa del PDF | Evidencia |
 | --- | --- |
-| Extensibilidad (Open/Closed) | Se agrega `ShieldCommand` (o `TeleportCommand`) sin tocar `TurnSession` ni la FSM; solo un test nuevo |
-| Desacoplamiento | Se sustituye el ejecutor por un fake y se verifica que la UI no consulta el estado por frame, sino que reacciona al evento |
-| Control de estado | `TurnState` inmutable y solo `TurnSession` lo reemplaza; transición inválida de FSM testeados en B2.6 |
-| Undo exacto | Snapshot, no aritmética: B2.5 compara el estado completo antes/después |
+| Desacoplamiento temporal: validación instantánea vs animación async | B2.3: el estado ya cambió y el `Task` sigue pendiente |
+| OCP: habilidad nueva sin tocar la FSM ni el controlador | B2.7 (`ShieldCommand`) y demo de `TractorBeamCommand` en vivo |
+| No FSM monolítica | Solo 3 fases; ninguna por combinación de acciones |
+| No corrutinas centralizadas | La espera es un `Task` en el puerto, no `WaitForSeconds` en la regla |
+| No singletons | `CommandProcessor` recibe la presentación por constructor; el driver compone |
 
-### Escena de demo
-
-`P2_TurnFlow.unity`: barra de PA, botones Mover / Atacar / Escudo / Deshacer / Terminar turno y un
-log de eventos. El `TurnDemoDriver` ejecuta un comando al iniciar para el test de Play Mode.
+**Decisión sobre UniTask:** el PDF declara *UniTask / Task*. Se usa `Task` (BCL) para que la suite
+sea reproducible sin dependencias de red. El punto de sustitución es `ICommandPresentation` +
+`ShipView`; migrar a UniTask no toca dominio, pipeline ni tests.
 
 ---
 
-## P3 — Slots, módulos y recálculo de estadísticas
+## P3 — Gestión de servicios y módulos data-driven
 
-**Problema del TP1:** slots de equipamiento, módulos MK I/II/III y modificadores
-(`GDD.md` §4.3.1 Problema 3; `DIAGRAMS.md` §5 y §8).
-**Solución del TP1 implementada:** data-driven + composición, con el `ScriptableObject` como
-adaptador (no como modelo de dominio).
+**Problema declarado (PDF, Desafío 3):** ¿cómo conectar servicios sin singletons estáticos
+(`GameManager.Instance`) y definir módulos (MK I–III)?
+**Solución declarada:** **inyección de dependencias con VContainer + ScriptableObjects (Flyweight)**.
+**Qué implementa el TP2:** un `LifetimeScope` que registra catálogo, configuración y servicio; el
+consumidor recibe `IEquipmentService` por `[Inject]`; los módulos son assets compartidos y el
+dominio recibe `ModuleDefinition` inmutables.
 
 ### Alcance comprometido
 
-Una nave con 4 slots tipados (Weapon, Propulsion, Shield, Exotic). Equipar/quitar módulos
-recalcula estadísticas **sumando** modificadores sobre las base, consolida habilidades otorgadas y
-nunca muta las definiciones ni las estadísticas base.
+Una nave con 4 slots (un tipo por slot). Equipar/quitar módulos recalcula estadísticas sumando
+bonificaciones sobre la base, consolida habilidades y nunca muta las definiciones ni la base. El
+servicio se resuelve por contenedor; en tests, inyectando un catálogo falso.
 
 ### Comportamientos
 
 | ID | Comportamiento |
 | --- | --- |
-| B3.1 | Un módulo solo entra en un slot de su `SlotType`; si no coincide, `WrongSlotType` y loadout intacto |
-| B3.2 | Las estadísticas calculadas = base + suma de bonificaciones de los módulos equipados |
-| B3.3 | Reemplazar MK I por MK II recalcula sin contar dos veces el módulo anterior |
-| B3.4 | Quitar un módulo elimina exactamente sus bonificaciones (vuelve a los valores previos) |
-| B3.5 | Las habilidades otorgadas se consolidan sin duplicados por `Id`, preservando orden |
-| B3.6 | El cálculo es idempotente y no muta `ShipBaseStats` ni `ModuleDefinition` |
-| B3.7 | El adaptador `ShipModuleAsset → ModuleDefinition` mapea todos los campos (integración, Edit Mode) |
-| B3.8 | Un módulo sin habilidad otorgada no agrega nada a la lista de habilidades (ausencia explícita) |
+| B3.1 | El servicio recibe el catálogo por constructor; con un catálogo falso resuelve módulos (DIP) |
+| B3.2 | Las estadísticas = base + suma de bonificaciones de los módulos equipados |
+| B3.3 | Reemplazar MK I por MK II recalcula sin contar dos veces el anterior |
+| B3.4 | Quitar un módulo elimina exactamente sus bonificaciones |
+| B3.5 | Las habilidades se consolidan sin duplicados |
+| B3.6 | El cálculo es idempotente y no muta la base ni la colección de entrada |
+| B3.7 | El adaptador `ShipModuleAsset → ModuleDefinition` mapea todos los campos |
+| B3.8 | Un slot vacío es ausencia explícita (`TryGetModule == false`), no un módulo vacío |
+| B3.9 | Un módulo inexistente devuelve `UnknownModule` y deja las estadísticas intactas |
+| B3.10 | Un `SlotType` fuera de rango devuelve `WrongSlotType` y conserva el loadout |
+| B3.11 | El loadout original no se muta al equipar (se devuelve uno nuevo) |
 
 ### Supuestos
 
-- 4 slots, uno por tipo; cada slot admite un módulo o está vacío.
-- Los modificadores son **aditivos** (el TP1 menciona suma/multiplicación; ver exclusión).
-- Las definiciones de módulos son inmutables una vez construidas.
-- No hay requisitos de nivel, peso, costo ni inventario.
+- 4 slots, uno por tipo; los modificadores son **aditivos**.
+- Las definiciones son inmutables una vez construidas.
+- No hay nivel, peso, costo ni inventario.
 
 ### Exclusiones (y por qué)
 
 | Exclusión | Justificación | Cómo se extendería |
 | --- | --- | --- |
-| Modificadores multiplicativos / porcentuales | Ningún módulo del alcance los usa; la composición aditiva ya demuestra la propiedad | `StatModifier` con `Op` (`Add`/`Multiply`) aplicado en orden declarado |
-| Set bonuses / sinergias | Regla de contenido, no de arquitectura; agrega combinaciones no testeadas | Etapa de post-proceso sobre el loadout |
-| Inventario, compra, drops | Sistema económico ajeno al problema de equipamiento | `IInventory` como dependencia del servicio |
-| Persistencia del loadout | No demuestra la propiedad de recálculo | Serializar `ModuleDefinition.Id` por slot |
-| UI de drag & drop | Presentación; el servicio ya expone `TryEquip`/`Unequip` | `LoadoutDemo` con botones (ya incluido) |
-| Varios slots del mismo tipo | El alcance fija 4 slots únicos; multiplicarlo no cambia la decisión | `Loadout` con `List<Slot>` y política de duplicados |
+| Modificadores multiplicativos | Ningún módulo del alcance los usa; la adición ya demuestra la composición | `StatModifier` con operación y orden |
+| Set bonuses / sinergias | Es contenido, no arquitectura; agrega combinaciones no testeadas | Etapa de post-proceso sobre el loadout |
+| Incompatibilidad de tipo de slot | **Imposible por construcción**: un slot por tipo y el módulo declara el suyo | Varios slots por tipo con validación explícita |
+| Inventario, compra, drops | Sistema económico ajeno al desafío de DI | `IInventoryService` inyectado |
+| Persistencia del loadout | No demuestra la propiedad | Serializar ids por slot |
+| UI de drag & drop | Presentación; el servicio ya expone `Equip`/`Unequip` | `LoadoutDemo` con botones |
 
 ### Contratos
 
 ```csharp
-readonly struct ModuleDefinition
-{
-    string Id; SlotType Slot; int Tier;
-    int BonusActionPoints; int BonusShields; int BonusMovement;
-    string GrantedAbilityId;      // string.Empty = sin habilidad
-}
-readonly struct ShipBaseStats { int ActionPoints; int Shields; int Movement; int Hull; }
-readonly struct ShipStats { int ActionPoints; int Shields; int Movement; int Hull; IReadOnlyList<string> Abilities; }
+public readonly struct ModuleDefinition { /* Id, Slot, Tier, bonus*, GrantedAbilityId */ }
 
-EquipResult Loadout.TryEquip(ModuleDefinition module); // Ok(Loadout) | WrongSlotType | UnknownSlot
-ShipStats ShipStatsCalculator.Calculate(ShipBaseStats baseStats, IEnumerable<ModuleDefinition> modules);
+public sealed class Loadout            // inmutable
+{
+    EquipResult TryEquip(ModuleDefinition module);   // devuelve un loadout NUEVO
+    EquipResult Unequip(SlotType slot);
+    bool TryGetModule(SlotType slot, out ModuleDefinition module);
+}
+
+public interface IModuleCatalog { bool TryGet(string id, out ModuleDefinition m); }
+
+public interface IEquipmentService
+{
+    Loadout Current { get; }
+    ShipStats CurrentStats { get; }
+    EquipResult Equip(string moduleId);
+    EquipResult Unequip(SlotType slot);
+    event Action<ShipStats> StatsChanged;            // solo cuando cambian de verdad
+}
 ```
 
-- **Precondiciones:** `baseStats` válido; módulos con `Id` no vacío.
-- **Garantías:** `Calculate` es pura, total (no lanza por módulos vacíos) e idempotente;
-  no muta argumentos; `TryEquip` no muta el loadout original (devuelve uno nuevo).
-- **Ausencia:** slot vacío ⇒ `TryGetModule(out …) == false`; habilidad ausente ⇒ `string.Empty`,
-  nunca `null` (el `null` solo existe en el campo serializado del SO y se valida en el borde).
+- **Precondiciones:** `catalog != null` (excepción); ids vacíos ⇒ `InvalidModule` (resultado).
+- **Garantías:** `Calculate` es pura, total e idempotente; `Equip` fallido no cambia el estado;
+  `StatsChanged` se emite solo si las estadísticas efectivamente cambian.
+- **Quién muta:** `Loadout` es inmutable; `EquipmentService` reemplaza su referencia actual.
+- **Ausencia:** `TryGetModule` / `GrantedAbilityId` vacío; nunca `null` cruza el dominio.
 
 ### Propiedad de diseño y demostración
 
-| Promesa | Evidencia |
+| Promesa del PDF | Evidencia |
 | --- | --- |
-| Extensibilidad por datos | Se agrega "Cañón MK III" creando un `ModuleDefinition` nuevo (o un asset), **sin cambiar código**; test B3.2 con el nuevo módulo |
-| Desacoplamiento del motor | El cálculo corre en Edit Mode sin `UnityEngine`; el SO es un adaptador testeado aparte (B3.7) |
-| Transparencia referencial | B3.6 calcula dos veces y compara; verifica que base y definiciones quedan iguales |
-| Control del estado | `Loadout` inmutable: `TryEquip` devuelve uno nuevo; el loadout original no cambia (test) |
+| DIP: inyección de mocks en tests | B3.1 con `FakeCatalog` en Edit Mode |
+| Sin Singleton ni Service Locator | No existe `Instance`; el consumidor recibe la interfaz por `[Inject]` |
+| Flyweight: datos compartidos | Un asset por módulo, referenciado por el catálogo; el dominio copia datos |
+| Data-driven: MK III sin recompilar | Crear un asset nuevo en el editor y equiparlo en la demo |
 
-### Escena de demo
-
-`P3_Loadout.unity`: 4 slots, botones de módulos MK I/II/III, panel de estadísticas y habilidades
-que se actualiza al equipar/quitar.
+**Demo en vivo:** en el inspector, crear un `ShipModuleAsset` MK III y equiparlo desde el catálogo,
+sin tocar código ni recompilar.
 
 ---
 
-## Cambios respecto del TP1 (resumen para la defensa)
+## Ajustes respecto del diseño del TP1 (para la defensa)
 
-1. **ScriptableObject fuera del cálculo:** el dominio recibe `ModuleDefinition`; el SO es un
-   adaptador. Se conserva el flujo data-driven y se gana testeabilidad.
-2. **Comandos sincrónicos:** `Execute` devuelve el nuevo estado; la animación queda en
-   Presentación. Se elimina `Task` del dominio.
-3. **Undo por snapshot:** no se "devuelven" PA con aritmética; se restaura el estado completo.
-4. **Validación con motivo:** `bool` → `CommandValidation` para que la UI explique y el test
-   verifique la razón del rechazo.
-5. **Ausencia explícita:** se reemplaza `null` por `TryGetModule` / `string.Empty` / resultados
-   con motivo.
-6. **FSM reducida:** solo los estados que el alcance implementa y testea.
+1. **P1 cambia de eje.** El informe largo del TP1 desarrolla la matemática hexagonal y el A*; el
+   *resumen ejecutivo* declara como desafío la **exposición del estado (ISP + Observer)**. El TP2
+   implementa el desafío declarado: la geometría y el A* son el sustrato que consume
+   `IGridQueryService`, no la tesis del prototipo.
+2. **`Task` en lugar de UniTask.** Declarado como alternativa en el PDF; elimina una dependencia
+   de red y deja la sustitución en una sola interfaz.
+3. **Undo/Redo fuera de alcance.** El PDF lo menciona como capacidad que el patrón habilita, no
+   como requisito; se excluye con justificación y ruta de extensión.
+4. **Sin FSM monolítica.** El PDF descarta un estado por combinación de acciones; se usan tres fases.
+5. **ScriptableObject como adaptador.** El dominio recibe `ModuleDefinition`: se conserva el flujo
+   data-driven y el dominio queda libre de `UnityEngine`.
+6. **Un slot por tipo.** Elimina el estado inválido "módulo en slot incompatible" en lugar de testearlo.

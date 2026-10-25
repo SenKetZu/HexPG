@@ -1,0 +1,23 @@
+{
+    "name": "VoidHex.Prototypes.Editor",
+    "rootNamespace": "VoidHex.Prototypes.Editor",
+    "references": [
+        "VoidHex.P1.Unity",
+        "VoidHex.P2.Unity",
+        "VoidHex.P3.Domain",
+        "VoidHex.P3.Application",
+        "VoidHex.P3.Unity",
+        "VContainer"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

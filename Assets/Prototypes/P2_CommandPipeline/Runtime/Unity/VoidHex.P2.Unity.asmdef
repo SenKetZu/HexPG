@@ -1,0 +1,17 @@
+{
+    "name": "VoidHex.P2.Unity",
+    "rootNamespace": "VoidHex.P2.Unity",
+    "references": [
+        "VoidHex.P2.Domain",
+        "VoidHex.P2.Application"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

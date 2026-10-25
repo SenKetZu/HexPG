@@ -45,6 +45,10 @@
 # Visual Studio cache directory
 .vs/
 
+# Local scratch / tooling
+.codebase-memory/
+.tmp-*
+
 # Gradle cache directory
 .gradle/
 

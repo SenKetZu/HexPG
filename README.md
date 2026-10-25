@@ -1,26 +1,26 @@
 # HexPG — Void Hex Tactics
 
-**TP2 — Programación de Videojuegos III (2026)** · Implementación y tests en Unity.
+**TP2 — Programación de VideoJuegos III (2026)** · Implementación y tests en Unity.
 
 | | |
 | --- | --- |
 | Integrantes | 1 |
 | Docente | Diego Freijo |
-| Unity | **6000.5.9f1** (URP 17.6, Test Framework 1.7.0) |
+| Unity | **6000.5.9f1** (Test Framework 1.7.0, VContainer 1.19.0) |
 | Entrega | tag `tp2` — 28/10 23:59 |
 | Reentrega | tag `rtp2` — 04/11 23:59 |
 | Defensa oral | 04/11 (20 min + 10 de preguntas) |
 
 ## Qué es esto
 
-Tres **pruebas de concepto** que implementan los problemas técnicos del TP1. No es un juego:
-es una demostración acotada de arquitectura, contratos y tests.
+Tres pruebas de concepto que implementan los **tres desafíos arquitectónicos declarados en el TP1**.
+No es un juego: es una demostración acotada de arquitectura, contratos y tests.
 
-| # | Prototipo | Problema del TP1 | Solución implementada |
+| # | Prototipo | Problema declarado en el TP1 | Solución implementada |
 | --- | --- | --- | --- |
-| P1 | `P1_HexGrid` | Grilla hexagonal y pathfinding con costo variable | Coordenadas cúbicas en C# puro + A* determinista |
-| P2 | `P2_TurnFlow` | Turnos, economía de PA y comandos intercalados | FSM + patrón comando con estado inmutable y undo por snapshot |
-| P3 | `P3_Loadout` | Slots, módulos MK I/II/III y estadísticas | Datos + composición; `ScriptableObject` como adaptador |
+| P1 | `P1_GridState` | Exponer el mapa a IA, comandos y UI sin God Object ni polling en `Update()` | **ISP + Observer**: `IGridQueryService` (lectura) e `IGridStatePublisher` (eventos) |
+| P2 | `P2_CommandPipeline` | Alternar PA validando en C# e invocando animaciones async | **Pipeline de `ICommand` + ejecución asíncrona** con cola serializada |
+| P3 | `P3_Loadout` | Conectar servicios sin singletons y definir módulos MK I–III | **VContainer DI + ScriptableObjects (Flyweight)** |
 
 Diseño de referencia (TP1): [`GDD.md`](./GDD.md) · [`DIAGRAMS.md`](./DIAGRAMS.md).
 
@@ -28,40 +28,49 @@ Diseño de referencia (TP1): [`GDD.md`](./GDD.md) · [`DIAGRAMS.md`](./DIAGRAMS.
 
 Se actualiza el mismo día que cambia el código.
 
-| Prototipo | Dominio | Escena | Tests Edit | Tests Play | Doc |
+| Prototipo | Estructura | Dominio | Escena | Tests Edit | Tests Play |
 | --- | --- | --- | --- | --- | --- |
-| P1 HexGrid | ☐ | ☐ | ☐ | — | ☑ |
-| P2 TurnFlow | ☐ | ☐ | ☐ | ☐ | ☑ |
-| P3 Loadout | ☐ | ☐ | ☐ | — | ☑ |
+| P1 GridState | ☑ | ☑ | ☐ | ☑ (5) | — |
+| P2 CommandPipeline | ☑ | ☑ | ☐ | ☑ (7) | ☑ (1) |
+| P3 Loadout | ☑ | ☑ | ☐ | ☑ (9) | — |
+
+> Las escenas se generan con `VoidHex → Build Prototype Scenes` (menú del editor).
 
 ## Estructura
 
 ```text
 Assets/Prototypes/
-  P1_HexGrid/{Runtime/Domain, Runtime/Unity, Tests/EditMode, Scenes, README.md}
-  P2_TurnFlow/{Runtime/Domain, Runtime/Unity, Tests/EditMode, Tests/PlayMode, Scenes, README.md}
-  P3_Loadout/{Runtime/Domain, Runtime/Unity, Tests/EditMode, Scenes, README.md}
+  P1_GridState/{Runtime/Domain, Runtime/Unity, Tests/EditMode, Scenes, README.md}
+  P2_CommandPipeline/{Runtime/Domain, Runtime/Application, Runtime/Unity,
+                      Tests/EditMode, Tests/PlayMode, Scenes, README.md}
+  P3_Loadout/{Runtime/Domain, Runtime/Application, Runtime/Unity,
+              Tests/EditMode, Scenes, Assets, README.md}
+  Editor/PrototypeSceneBuilder.cs      genera escenas y assets de P3
 docs/   doctrina, arquitectura, tests, prototipos, trazabilidad, defensa, plan
 ```
 
 Cada prototipo es independiente: no comparte escena, estado estático ni carpeta con otro.
-La separación de capas se impone con asmdefs (`VoidHex.Pn.Domain` con `noEngineReferences: true`).
+La separación de capas se impone con asmdefs: los assemblies de dominio declaran
+`"noEngineReferences": true`, así que un `using UnityEngine;` no compila.
 
 ## Cómo abrir
 
 1. Instalar Unity **6000.5.9f1** (Unity Hub).
 2. Unity Hub → *Add* → *Add project from disk* → seleccionar la raíz de este repositorio.
-3. Abrir el proyecto y esperar la importación de paquetes (`com.unity.test-framework` ya está en `Packages/manifest.json`).
+3. Esperar la importación. El proyecto usa el registro **OpenUPM** para VContainer
+   (`Packages/manifest.json`); requiere conexión la primera vez.
 
-## Cómo ejecutar cada prototipo
+## Cómo generar y ejecutar cada prototipo
+
+Una sola vez: menú **`VoidHex → Build Prototype Scenes`**. Crea las tres escenas y los assets de P3.
 
 | Prototipo | Escena | Qué se ve |
 | --- | --- | --- |
-| P1 | `Assets/Prototypes/P1_HexGrid/Scenes/P1_HexGrid.unity` | Mapa 12×12, origen/destino por clic, ruta óptima o motivo de rechazo |
-| P2 | `Assets/Prototypes/P2_TurnFlow/Scenes/P2_TurnFlow.unity` | Barra de PA, comandos Mover/Atacar/Escudo, Deshacer y log de eventos |
-| P3 | `Assets/Prototypes/P3_Loadout/Scenes/P3_Loadout.unity` | 4 slots, módulos MK I/II/III y panel de estadísticas recalculadas |
+| P1 | `Assets/Prototypes/P1_GridState/Scenes/P1_GridState.unity` | Mapa 12×12 con celdas bloqueadas, ruta óptima dibujada con gizmos y un log por **mutación real** |
+| P2 | `Assets/Prototypes/P2_CommandPipeline/Scenes/P2_CommandPipeline.unity` | Secuencia mover → atacar → mover; cada animación se completa desde `Update` |
+| P3 | `Assets/Prototypes/P3_Loadout/Scenes/P3_Loadout.unity` | `LifetimeScope` inyecta el servicio; se equipan MK I / MK II y se registran las stats |
 
-Abrir la escena y presionar **Play**. Cada prototipo se ejecuta solo; no requiere los otros.
+Abrir la escena y presionar **Play**. Cada prototipo se ejecuta solo.
 
 ## Cómo correr los tests
 
@@ -69,12 +78,10 @@ Abrir la escena y presionar **Play**. Cada prototipo se ejecuta solo; no requier
 
 `Window → General → Test Runner`:
 
-1. **EditMode** → `Run All` (dominio de P1, P2, P3 y adaptador de assets).
-2. **PlayMode** → `Run All` (integración de P2 con el ciclo de vida de Unity).
+1. **EditMode → Run All** (dominio, aplicación y adaptadores de los tres prototipos).
+2. **PlayMode → Run All** (integración de P2 con el ciclo de vida de Unity).
 
 ### Desde línea de comandos
-
-Con el editor cerrado:
 
 ```powershell
 $unity = "C:\Program Files\Unity\Hub\Editor\6000.5.9f1\Editor\Unity.exe"
@@ -88,24 +95,20 @@ $unity = "C:\Program Files\Unity\Hub\Editor\6000.5.9f1\Editor\Unity.exe"
 
 Los resultados quedan en `Logs/*.xml`. Código de salida `0` = suite verde.
 
-**Requisitos de reproducibilidad:** no hay pasos manuales, ni dependencia de orden, ni assets
-creados a mano. Cada test prepara y limpia lo suyo.
-
 ## Documentación
 
 | Documento | Contenido |
 | --- | --- |
-| [`docs/00-doctrina.md`](./docs/00-doctrina.md) | Pilares, reglas no negociables, anti-objetivos, definición de terminado |
-| [`docs/01-arquitectura.md`](./docs/01-arquitectura.md) | Capas, asmdefs, estructura, contratos y **ajustes respecto del TP1** |
+| [`docs/00-doctrina.md`](./docs/00-doctrina.md) | Los tres desafíos declarados, pilares, reglas no negociables, anti-objetivos |
+| [`docs/01-arquitectura.md`](./docs/01-arquitectura.md) | Capas, asmdefs, estructura, dependencias y **ajustes respecto del TP1** |
 | [`docs/02-doctrina-de-tests.md`](./docs/02-doctrina-de-tests.md) | Qué testear, Edit vs Play Mode, reglas y trampas |
-| [`docs/03-prototipos.md`](./docs/03-prototipos.md) | Por prototipo: alcance, comportamientos, supuestos, exclusiones, contratos y propiedad demostrada |
-| [`docs/04-trazabilidad.md`](./docs/04-trazabilidad.md) | Matriz comportamiento → test → defecto que detecta → cumplimiento de la consigna |
-| [`docs/05-defensa.md`](./docs/05-defensa.md) | Guion de 20 minutos, demos, banco de preguntas |
+| [`docs/03-prototipos.md`](./docs/03-prototipos.md) | Por prototipo: alcance, comportamientos, exclusiones, contratos y propiedad demostrada |
+| [`docs/04-trazabilidad.md`](./docs/04-trazabilidad.md) | Matriz comportamiento → test → defecto que detecta, y cumplimiento de la consigna |
+| [`docs/05-defensa.md`](./docs/05-defensa.md) | Guion de 20 minutos, demos y banco de preguntas |
 | [`docs/06-plan.md`](./docs/06-plan.md) | Plan hasta la entrega, riesgos y procedimiento del tag |
 
 ## Alcance
 
-Lo que **no** incluye este TP, y por qué, está en
-[`docs/03-prototipos.md`](./docs/03-prototipos.md): arte, IA enemiga, animaciones, efectos de
-terreno, guardado, optimización para mapas grandes y modificadores multiplicativos. Cada exclusión
-tiene justificación y una ruta de extensión.
+Lo que **no** incluye, y por qué, está en [`docs/03-prototipos.md`](./docs/03-prototipos.md):
+arte, IA enemiga, undo/redo, efectos de terreno, guardado, mapas 3D y modificadores multiplicativos.
+Cada exclusión tiene justificación y una ruta de extensión.

@@ -1,13 +1,18 @@
 # 01 — Arquitectura: reglas, capas y estructura
 
+> La arquitectura implementada es la **declarada en el resumen ejecutivo del TP1**:
+> ISP + Observer (P1), pipeline de comandos asíncrono (P2) y DI con VContainer + ScriptableObjects (P3).
+> Este documento explica cómo se materializa en assemblies y qué reglas la sostienen.
+
 ## 1. Regla de dependencia
 
 ```mermaid
 flowchart LR
-    P["Presentación<br/>MonoBehaviour · Input · Render · Assets SO"]
-    A["Aplicación<br/>Orquestación · Sesión · Servicios"]
-    D["Dominio<br/>Reglas puras (C# sin UnityEngine)"]
+    P["Presentación<br/>MonoBehaviour · VContainer LifetimeScope · ScriptableObjects"]
+    A["Aplicación<br/>Pipeline · Servicio de equipamiento (C# puro)"]
+    D["Dominio<br/>Reglas, contratos, estructuras (C# sin UnityEngine)"]
     TE["Tests Edit Mode"] --> D
+    TE --> A
     TP["Tests Play Mode"] --> P
 
     P --> A
@@ -16,35 +21,37 @@ flowchart LR
 
 | Capa | Responsabilidad | Puede depender de | Testeable sin escena |
 | --- | --- | --- | --- |
-| **Dominio** | Reglas, matemática, invariantes, validaciones | Nada externo | Sí (NUnit, Edit Mode) |
-| **Aplicación** | Orquestar casos de uso, mantener estado de sesión | Dominio | Sí (Edit Mode) |
-| **Presentación** | Input, render, animación, assets de Unity | Aplicación + Dominio | Solo con Play Mode |
+| **Dominio** | Contratos, reglas, invariantes, cálculo puro | Nada externo | Sí (Edit Mode) |
+| **Aplicación** | Casos de uso con estado: pipeline de comandos, servicio de equipamiento | Dominio | Sí (Edit Mode) |
+| **Presentación** | Input, animación, assets, composición con VContainer | Aplicación + Dominio | Solo con Play Mode |
 
-**Regla dura:** ninguna referencia va "hacia arriba". El dominio no sabe que existe Unity, ni
-que existe una UI, ni que existe una escena.
+**Regla dura:** ninguna referencia va "hacia arriba". El dominio no sabe que existe Unity, ni que
+existe una vista, ni que existe un contenedor de DI.
 
 ## 2. Cómo se hace cumplir (asmdef)
 
-Cada prototipo tiene tres assemblies como mínimo. P2 agrega `…Application` (orquestación pura)
-porque tiene un caso de uso con estado; P1 y P3 no lo necesitan.
-
 | Assembly | `noEngineReferences` | Referencias | Contenido |
 | --- | --- | --- | --- |
-| `VoidHex.Pn.Domain` | `true` | — | Coordenadas, reglas, resultados, cálculo puro |
-| `VoidHex.Pn.Application` | `true` | `…Domain` | Solo P2: `TurnSession` (validar → aplicar → historial) |
-| `VoidHex.Pn.Unity` | `false` | `…Domain`, `…Application` (si existe) | MonoBehaviours, escena, adaptadores SO |
-| `VoidHex.Pn.Tests.EditMode` | `false` | `…Domain`, `…Application`, `UnityEngine.TestRunner`, `UnityEditor.TestRunner` | Tests de dominio, aplicación y adaptadores |
-| `VoidHex.Pn.Tests.PlayMode` | `false` | `…Unity`, `…Domain`, `…Application`, test runners | Solo P2 (ciclo de vida) |
+| `VoidHex.P1.Domain` | `true` | — | `HexCoordinates`, `HexCell`, `GridModel`, `Pathfinder`, contratos ISP |
+| `VoidHex.P1.Unity` | `false` | `P1.Domain` | `GridPresenter`, `GridBootstrap` |
+| `VoidHex.P2.Domain` | `true` | — | `ShipModel`, `ICommand`, comandos, `CommandValidation`, `ICommandPresentation` |
+| `VoidHex.P2.Application` | `true` | `P2.Domain` | `CommandProcessor`, `CommandOutcome`, `TurnPhase` |
+| `VoidHex.P2.Unity` | `false` | `P2.Domain`, `P2.Application` | `ShipView`, `TurnDemoDriver` |
+| `VoidHex.P3.Domain` | `true` | — | `ModuleDefinition`, `Loadout`, `ShipStatsCalculator`, `IEquipmentService` |
+| `VoidHex.P3.Application` | `true` | `P3.Domain` | `EquipmentService`, `ShipConfig` |
+| `VoidHex.P3.Unity` | `false` | `P3.Domain`, `P3.Application`, `VContainer` | Assets SO, `EquipmentLifetimeScope`, `LoadoutDemo` |
+| `VoidHex.Pn.Tests.EditMode` | `false` | dominio + aplicación + test runners | Unitarios e integración de adaptadores |
+| `VoidHex.P2.Tests.PlayMode` | `false` | P2 Unity + dominio + aplicación | Ciclo de vida de Unity |
+| `VoidHex.Prototypes.Editor` | `false` | P1/P2/P3 Unity + `VContainer` | Generador de escenas y assets |
 
-Ejemplo de dominio puro:
+Dominio puro:
 
 ```json
 {
-  "name": "VoidHex.P1.Domain",
-  "rootNamespace": "VoidHex.P1.Domain",
+  "name": "VoidHex.P2.Domain",
+  "rootNamespace": "VoidHex.P2.Domain",
   "references": [],
   "includePlatforms": [],
-  "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,
   "precompiledReferences": [],
@@ -55,13 +62,18 @@ Ejemplo de dominio puro:
 }
 ```
 
-Ejemplo de tests:
+Tests:
 
 ```json
 {
-  "name": "VoidHex.P1.Tests.EditMode",
-  "rootNamespace": "VoidHex.P1.Tests",
-  "references": ["VoidHex.P1.Domain", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "name": "VoidHex.P2.Tests.EditMode",
+  "rootNamespace": "VoidHex.P2.Tests",
+  "references": [
+    "VoidHex.P2.Domain",
+    "VoidHex.P2.Application",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
   "includePlatforms": ["Editor"],
   "precompiledReferences": ["nunit.framework.dll"],
   "autoReferenced": false,
@@ -69,87 +81,101 @@ Ejemplo de tests:
 }
 ```
 
-**Por qué importa en la defensa:** la promesa "el dominio es independiente de Unity" no se
-demuestra con una frase, se demuestra intentando compilar un `using UnityEngine;` en el dominio
-y mostrando que falla.
+**Por qué importa en la defensa:** la promesa "el dominio es independiente de Unity" no se demuestra
+con una frase, se demuestra escribiendo `using UnityEngine;` en el dominio y mostrando que **no compila**.
+
+### Referencias transitivas
+
+Un assembly que **usa** un tipo cuya clase base vive en otro assembly necesita declararlo: el
+compilador no infiere la jerarquía de tipos externos. Por eso `VoidHex.Prototypes.Editor` referencia
+`VContainer` explícitamente (usa `EquipmentLifetimeScope`, que hereda de `LifetimeScope`); sin esa
+referencia aparecen `CS0012` y `CS0311`. Regla práctica: *si agregás un `AddComponent<T>` en un
+assembly nuevo, revisá la cadena de herencia de `T`*.
 
 ## 3. Estructura de carpetas
 
 ```text
-Assets/
-  Prototypes/
-    P1_HexGrid/
-      Runtime/
-        Domain/            → VoidHex.P1.Domain.asmdef
-        Unity/             → VoidHex.P1.Unity.asmdef
-      Tests/
-        EditMode/          → VoidHex.P1.Tests.EditMode.asmdef
-      Scenes/
-        P1_HexGrid.unity
-      README.md            → alcance del prototipo (1 página)
-    P2_TurnFlow/
-      Runtime/
-        Domain/            → VoidHex.P2.Domain.asmdef
-        Application/       → VoidHex.P2.Application.asmdef
-        Unity/             → VoidHex.P2.Unity.asmdef
-      Tests/EditMode/ · Tests/PlayMode/ · Scenes/
-      README.md
-    P3_Loadout/
-      Runtime/Domain/ · Runtime/Unity/ · Tests/EditMode/ · Scenes/
-      README.md
+Assets/Prototypes/
+  P1_GridState/
+    Runtime/Domain/     → VoidHex.P1.Domain.asmdef (ISP + Observer + sustrato hexagonal)
+    Runtime/Unity/      → VoidHex.P1.Unity.asmdef
+    Tests/EditMode/     → VoidHex.P1.Tests.EditMode.asmdef
+    Scenes/             → generadas por PrototypeSceneBuilder
+    README.md
+  P2_CommandPipeline/
+    Runtime/Domain/ · Runtime/Application/ · Runtime/Unity/
+    Tests/EditMode/ · Tests/PlayMode/ · Scenes/
+    README.md
+  P3_Loadout/
+    Runtime/Domain/ · Runtime/Application/ · Runtime/Unity/
+    Tests/EditMode/ · Scenes/ · Assets/ (módulos y catálogo SO)
+    README.md
+  Editor/               → VoidHex.Prototypes.Editor.asmdef (generador de escenas)
 ```
 
-No hay carpeta compartida entre prototipos. Es deliberado: la independencia exigida por la
-consigna (§3.1) vale más que ahorrar 40 líneas de `HexCoordinates`. La duplicación menor se
-documenta como decisión.
+No hay carpeta compartida entre prototipos. Es deliberado: la independencia que exige la consigna
+(§3.1) vale más que ahorrar ~40 líneas de `HexCoordinates` duplicadas.
 
 ## 4. Qué va en cada capa (por prototipo)
 
 | Prototipo | Dominio | Aplicación | Presentación |
 | --- | --- | --- | --- |
-| **P1 HexGrid** | `HexCoordinates`, `HexGrid`, `Pathfinder`, `PathResult`, `LineOfSight` | — (una consulta; sin orquestación) | `HexGridRenderer : MonoBehaviour`, escena de demo |
-| **P2 TurnFlow** | `TurnState`, `ICommand`, `MoveCommand`, `AttackCommand`, `CommandResult`, `CommandValidation`, `TurnStateMachine` | `TurnSession` (validar → ejecutar → historial/undo) | `TurnDemoDriver : MonoBehaviour`, `ActionPointView`, escena |
-| **P3 Loadout** | `ModuleDefinition`, `SlotType`, `Loadout`, `ShipStats`, `ShipStatsCalculator`, `EquipResult` | — (el `Loadout` inmutable es el caso de uso) | `ShipModuleAsset : ScriptableObject`, `LoadoutDemo : MonoBehaviour`, escena |
+| **P1 GridState** | `HexCoordinates`, `HexCell`, `GridModel`, `Pathfinder`, `IGridQueryService`, `IGridStatePublisher` | — (una consulta, sin caso de uso con estado) | `GridPresenter`, `GridBootstrap` |
+| **P2 CommandPipeline** | `ShipModel`, `ICommand`, `Move/Attack/ShieldCommand`, `CommandValidation`, `ICommandPresentation` | `CommandProcessor` (pipeline + cola), `CommandOutcome`, `TurnPhase` | `ShipView` (adaptador async), `TurnDemoDriver` |
+| **P3 Loadout** | `ModuleDefinition`, `Loadout`, `ShipStatsCalculator`, `IModuleCatalog`, `IEquipmentService` | `EquipmentService`, `ShipConfig` | `ShipModuleAsset`, `ModuleCatalogAsset`, `EquipmentLifetimeScope`, `LoadoutDemo` |
 
-> En P3 el `ScriptableObject` **no** entra al dominio: es un adaptador de datos. Esta es la
-> corrección de diseño más importante respecto del TP1 (ver §5).
+Reglas particulares:
+
+- **P1:** las mutaciones de `GridModel` **no** están en las interfaces. Esa es la garantía de ISP.
+- **P2:** `ICommandPresentation` es un puerto de salida del dominio; la asincronía vive ahí, no en la regla.
+- **P3:** VContainer se usa solo en la capa de presentación (composition root). El servicio no
+  conoce el contenedor: recibe `IModuleCatalog` y `ShipConfig` por constructor.
 
 ## 5. Ajustes respecto del diseño del TP1
 
-| TP1 (diseño) | TP2 (implementación) | Motivo |
+| TP1 (documento) | TP2 (implementación) | Motivo |
 | --- | --- | --- |
-| `ShipStatsCalculator` recibe `ShipModuleSO` | El dominio recibe `ModuleDefinition`; el SO se mapea en Presentación | Mantener el dominio libre de `UnityEngine` sin perder el flujo data-driven |
-| `ICommand.ExecuteAsync` devuelve `Task` | `Execute` sincrónico que devuelve un resultado de estado | El dominio no espera frames ni animaciones; la animación es Presentación |
-| `Undo` con `RefundActionPoints` / `SetPosition(origin)` | Historial de snapshots de `UnitState` | Undo exacto, sin deriva aritmética ni estados intermedios inconsistentes |
-| `CanExecute → bool` | `CommandValidation` con motivo (`NotEnoughActionPoints`, `InvalidTarget`, …) | La UI puede explicar el rechazo y el test puede verificar el motivo |
-| `UnitController` (MonoBehaviour) dentro de `ICommand` | `TurnSession` + `UnitState` puros | Testear sin escena y sin acoplar comandos a Unity |
-| `HexGridLogic` (typo) | `HexGrid` | Nombre único y claro; no cambia el diseño |
-| `module == null → continue` | `TryGetModule(out …)` y slot con estado explícito | Ausencia explícita, sin `null` silencioso |
-| FSM con estados no usados | `PlayerTurn`, `Executing`, `EnemyTurn`, `Resolution` | Solo los estados que el alcance implementa y testea |
+| El informe desarrolla grilla/A* como **Problema 1** | P1 implementa **ISP + Observer** (el desafío del resumen ejecutivo); la grilla es el sustrato | El TP1 defendido declara la exposición de estado como desafío; el TP2 implementa lo declarado |
+| `ICommand` con `UniTask` | `ICommand` sincrónico + `ICommandPresentation` con `Task` | El PDF declara "UniTask / Task"; `Task` no agrega dependencias de red y deja un único punto de sustitución |
+| Undo/Redo | Fuera de alcance | El PDF lo menciona como capacidad habilitada, no como requisito; se excluye justificadamente |
+| FSM de turnos con estados por acción | Tres fases (`PlayerTurn`, `Executing`, `EnemyTurn`) | El PDF descarta la FSM monolítica |
+| `ShipStatsCalculator` recibe `ShipModuleSO` | El dominio recibe `ModuleDefinition`; el SO es adaptador | Mantiene el dominio libre de `UnityEngine` sin perder el flujo data-driven |
+| Slots con validación de tipo | Un slot por tipo | La incompatibilidad se vuelve imposible por construcción |
+| Texto de UI en los contratos | Eventos y resultados con motivo | La vista explica el rechazo; el test verifica el motivo, no un string |
 
-Ninguno de estos ajustes cambia **qué** resuelve cada prototipo; cambian **cómo** se respeta la
-regla de dependencia. Se documentan acá porque la consigna (§4.1) los pide explícitamente.
+Ningún ajuste cambia **qué** resuelve cada prototipo: cambian **cómo** se respeta la regla de
+dependencia y el alcance declarado. Se documentan porque la consigna (§4.1) los pide explícitamente.
 
 ## 6. Convenciones de contratos
 
 | Tema | Regla | Ejemplo |
 | --- | --- | --- |
-| Entradas inválidas esperables | Resultado con motivo | `CommandValidation.NotEnoughActionPoints(3, 1)` |
-| Precondición rota (bug) | Excepción | `ArgumentNullException` si el mapa es `null` |
-| Ausencia | `TryGet…(out …)` / resultado | `slot.TryGetModule(out var module)` |
-| Mutabilidad | Estado inmutable + `With…` | `state.WithActionPoints(2)` |
-| Colecciones | `IReadOnlyList<T>` hacia afuera | `PathResult.Path` |
-| Quién muta | Un único dueño por estado | `TurnSession` es el único que reemplaza `UnitState` |
-| Aleatoriedad | Semilla inyectada | `Pathfinder` no usa `Random` |
+| Entradas inválidas esperables | Resultado con motivo | `CommandValidation.Rejected(NotEnoughActionPoints, 3, 1)` |
+| Precondición rota (bug) | Excepción | `ArgumentNullException` si el catálogo es `null` |
+| Ausencia | `TryGet…(out …)` / resultado | `loadout.TryGetModule(SlotType.Weapon, out var m)` |
+| Mutabilidad | Estado inmutable + `With…` | `shipModel.WithActionPoints(4)` |
+| Colecciones | `IReadOnlyList<T>` hacia afuera | `PathResult.Path`, `HexCoordinates.Directions` |
+| Quién muta | Un único dueño por estado | `GridModel` (mapa), `CommandProcessor` (nave) |
+| Aleatoriedad | Semilla inyectada | Ningún componente usa `Random` |
 | Tiempo | Prohibido en dominio | Sin `Time.deltaTime` fuera de Presentación |
+| Cadenas como datos | `string.Empty`, nunca `null` | `GrantedAbilityId` |
 
-## 7. Nomenclatura de tests
+## 7. Dependencias externas
+
+| Paquete | Versión | Dónde | Por qué |
+| --- | --- | --- | --- |
+| `jp.hadashikick.vcontainer` | 1.19.0 (OpenUPM) | Solo P3 Unity | Declarado en el TP1 como solución de DI (desafío 3) |
+| `com.unity.test-framework` | 1.7.0 | Tests | Edit Mode y Play Mode |
+
+UniTask **no** se agrega: se usa `Task` (BCL), declarado como alternativa en el PDF, para que la
+suite sea reproducible en una máquina limpia sin descargas adicionales.
+
+## 8. Nomenclatura de tests
 
 `Método_Escenario_ResultadoEsperado`, por ejemplo:
 
-- `FindPath_WhenGoalBlocked_ReturnsUnreachable`
-- `Submit_WhenActionPointsInsufficient_KeepsStateUnchanged`
-- `Equip_WhenSlotTypeMismatch_ReturnsWrongSlotType`
+- `SetCell_WithSameValue_DoesNotRaiseChange`
+- `Submit_AppliesLogicBeforeTheAnimationCompletes`
+- `TryEquip_ReplacingModule_DoesNotDoubleCount`
 
-Cada test sigue Arrange–Act–Assert y una sola aserción conceptual (pueden ser varias
-aserciones sobre el mismo resultado).
+Cada test sigue Arrange–Act–Assert y verifica un solo comportamiento conceptual.

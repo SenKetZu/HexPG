@@ -1,0 +1,16 @@
+{
+    "name": "VoidHex.P2.Application",
+    "rootNamespace": "VoidHex.P2.Application",
+    "references": [
+        "VoidHex.P2.Domain"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

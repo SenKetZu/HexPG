@@ -17,6 +17,18 @@ La devolución dice algo incómodo y útil: **el trabajo técnico estuvo bien y 
 El TP2 no se arregla escribiendo más código: se arregla haciendo que cada decisión sea
 **explícita, verificable y contable en 20 minutos**.
 
+## 0.1 Los tres desafíos declarados (y qué implementa el TP2)
+
+La fuente de verdad es el **resumen ejecutivo del TP1**, no una reinterpretación posterior.
+
+| # | Problema declarado | Solución declarada | Implementación en TP2 |
+| --- | --- | --- | --- |
+| 1 | Exponer el mapa a IA, comandos y UI sin God Object ni polling en `Update()` | **ISP + Observer**: `IGridQueryService` (lectura) e `IGridStatePublisher` (eventos) | `Assets/Prototypes/P1_GridState` |
+| 2 | Alternar PA validando en C# e invocando animaciones async | **Pipeline `ICommand` + async** (UniTask / Task) | `Assets/Prototypes/P2_CommandPipeline` |
+| 3 | Conectar servicios sin singletons y definir módulos MK I–III | **VContainer DI + ScriptableObjects** (Flyweight) | `Assets/Prototypes/P3_Loadout` |
+
+Todo lo que no sea uno de estos tres desafíos es **fuera de alcance** y se documenta como exclusión.
+
 ## 1. Los siete pilares
 
 ### Pilar 1 — Un prototipo = un problema del TP1 = una carpeta = una escena
@@ -35,7 +47,8 @@ sin abrir una escena.
 - **Verificación mecánica:** el `.asmdef` del dominio declara `"noEngineReferences": true`.
   Si alguien escribe `using UnityEngine;` en el dominio, **no compila**. La regla no depende de
   la disciplina, la impone el compilador.
-- **Origen:** Solución C del TP1 (coordenadas cúbicas en C# puro) llevada a todo el proyecto.
+- **Origen:** la solución declarada del desafío 1 (contratos segregados en C# puro) y del
+desafío 3 (DIP): el dominio no depende del motor ni de un contenedor.
 
 ### Pilar 3 — El test es el contrato ejecutable
 
@@ -100,7 +113,9 @@ Cada prototipo debe poder contarse en 5 minutos: problema → promesa → eviden
 | Arte, animaciones, VFX, audio | No demuestran ninguna propiedad de diseño (§4.1) |
 | Menús, guardado, progresión | Fuera del alcance de los 3 problemas técnicos |
 | Un test por método | Se testean comportamientos y casos límite, no cobertura |
-| `Option<T>` casero, DI container, event bus global | Sobre-ingeniería para 3 días; se explica por qué no |
+| `Option<T>` casero, event bus global | Sobre-ingeniería, y el PDF descarta explícitamente el event bus global |
+| Servicio concreto referenciado desde la vista | Rompe DIP, que es justamente la promesa del desafío 3 |
+| `GameManager.Instance` / Service Locator | Anti-objetivo explícito del PDF |
 | DOTS/ECS, multihilo, optimización prematura | El problema del TP1 no es performance extrema |
 | Mover el tag después de enviarlo | La consigna lo prohíbe explícitamente |
 
@@ -121,7 +136,8 @@ Un prototipo está terminado cuando:
   **no** primary constructors de clase.
 - Nombres: `TryX` (intento con `out`), `CanX` (consulta), `XResult` (resultado con motivo),
   `XState` (estado), `XService` (cálculo sin estado propio).
-- Un tipo público por archivo. Clases de dominio `sealed` por defecto.
+- Un tipo público **con comportamiento propio** por archivo; los enums y structs de datos pueden
+  agruparse con el tipo que los usa (p. ej. `HexCell` + `CellTerrain`).
 - Structs de valor `readonly`; colecciones expuestas como `IReadOnlyList<T>`.
 - `null` no representa ausencia lógica: se usa `TryGet…(out …)` o un resultado explícito.
   `null` solo aparece en campos serializados de Unity y se valida en el borde.

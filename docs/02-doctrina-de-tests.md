@@ -52,20 +52,22 @@ Si una fila no puede completar la columna 3, el test se elimina o se rediseña.
 
 ```csharp
 [Test]
-public void Submit_WhenActionPointsInsufficient_KeepsStateUnchanged()
+public async Task Submit_RejectedCommand_KeepsStateAndDoesNotAnimate()
 {
-    // Arrange: sesión con 1 PA y un comando de costo 2
-    var session = TurnSession.CreateForTests(actionPoints: 1);
-    var command = new MoveCommand(targetCell: 2, cost: 2);
+    // Arrange: nave con 1 PA y comando de costo 2; presentación que solo cuenta llamadas
+    var presentation = new ImmediatePresentation();
+    var processor = new CommandProcessor(ShipModel.Start().WithActionPoints(1), presentation);
+    var command = new MoveCommand(new HexCoordinates(3, 0), actionPointCost: 2);
 
     // Act
-    var result = session.Submit(command);
+    var outcome = await processor.SubmitAsync(command);
 
-    // Assert: rechazo con motivo explícito y estado intacto
-    Assert.That(result.IsAllowed, Is.False);
-    Assert.That(result.Reason, Is.EqualTo(CommandRejection.NotEnoughActionPoints));
-    Assert.That(session.State.ActionPoints, Is.EqualTo(1));
-    Assert.That(session.State.Cell, Is.EqualTo(0));
+    // Assert: rechazo con motivo explícito, estado intacto y sin animación
+    Assert.That(outcome.IsAccepted, Is.False);
+    Assert.That(outcome.Validation.Rejection, Is.EqualTo(CommandRejection.NotEnoughActionPoints));
+    Assert.That(processor.State.ActionPoints, Is.EqualTo(1));
+    Assert.That(processor.State.Position, Is.EqualTo(HexCoordinates.Origin));
+    Assert.That(presentation.Calls, Is.Zero);
 }
 ```
 
@@ -76,7 +78,8 @@ public void Submit_WhenActionPointsInsufficient_KeepsStateUnchanged()
 | Test que solo verifica "no lanza" | Pasa aunque la lógica sea incorrecta | Aserción sobre valor y motivo |
 | Test de orden | Pasa solo si corrió otro antes | `SetUp` por test, sin estáticos |
 | Play Mode con `yield return new WaitForSeconds` | Lento y frágil | `yield return null` o duración 0 |
-| Test acoplado a MonoBehaviour | Obliga a Play Mode para lógica pura | Lógica en dominio, test en Edit Mode |
+| Test acoplado a MonoBehaviour | Obliga a Play Mode para lógica pura | Lógica en dominio/aplicación, test en Edit Mode |
+| Test async sin control del tiempo | Cuelga o pasa por casualidad | Presentación controlada por `TaskCompletionSource`; nunca `Thread.Sleep` |
 | Aserción sobre `ToString()` / logs | Cambia por formato | Aserción sobre estado o resultado |
 | Test que crea assets y no los borra | Contamina el proyecto | `TearDown` con `Object.DestroyImmediate` |
 | Test gigante con 10 aserciones | No se sabe qué falló | Un comportamiento por test |
@@ -85,8 +88,8 @@ public void Submit_WhenActionPointsInsufficient_KeepsStateUnchanged()
 
 | Prototipo | Unitarios (Edit) | Integración (Edit) | Funcional (Play) |
 | --- | --- | --- | --- |
-| P1 | Distancia, vecinos, pathfinding, unreachable, determinismo, LOS, no mutación del mapa | — (el render es una vista sin reglas) | — |
-| P2 | AP, validación, undo por snapshot, FSM, recarga de turno | — | Driver ejecuta un comando al iniciar y emite el evento |
-| P3 | Tipos de slot, recálculo, reemplazo, quitar, no mutación | SO → `ModuleDefinition` | — |
+| P1 | ISP por reflexión, reactividad (0/1 redibujos), A*, determinismo, LOS | — (la vista no tiene reglas) | — |
+| P2 | Validación con motivo, lógica antes de la animación, cola, PA exactos, fases | — | El driver de Unity ejecuta y completa animaciones |
+| P3 | Composición de stats, reemplazo, quitar, idempotencia, DIP con catálogo falso | `ShipModuleAsset → ModuleDefinition` | — |
 
 El detalle de casos y nombres está en `03-prototipos.md` y `04-trazabilidad.md`.
