@@ -32,5 +32,19 @@ namespace VoidHex.P3.Unity
             builder.Register<EquipmentService>(Lifetime.Singleton).As<IEquipmentService>();
             builder.RegisterComponentInHierarchy<LoadoutDemo>();
         }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// Asignación explícita usada por el generador de escenas. Se prefiere a SerializedObject porque
+        /// no depende del nombre del campo serializado: si alguien lo renombra, esto sigue compilando.
+        /// </summary>
+        public void EditorAssign(ShipConfigAsset configAsset, ModuleCatalogAsset catalogAsset)
+        {
+            shipConfig = configAsset;
+            moduleCatalog = catalogAsset;
+        }
+
+        public bool EditorIsConfigured => shipConfig != null && moduleCatalog != null;
+#endif
     }
 }

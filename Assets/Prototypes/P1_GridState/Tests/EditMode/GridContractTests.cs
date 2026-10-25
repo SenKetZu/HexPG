@@ -18,6 +18,10 @@ namespace VoidHex.P1.Tests
 
             foreach (var member in members)
             {
+                // Un evento expone además sus accesores add_/remove_, marcados con IsSpecialName.
+                // No son API nueva: se ignoran para no confundir el contrato con su implementación.
+                if (member is System.Reflection.MethodInfo method && method.IsSpecialName) continue;
+
                 Assert.That(
                     member.MemberType,
                     Is.EqualTo(System.Reflection.MemberTypes.Event),
