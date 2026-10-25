@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using VoidHex.P1.Domain;
@@ -5,10 +6,11 @@ using VoidHex.P1.Domain;
 namespace VoidHex.P1.Unity
 {
     /// <summary>
-    /// Composition root del prototipo P1. Construye el modelo y expone los dos contratos segregados.
+    /// Composition root del prototipo P1. Construye el modelo y expone TRES contratos segregados:
+    /// lectura (<see cref="IGridQueryService"/>), notificación (<see cref="IGridStatePublisher"/>)
+    /// y escritura (<see cref="IGridCommands"/>).
     ///
-    /// Las mutaciones de demo viven acá y no en las interfaces: en el juego real las dispara un comando
-    /// (capa de aplicación). La escena las usa como si fueran la entrada del jugador.
+    /// La pantalla recibe los tres; el pathfinding recibe solo el de lectura. Esa es la garantía de ISP.
     /// </summary>
     public sealed class GridBootstrap : MonoBehaviour
     {
@@ -19,20 +21,29 @@ namespace VoidHex.P1.Unity
         private GridModel _grid;
 
         /// <summary>
-        /// Creación perezosa: la suscripción de la vista no depende del orden
-        /// en que Unity invoca Awake/OnEnable entre componentes del mismo GameObject.
+        /// Creación perezosa: la suscripción no depende del orden Awake/OnEnable entre componentes.
         /// </summary>
-        private GridModel Grid => _grid ??= new GridModel(width, height);
+        private GridModel Grid
+        {
+            get
+            {
+                if (_grid != null) return _grid;
+
+                _grid = new GridModel(width, height);
+                _grid.Changed += HandleChanged;
+                return _grid;
+            }
+        }
 
         public int Width => width;
 
         public int Height => height;
 
-        /// <summary>La vista recibe únicamente el contrato de publicación.</summary>
+        public IGridQueryService Query => Grid;
+
         public IGridStatePublisher Publisher => Grid;
 
-        /// <summary>La IA y el pathfinding reciben únicamente el contrato de lectura.</summary>
-        public IGridQueryService Query => Grid;
+        public IGridCommands Commands => Grid;
 
         public HexCoordinates StartCell { get; private set; } = HexCoordinates.Origin;
 
@@ -46,8 +57,16 @@ namespace VoidHex.P1.Unity
 
         public IReadOnlyList<HexCoordinates> LastPath { get; private set; } = new HexCoordinates[0];
 
-        /// <summary>Eventos recibidos por la vista. Demuestra que sin mutación real no hay trabajo.</summary>
+        /// <summary>Eventos que emitió el modelo. Si no hubo mutación real, no sube.</summary>
         public int ChangeCount { get; private set; }
+
+        public GridChange LastChange { get; private set; }
+
+        /// <summary>Se reemite para que la pantalla refresque sin consultar por frame.</summary>
+        public event Action<GridChange> Changed;
+
+        /// <summary>Se emite cuando cambia la ruta (recalculo explícito).</summary>
+        public event Action PathRecomputed;
 
         private void Start()
         {
@@ -62,35 +81,41 @@ namespace VoidHex.P1.Unity
             }
         }
 
+        private void HandleChanged(GridChange change)
+        {
+            ChangeCount++;
+            LastChange = change;
+            Changed?.Invoke(change);
+        }
+
         private void ApplyDefaultTerrain()
         {
-            Grid.SetCell(HexCell.Asteroid(new HexCoordinates(3, 3)));
-            Grid.SetCell(HexCell.Asteroid(new HexCoordinates(3, 4)));
-            Grid.SetCell(HexCell.Nebula(new HexCoordinates(4, 4)));
-            Grid.SetCell(HexCell.Nebula(new HexCoordinates(5, 3)));
+            Commands.SetCell(HexCell.Asteroid(new HexCoordinates(3, 3)));
+            Commands.SetCell(HexCell.Asteroid(new HexCoordinates(3, 4)));
+            Commands.SetCell(HexCell.Nebula(new HexCoordinates(4, 4)));
+            Commands.SetCell(HexCell.Nebula(new HexCoordinates(5, 3)));
         }
 
-        /// <summary>Bloquea una celda (simula el efecto de un comando de terreno).</summary>
-        public bool DemoBlock(HexCoordinates cell) => Grid.SetCell(HexCell.Asteroid(cell));
+        // ------------------------------------------------------------------ demo
 
-        /// <summary>Libera una celda bloqueada.</summary>
-        public bool DemoOpen(HexCoordinates cell) => Grid.SetCell(HexCell.Open(cell));
+        public bool Block(HexCoordinates cell) => Commands.SetCell(HexCell.Asteroid(cell));
+
+        public bool Free(HexCoordinates cell) => Commands.SetCell(HexCell.Open(cell));
+
+        public bool ToggleOccupied(HexCoordinates cell)
+        {
+            if (!Query.TryGetCell(cell, out var current)) return false;
+            return Commands.SetOccupied(cell, !current.IsOccupied);
+        }
 
         /// <summary>
-        /// Reescribe una celda con su mismo valor. Debe devolver false y NO emitir evento:
-        /// es la demostración en vivo de que el render es reactivo y no polling.
+        /// Reescribe una celda con su mismo valor. Devuelve false y NO emite evento:
+        /// es la prueba en vivo de que el render es reactivo y no polling.
         /// </summary>
-        public bool DemoRewriteSame(HexCoordinates cell)
+        public bool RewriteSame(HexCoordinates cell)
         {
-            if (!Grid.TryGetCell(cell, out var current)) return false;
-            return Grid.SetCell(current);
-        }
-
-        /// <summary>Ocupa o libera una celda, para mostrar que la ocupación también notifica.</summary>
-        public bool DemoToggleOccupied(HexCoordinates cell)
-        {
-            if (!Grid.TryGetCell(cell, out var current)) return false;
-            return Grid.SetOccupied(cell, !current.IsOccupied);
+            if (!Query.TryGetCell(cell, out var current)) return false;
+            return Commands.SetCell(current);
         }
 
         public void RecomputePath()
@@ -102,9 +127,8 @@ namespace VoidHex.P1.Unity
             LastPathCost = result.TotalCost;
             LastFailure = result.Failure;
             LastPath = result.Path;
-        }
 
-        /// <summary>Lo llama la vista al recibir un evento; así el HUD lo muestra sin consultar el modelo.</summary>
-        internal void RegisterChange() => ChangeCount++;
+            PathRecomputed?.Invoke();
+        }
     }
 }

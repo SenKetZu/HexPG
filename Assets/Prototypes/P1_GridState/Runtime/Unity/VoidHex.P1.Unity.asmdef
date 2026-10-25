@@ -2,7 +2,8 @@
     "name": "VoidHex.P1.Unity",
     "rootNamespace": "VoidHex.P1.Unity",
     "references": [
-        "VoidHex.P1.Domain"
+        "VoidHex.P1.Domain",
+        "VoidHex.UiKit"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

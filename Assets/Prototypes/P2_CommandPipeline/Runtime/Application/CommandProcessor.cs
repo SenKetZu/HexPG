@@ -29,6 +29,17 @@ namespace VoidHex.P2.Application
 
         public TurnPhase Phase { get; private set; }
 
+        /// <summary>Se emite en cada transición de fase: la vista no necesita consultar por frame.</summary>
+        public event Action<TurnPhase> PhaseChanged;
+
+        private void SetPhase(TurnPhase phase)
+        {
+            if (Phase == phase) return;
+
+            Phase = phase;
+            PhaseChanged?.Invoke(phase);
+        }
+
         /// <summary>Se emite para comandos aceptados y rechazados; la UI distingue con IsAccepted.</summary>
         public event Action<CommandOutcome> Resolved;
 
@@ -62,10 +73,9 @@ namespace VoidHex.P2.Application
                     return rejected;
                 }
 
-                Phase = TurnPhase.Executing;
+                SetPhase(TurnPhase.Executing);
                 var after = command.Execute(before);
                 _state = after;
-
                 var outcome = CommandOutcome.Accepted(validation, before, after);
                 Resolved?.Invoke(outcome);
 
@@ -75,7 +85,7 @@ namespace VoidHex.P2.Application
             }
             finally
             {
-                Phase = TurnPhase.PlayerTurn;
+                SetPhase(TurnPhase.PlayerTurn);
                 _queue.Release();
             }
         }
@@ -88,7 +98,7 @@ namespace VoidHex.P2.Application
                 throw new InvalidOperationException("No se puede terminar el turno durante una animación.");
             }
 
-            Phase = TurnPhase.PlayerTurn;
+            SetPhase(TurnPhase.PlayerTurn);
             _state = _state.WithActionPoints(_state.MaxActionPoints);
             TurnStarted?.Invoke(_state);
         }
@@ -101,7 +111,7 @@ namespace VoidHex.P2.Application
                 throw new InvalidOperationException("No se puede ceder el turno durante una animación.");
             }
 
-            Phase = TurnPhase.EnemyTurn;
+            SetPhase(TurnPhase.EnemyTurn);
         }
 
         public event Action<ShipModel> TurnStarted;

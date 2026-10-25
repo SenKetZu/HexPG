@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using VContainer;
@@ -8,6 +9,10 @@ namespace VoidHex.P3.Unity
     /// <summary>
     /// Consumidor inyectado. No hay <c>GameManager.Instance</c> ni búsqueda de servicios:
     /// las dependencias llegan por constructor desde el LifetimeScope.
+    ///
+    /// Expone <see cref="Ready"/> porque la inyección ocurre cuando el LifetimeScope construye el
+    /// contenedor, y eso puede pasar antes o después del <c>Start</c> de otras vistas. Un evento
+    /// elimina la dependencia del orden de inicialización.
     /// </summary>
     public sealed class LoadoutDemo : MonoBehaviour
     {
@@ -18,14 +23,22 @@ namespace VoidHex.P3.Unity
 
         public IEquipmentService Service => _service;
 
+        public IModuleCatalog Catalog => _catalog;
+
+        public bool IsReady => _service != null;
+
+        /// <summary>Se emite cuando el contenedor inyecta las dependencias.</summary>
+        public event Action<IEquipmentService> Ready;
+
         public IReadOnlyList<ModuleDefinition> AvailableModules =>
-            _catalog != null ? _catalog.All : (IReadOnlyList<ModuleDefinition>)new ModuleDefinition[0];
+            _catalog != null ? _catalog.All : (IReadOnlyList<ModuleDefinition>)Array.Empty<ModuleDefinition>();
 
         [Inject]
         public void Construct(IEquipmentService service, IModuleCatalog catalog)
         {
             _service = service;
             _catalog = catalog;
+            Ready?.Invoke(service);
         }
 
         private void Start()
@@ -36,14 +49,7 @@ namespace VoidHex.P3.Unity
                 return;
             }
 
-            _service.StatsChanged += LogStats;
-
             if (runDemoOnStart) RunDemo();
-        }
-
-        private void OnDestroy()
-        {
-            if (_service != null) _service.StatsChanged -= LogStats;
         }
 
         /// <summary>Secuencia de demostración: dos láseres (el MK II reemplaza al MK I) y un propulsor.</summary>
@@ -61,11 +67,5 @@ namespace VoidHex.P3.Unity
 
         public bool TryGetEquipped(SlotType slot, out ModuleDefinition module) =>
             _service.Current.TryGetModule(slot, out module);
-
-        private static void LogStats(ShipStats stats)
-        {
-            Debug.Log($"[P3] Stats: PA {stats.ActionPoints}, escudos {stats.Shields}, " +
-                      $"movimiento {stats.Movement}, habilidades [{string.Join(", ", stats.Abilities)}]");
-        }
     }
 }

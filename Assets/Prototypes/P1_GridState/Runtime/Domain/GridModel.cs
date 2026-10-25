@@ -8,7 +8,7 @@ namespace VoidHex.P1.Domain
     /// la lectura síncrona y la publicación de cambios. Las mutaciones viven SOLO en esta clase,
     /// fuera de ambas interfaces, por lo que ningún consumidor de los contratos puede alterar el mapa.
     /// </summary>
-    public sealed class GridModel : IGridQueryService, IGridStatePublisher
+    public sealed class GridModel : IGridQueryService, IGridStatePublisher, IGridCommands
     {
         private readonly Dictionary<HexCoordinates, HexCell> _cells;
 

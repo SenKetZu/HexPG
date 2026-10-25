@@ -4,6 +4,7 @@
     "references": [
         "VoidHex.P3.Domain",
         "VoidHex.P3.Application",
+        "VoidHex.UiKit",
         "VContainer"
     ],
     "includePlatforms": [],

@@ -19,6 +19,20 @@ namespace VoidHex.P2.Unity
 
         public event Action<CommandOutcome> CommandResolved;
 
+        /// <summary>Reexpone la transición de fase para que la pantalla no consulte el estado por frame.</summary>
+        public event Action<TurnPhase> PhaseChanged
+        {
+            add => _processor.PhaseChanged += value;
+            remove => _processor.PhaseChanged -= value;
+        }
+
+        /// <summary>Reexpone la recarga de PA al iniciar turno.</summary>
+        public event Action<ShipModel> TurnStarted
+        {
+            add => _processor.TurnStarted += value;
+            remove => _processor.TurnStarted -= value;
+        }
+
         public ShipModel State => _processor.State;
 
         public TurnPhase Phase => _processor.Phase;

@@ -3,7 +3,8 @@
     "rootNamespace": "VoidHex.P2.Unity",
     "references": [
         "VoidHex.P2.Domain",
-        "VoidHex.P2.Application"
+        "VoidHex.P2.Application",
+        "VoidHex.UiKit"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

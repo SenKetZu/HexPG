@@ -106,14 +106,18 @@ namespace VoidHex.Prototypes.Editor
             // El HUD y el renderer toman la referencia del mismo GameObject (auto-wiring en OnEnable).
             root.AddComponent<GridCellRenderer>();
             root.AddComponent<GridPresenter>();
-            root.AddComponent<GridHud>();
+            root.AddComponent<GridScreen>();
 
-            // Encuadre calculado a partir de la extensión real del mapa.
-            var maxX = 1.5f * (width - 1);
-            var maxZ = 1.7320508f * (height - 1);
-            var center = new Vector3(maxX * 0.5f, 0f, maxZ * 0.5f);
+            // Encuadre a partir de la extensión REAL del mapa axial (es un rombo, no un rectángulo).
+            // Una sola fuente de verdad para la separación: GridCellRenderer.Spacing.
+            var spacing = GridCellRenderer.Spacing;
+            const float hexZ = 1.7320508f;
 
-            FrameCameraOnExtent(center, halfExtentZ: maxZ * 0.5f, fov: 48f, tiltDeg: 58f);
+            var extentX = 1.5f * spacing * (width - 1);
+            var extentZ = hexZ * spacing * ((height - 1) + (width - 1) * 0.5f);
+            var center = new Vector3(extentX * 0.5f, 0f, extentZ * 0.5f);
+
+            FrameOrthoTopDown(center, halfExtentZ: extentZ * 0.5f, shiftRightFraction: 0.16f);
 
             EditorUtility.SetDirty(bootstrap);
             EditorSceneManager.MarkSceneDirty(scene);
@@ -130,11 +134,12 @@ namespace VoidHex.Prototypes.Editor
             var root = new GameObject("P2_TurnDemo");
             root.AddComponent<ShipView>();
             root.AddComponent<TurnDemoDriver>();
-            root.AddComponent<TurnHud>();
+            root.AddComponent<TurnScreen>();
 
-            CreateHexFloor(fromQ: 0, toQ: 4, radius: 2);
+            CreateBoard(width: 5, height: 4);
 
-            FrameCameraOnExtent(new Vector3(2.8f, 0.25f, 2.2f), halfExtentZ: 3.2f, fov: 50f, tiltDeg: 52f);
+            FrameCameraOnExtent(new Vector3(2.1f, 0.3f, 1.6f), halfExtentZ: 2.3f, fov: 42f, tiltDeg: 44f,
+                shiftRightFraction: 0.16f);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, P2Scene);
@@ -164,14 +169,17 @@ namespace VoidHex.Prototypes.Editor
 
             var root = new GameObject("P3_Loadout");
             root.AddComponent<LoadoutDemo>();
-            root.AddComponent<LoadoutHud>();
+            root.AddComponent<LoadoutScreen>();
+            // Vista 3D en el mismo GameObject: comparte el LoadoutDemo sin buscarlo por la escena.
+            root.AddComponent<ShipPreview>();
             var scope = root.AddComponent<EquipmentLifetimeScope>();
 
             // Asignación explícita: no depende de nombres de campos serializados.
             scope.EditorAssign(config, catalog);
             EditorUtility.SetDirty(scope);
 
-            FrameCameraOnExtent(new Vector3(0f, 0.6f, 0f), halfExtentZ: 2.4f, fov: 55f, tiltDeg: 18f);
+            FrameCameraOnExtent(new Vector3(-0.6f, 0.15f, 0f), halfExtentZ: 1.05f, fov: 36f, tiltDeg: 32f,
+                shiftRightFraction: 0.08f);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, P3Scene);
@@ -215,21 +223,43 @@ namespace VoidHex.Prototypes.Editor
         }
 
         /// <summary>
-        /// Coloca la cámara a la distancia justa para que la extensión vertical dada entre en cuadro,
-        /// con una inclinación fija, y desplaza el encuadre a la derecha para que el HUD no tape el mapa.
+        /// Encuadre ortográfico cenital: el tamaño depende solo de la extensión del mapa, así que
+        /// entra completo sin importar el aspect ratio. Desplaza la cámara en -X para que el mapa
+        /// quede a la derecha y el HUD (izquierda) no lo tape.
+        /// </summary>
+        private static void FrameOrthoTopDown(Vector3 center, float halfExtentZ, float shiftRightFraction = 0.30f)
+        {
+            var camera = Camera.main;
+            if (camera == null) return;
+
+            camera.orthographic = true;
+            camera.orthographicSize = halfExtentZ * 1.12f;
+            camera.transform.SetPositionAndRotation(
+                center + new Vector3(0f, 40f, 0f),
+                Quaternion.Euler(90f, 0f, 0f));
+
+            var visibleHalfWidth = camera.orthographicSize * Mathf.Max(camera.aspect, 1.2f);
+            camera.transform.position += Vector3.left * (visibleHalfWidth * shiftRightFraction);
+        }
+
+        /// <summary>
+        /// Encuadre perspectiva: distancia derivada del FOV para que la extensión vertical entre
+        /// con margen. El desplazamiento lateral corre el contenido a la derecha, lejos del HUD.
         /// </summary>
         private static void FrameCameraOnExtent(
             Vector3 center,
             float halfExtentZ,
             float fov,
             float tiltDeg,
-            float horizontalShift = 0.22f)
+            float shiftRightFraction = 0.22f)
         {
             var camera = Camera.main;
             if (camera == null) return;
 
+            camera.orthographic = false;
+
             var halfFov = fov * 0.5f * Mathf.Deg2Rad;
-            var distance = halfExtentZ / Mathf.Tan(halfFov) * 1.18f;
+            var distance = halfExtentZ / Mathf.Tan(halfFov) * 1.55f;
 
             var tilt = tiltDeg * Mathf.Deg2Rad;
             var offset = new Vector3(0f, Mathf.Sin(tilt) * distance, -Mathf.Cos(tilt) * distance);
@@ -238,25 +268,44 @@ namespace VoidHex.Prototypes.Editor
             camera.transform.position = center + offset;
             camera.transform.LookAt(center);
 
-            // Mueve la cámara a la derecha en su espacio local: el mapa se corre a la derecha en pantalla.
-            camera.transform.position += camera.transform.right * (distance * horizontalShift * 0.45f);
+            // Corre el contenido a la derecha: la cámara se mueve a la izquierda en su espacio local.
+            camera.transform.position -= camera.transform.right * (distance * shiftRightFraction * 0.45f);
         }
 
-        /// <summary>Suelo de referencia con la misma geometría hexagonal que la lógica.</summary>
-        private static void CreateHexFloor(int fromQ, int toQ, int radius)
+        /// <summary>
+        /// Tablero de casillas hexagonales planas. Reemplaza la losa continua: da referencia
+        /// espacial al movimiento y hace legible la posición de cada nave.
+        /// </summary>
+        private static void CreateBoard(int width = 5, int height = 4)
         {
-            var material = CreateOrLoadMaterial(P2Materials + "/P2_FloorMaterial.mat",
-                new Color(0.13f, 0.17f, 0.24f));
+            var baseMaterial = CreateOrLoadMaterial(P2Materials + "/P2_TileMaterial.mat",
+                new Color(0.16f, 0.21f, 0.30f));
+            var accentMaterial = CreateOrLoadMaterial(P2Materials + "/P2_TileAccentMaterial.mat",
+                new Color(0.20f, 0.30f, 0.44f));
 
-            var floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            floor.name = "Floor";
+            var board = new GameObject("Board").transform;
 
-            var width = (toQ - fromQ + 2) * 1.5f;
-            floor.transform.position = new Vector3((fromQ + toQ) * 0.75f, -0.08f, radius * 0.9f);
-            floor.transform.localScale = new Vector3(width, 0.12f, radius * 3.4f);
+            for (var q = 0; q < width; q++)
+            {
+                for (var r = 0; r < height; r++)
+                {
+                    var tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    tile.name = "tile_" + q + "_" + r;
+                    tile.transform.SetParent(board, false);
 
-            RemoveCollider(floor);
-            floor.GetComponent<Renderer>().sharedMaterial = material;
+                    // Misma conversión axial y separación que la lógica: el tablero coincide con las celdas.
+                    const float spacing = 0.7f;
+                    tile.transform.localPosition = new Vector3(
+                        1.5f * q * spacing,
+                        -0.03f,
+                        1.7320508f * (r + q * 0.5f) * spacing);
+                    tile.transform.localScale = new Vector3(0.66f, 0.06f, 0.66f);
+
+                    RemoveCollider(tile);
+                    tile.GetComponent<Renderer>().sharedMaterial =
+                        (q + r) % 2 == 0 ? baseMaterial : accentMaterial;
+                }
+            }
         }
 
         private static void RemoveCollider(GameObject target)
