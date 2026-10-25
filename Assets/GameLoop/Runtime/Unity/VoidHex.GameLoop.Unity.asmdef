@@ -1,0 +1,24 @@
+{
+    "name": "VoidHex.GameLoop.Unity",
+    "rootNamespace": "VoidHex.GameLoop.Unity",
+    "references": [
+        "VoidHex.GameLoop.Logic",
+        "VoidHex.P1.Domain",
+        "VoidHex.P1.Unity",
+        "VoidHex.P2.Domain",
+        "VoidHex.P2.Unity",
+        "VoidHex.P3.Domain",
+        "VoidHex.P3.Application",
+        "VoidHex.P3.Unity",
+        "VoidHex.UiKit"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

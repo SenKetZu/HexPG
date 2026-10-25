@@ -95,6 +95,27 @@ namespace VoidHex.P2.Unity
             }
         }
 
+        /// <summary>
+        /// Coloca las naves en las posiciones de un estado concreto, sin animar.
+        ///
+        /// Lo usa el game loop al desplegar: la vista arranca sincronizada con el estado de la sesión
+        /// en lugar de asumir las posiciones iniciales de la demo de P2.
+        /// </summary>
+        public void SnapTo(ShipModel state, int enemyHullMax)
+        {
+            EnsureVisuals();
+
+            if (_player != null) _player.position = ToWorld(state.Position);
+
+            if (_enemy != null)
+            {
+                _enemy.position = ToWorld(state.EnemyPosition);
+
+                var normalized = enemyHullMax <= 0 ? 0f : Mathf.Clamp01(state.EnemyHull / (float)enemyHullMax);
+                _enemy.localScale = _enemyBaseScale * Mathf.Lerp(0.45f, 1f, normalized );
+            }
+        }
+
         // ------------------------------------------------------------------ construcción
 
         private Vector3 _enemyBaseScale = Vector3.one;

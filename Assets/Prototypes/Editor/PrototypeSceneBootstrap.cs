@@ -62,6 +62,9 @@ namespace VoidHex.Prototypes.Editor
         [MenuItem("VoidHex/Open P3 Loadout Scene")]
         private static void OpenP3() => OpenScene(PrototypeSceneBuilder.P3Scene);
 
+        [MenuItem("VoidHex/Open Game Loop Scene")]
+        private static void OpenGameLoop() => OpenScene(PrototypeSceneBuilder.GameLoopScene);
+
         private static void OpenScene(string path)
         {
             if (!File.Exists(path))

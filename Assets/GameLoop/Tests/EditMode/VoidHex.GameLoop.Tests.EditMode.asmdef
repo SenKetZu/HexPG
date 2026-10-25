@@ -1,0 +1,27 @@
+{
+    "name": "VoidHex.GameLoop.Tests.EditMode",
+    "rootNamespace": "VoidHex.GameLoop.Tests",
+    "references": [
+        "VoidHex.GameLoop.Logic",
+        "VoidHex.P1.Domain",
+        "VoidHex.P2.Domain",
+        "VoidHex.P3.Domain",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

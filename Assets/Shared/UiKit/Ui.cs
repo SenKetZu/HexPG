@@ -27,7 +27,6 @@ namespace VoidHex.UiKit
             if (existing != null && existing.name == name) return existing;
 
             var go = new GameObject(name, typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            Object.DontDestroyOnLoad(go);
 
             var canvas = go.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -89,8 +88,11 @@ namespace VoidHex.UiKit
         // ------------------------------------------------------------------ superficies
 
         /// <summary>
-        /// Panel con borde de 1 px y esquinas redondeadas. Devuelve el rect interior,
-        /// de modo que los hijos se posicionan dentro del panel sin compensar el borde.
+        /// Panel con borde de 1 px y esquinas redondeadas.
+        ///
+        /// Devuelve el rect EXTERIOR: así <c>SetActive(false)</c> oculta el panel completo, incluido
+        /// el borde. El relleno se crea como primer hijo, de modo que todo lo que se agregue después
+        /// se dibuja por encima sin tocar el orden de la jerarquía.
         /// </summary>
         public static RectTransform Panel(
             Transform parent,
@@ -117,7 +119,7 @@ namespace VoidHex.UiKit
             background.color = fill;
             background.raycastTarget = false;
 
-            return inner;
+            return outer;
         }
 
         // ------------------------------------------------------------------ texto
@@ -232,21 +234,30 @@ namespace VoidHex.UiKit
             fillImage.color = accent.Tint(0.72f);
 
             // Barra de acento a la izquierda: guía visual del tipo de acción.
-            var strip = Rect(fill, "strip", 0f, 4f, 4f, h - 10f);
+            var strip = Rect(fill, "strip", 0f, 4f, 4f, Mathf.Max(8f, h - 10f));
             var stripImage = strip.gameObject.AddComponent<Image>();
             stripImage.sprite = UiSprites.RoundedRect(2);
             stripImage.type = Image.Type.Sliced;
             stripImage.color = accent;
 
             var hasSubtitle = !string.IsNullOrEmpty(subtitle);
-            Label(fill, "label", 18f, hasSubtitle ? 6f : 0f, w - 40f, hasSubtitle ? 22f : h - 2f,
-                title, UiTheme.ButtonSize, UiTheme.Text, hasSubtitle ? TextAnchor.UpperLeft : TextAnchor.MiddleLeft,
-                bold: true);
+
+            // El texto se reparte dentro de la altura disponible: con botones compactos (40 px)
+            // las posiciones fijas desbordaban y el subtítulo caía fuera del botón.
+            var innerH = h - 2f;
+            var labelTop = hasSubtitle ? Mathf.Max(2f, innerH * 0.10f) : 0f;
+            var labelH = hasSubtitle ? innerH * 0.50f : innerH;
+            var subtitleTop = labelTop + labelH - 1f;
+            var subtitleH = Mathf.Max(10f, innerH * 0.36f);
+
+            Label(fill, "label", 18f, labelTop, w - 40f, labelH,
+                title, UiTheme.ButtonSize, UiTheme.Text,
+                hasSubtitle ? TextAnchor.LowerLeft : TextAnchor.MiddleLeft, bold: true);
 
             if (hasSubtitle)
             {
-                Label(fill, "subtitle", 18f, 28f, w - 40f, 18f, subtitle, UiTheme.SmallSize,
-                    UiTheme.Muted.WithAlpha(0.95f));
+                Label(fill, "subtitle", 18f, subtitleTop, w - 40f, subtitleH, subtitle,
+                    UiTheme.SmallSize - 1, UiTheme.Muted.WithAlpha(0.95f), TextAnchor.UpperLeft);
             }
 
             var button = outer.gameObject.AddComponent<Button>();

@@ -7,6 +7,8 @@
         "VoidHex.P3.Domain",
         "VoidHex.P3.Application",
         "VoidHex.P3.Unity",
+        "VoidHex.GameLoop.Logic",
+        "VoidHex.GameLoop.Unity",
         "VContainer"
     ],
     "includePlatforms": [

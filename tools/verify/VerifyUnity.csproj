@@ -27,11 +27,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Capa de presentación de cada prototipo + toolkit visual compartido + herramientas de editor -->
+    <!-- Capa de presentación de cada prototipo + toolkit visual compartido + bucle + editor -->
     <Compile Include="..\..\Assets\Shared\UiKit\*.cs" />
     <Compile Include="..\..\Assets\Prototypes\P1_GridState\Runtime\Unity\*.cs" />
     <Compile Include="..\..\Assets\Prototypes\P2_CommandPipeline\Runtime\Unity\*.cs" />
     <Compile Include="..\..\Assets\Prototypes\P3_Loadout\Runtime\Unity\*.cs" />
+    <Compile Include="..\..\Assets\GameLoop\Runtime\Logic\**\*.cs" />
+    <Compile Include="..\..\Assets\GameLoop\Runtime\Unity\*.cs" />
     <Compile Include="..\..\Assets\Prototypes\Editor\*.cs" />
   </ItemGroup>
 

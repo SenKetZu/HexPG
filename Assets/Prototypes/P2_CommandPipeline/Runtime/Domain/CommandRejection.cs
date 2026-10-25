@@ -9,5 +9,11 @@ namespace VoidHex.P2.Domain
         OutOfRange = 3,
         TargetDestroyed = 4,
         WrongPhase = 5,
+
+        /// <summary>
+        /// Agregado por el game loop: el objetivo está en rango pero un obstáculo corta la línea de visión.
+        /// Es aditivo y no cambia ninguna regla existente; el tipo de rechazo lo necesita quien extiende.
+        /// </summary>
+        LineOfSightBlocked = 6,
     }
 }

@@ -3,6 +3,8 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
+using VoidHex.GameLoop.Logic;
+using VoidHex.GameLoop.Unity;
 using VoidHex.P1.Unity;
 using VoidHex.P2.Unity;
 using VoidHex.P3.Domain;
@@ -26,10 +28,13 @@ namespace VoidHex.Prototypes.Editor
         public const string P2Scene = "Assets/Prototypes/P2_CommandPipeline/Scenes/P2_CommandPipeline.unity";
         public const string P3Scene = "Assets/Prototypes/P3_Loadout/Scenes/P3_Loadout.unity";
 
+        /// <summary>Escena de composición: el bucle completo usando los tres prototipos.</summary>
+        public const string GameLoopScene = "Assets/GameLoop/Scenes/GameLoop.unity";
+
         private const string P3Assets = "Assets/Prototypes/P3_Loadout/Assets";
         private const string P2Materials = "Assets/Prototypes/P2_CommandPipeline/Scenes";
 
-        public static readonly string[] AllScenes = { P1Scene, P2Scene, P3Scene };
+        public static readonly string[] AllScenes = { P1Scene, P2Scene, P3Scene, GameLoopScene };
 
         // Fondo y ambiente comunes: las tres escenas comparten estética con el HUD.
         private static readonly Color Background = new Color(0.06f, 0.09f, 0.16f);
@@ -72,10 +77,12 @@ namespace VoidHex.Prototypes.Editor
             EnsureFolder("Assets/Prototypes/P2_CommandPipeline/Scenes");
             EnsureFolder("Assets/Prototypes/P3_Loadout/Scenes");
             EnsureFolder(P3Assets + "/Modules");
+            EnsureFolder("Assets/GameLoop/Scenes");
 
             if (force || !File.Exists(P1Scene)) BuildP1();
             if (force || !File.Exists(P2Scene)) BuildP2();
             if (force || !File.Exists(P3Scene)) BuildP3();
+            if (force || !File.Exists(GameLoopScene)) BuildGameLoop();
 
             RegisterScenesInBuildSettings();
             AssetDatabase.SaveAssets();
@@ -149,20 +156,7 @@ namespace VoidHex.Prototypes.Editor
 
         private static void BuildP3()
         {
-            var config = CreateOrLoad<ShipConfigAsset>(P3Assets + "/ShipConfig.asset");
-            config.Initialize(actionPoints: 6, shields: 0, movement: 3, hull: 10);
-            EditorUtility.SetDirty(config);
-
-            var laserMk1 = CreateModule("laser-mk1", "Láser MK I", SlotType.Weapon, 1, 0, 0, 0, "beam");
-            var laserMk2 = CreateModule("laser-mk2", "Láser MK II", SlotType.Weapon, 2, 0, 0, 2, "beam");
-            var laserMk3 = CreateModule("laser-mk3", "Láser MK III", SlotType.Weapon, 3, 1, 0, 4, "beam-iii");
-            var thruster = CreateModule("thruster-mk1", "Propulsor MK I", SlotType.Propulsion, 1, 0, 0, 1, string.Empty);
-            var shield = CreateModule("shield-mk1", "Escudo MK I", SlotType.Shield, 1, 0, 3, 0, "barrier");
-
-            var catalog = CreateOrLoad<ModuleCatalogAsset>(P3Assets + "/ModuleCatalog.asset");
-            catalog.Initialize(new[] { laserMk1, laserMk2, laserMk3, thruster, shield });
-            EditorUtility.SetDirty(catalog);
-            AssetDatabase.SaveAssets();
+            EnsureLoadoutAssets(out var config, out var catalog);
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             SetupEnvironment();
@@ -185,9 +179,115 @@ namespace VoidHex.Prototypes.Editor
             EditorSceneManager.SaveScene(scene, P3Scene);
         }
 
+        /// <summary>
+        /// Crea los assets de P3 si no existen y devuelve las referencias.
+        /// No pisa un catálogo ya poblado: regenerar escenas no debe borrar contenido del diseñador.
+        /// </summary>
+        private static void EnsureLoadoutAssets(out ShipConfigAsset config, out ModuleCatalogAsset catalog)
+        {
+            config = CreateOrLoad<ShipConfigAsset>(P3Assets + "/ShipConfig.asset");
+            if (config.ToBaseStats().ActionPoints <= 0)
+            {
+                config.Initialize(actionPoints: 6, shields: 0, movement: 3, hull: 10);
+                EditorUtility.SetDirty(config);
+            }
+
+            catalog = CreateOrLoad<ModuleCatalogAsset>(P3Assets + "/ModuleCatalog.asset");
+
+            if (catalog.All.Count == 0)
+            {
+                var laserMk1 = CreateModule("laser-mk1", "Láser MK I", SlotType.Weapon, 1, 0, 0, 0, "beam");
+                var laserMk2 = CreateModule("laser-mk2", "Láser MK II", SlotType.Weapon, 2, 0, 0, 2, "beam");
+                var laserMk3 = CreateModule("laser-mk3", "Láser MK III", SlotType.Weapon, 3, 1, 0, 4, "beam-iii");
+                var thruster = CreateModule("thruster-mk1", "Propulsor MK I", SlotType.Propulsion, 1, 0, 0, 1,
+                    string.Empty);
+                var shield = CreateModule("shield-mk1", "Escudo MK I", SlotType.Shield, 1, 0, 3, 0, "barrier");
+
+                catalog.Initialize(new[] { laserMk1, laserMk2, laserMk3, thruster, shield });
+                EditorUtility.SetDirty(catalog);
+            }
+
+            AssetDatabase.SaveAssets();
+        }
+
+        // ------------------------------------------------------------------ game loop
+
+        /// <summary>
+        /// Escena de composición: no aporta reglas nuevas, une las tres.
+        /// Hangar (P3) → despliegue → combate sobre la grilla (P1 + P2) → resultado → hangar.
+        /// </summary>
+        private static void BuildGameLoop()
+        {
+            EnsureLoadoutAssets(out var config, out var catalog);
+
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            SetupEnvironment();
+
+            var root = new GameObject("GameLoop");
+            var bootstrap = root.AddComponent<LoopBootstrap>();
+            root.AddComponent<LoopGridView>();
+            root.AddComponent<ShipView>();
+            root.AddComponent<LoopDriver>();
+            root.AddComponent<GameLoopScreen>();
+
+            var serialized = new SerializedObject(bootstrap);
+            serialized.FindProperty("shipConfig").objectReferenceValue = config;
+            serialized.FindProperty("moduleCatalog").objectReferenceValue = catalog;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            // El encuadre usa la MISMA proyección que el clic, y deja el tablero en la franja
+            // libre a la derecha del panel.
+            const int width = 8;
+            const int height = 6;
+            var spacing = HexProjection.Spacing;
+            var extentX = 1.5f * spacing * (width - 1);
+            var extentZ = 1.7320508f * spacing * ((height - 1) + (width - 1) * 0.5f);
+            var center = new Vector3(extentX * 0.5f, 0f, extentZ * 0.5f);
+
+            FrameInFreeArea(center, halfExtentX: extentX * 0.5f, halfExtentZ: extentZ * 0.5f,
+                panelFraction: 0.30f);
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene, GameLoopScene);
+        }
+
         // ------------------------------------------------------------------ entorno
 
         /// <summary>Cámara, luz direccional y ambiente. Sin esto las escenas se ven negras.</summary>
+        /// <summary>
+        /// Encuadre ortográfico cenital que deja el contenido DENTRO del área libre de UI.
+        ///
+        /// A diferencia de un simple desplazamiento, calcula el tamaño ortográfico para que el tablero
+        /// entre completo en la franja derecha y centra el contenido en esa franja. Un desplazamiento
+        /// fijo dependía del aspect ratio y cortaba la grilla en 16:9.
+        /// </summary>
+        private static void FrameInFreeArea(Vector3 center, float halfExtentX, float halfExtentZ,
+            float panelFraction, float assumedAspect = 16f / 9f)
+        {
+            var camera = Camera.main;
+            if (camera == null) return;
+
+            var free = Mathf.Clamp(1f - panelFraction, 0.25f, 1f);
+
+            // El tamaño vertical debe cubrir el alto del tablero y también su ancho dentro de `free`.
+            var neededByHeight = halfExtentZ * 1.10f;
+            var neededByWidth = halfExtentX * 1.10f / (assumedAspect * free);
+
+            var orthoSize = Mathf.Max(neededByHeight, neededByWidth);
+
+            camera.orthographic = true;
+            camera.orthographicSize = orthoSize;
+            camera.transform.SetPositionAndRotation(
+                new Vector3(center.x, 40f, center.z),
+                Quaternion.Euler(90f, 0f, 0f));
+
+            // Centro de la franja libre en coordenadas normalizadas (-1..1).
+            var freeCenterNormalized = -1f + free;
+            var worldOffset = orthoSize * assumedAspect * freeCenterNormalized;
+
+            camera.transform.position = new Vector3(center.x - worldOffset, 40f, center.z);
+        }
+
         private static void SetupEnvironment()
         {
             var cameraObject = new GameObject("Main Camera");
@@ -364,6 +464,7 @@ namespace VoidHex.Prototypes.Editor
                 new EditorBuildSettingsScene(P1Scene, true),
                 new EditorBuildSettingsScene(P2Scene, true),
                 new EditorBuildSettingsScene(P3Scene, true),
+                new EditorBuildSettingsScene(GameLoopScene, true),
             };
         }
 
