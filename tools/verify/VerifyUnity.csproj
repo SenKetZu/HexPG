@@ -1,0 +1,82 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Verificación de compilación de las capas Unity SIN abrir el editor.
+
+    Compila Runtime/Unity + Editor de los tres prototipos contra los DLLs reales de Unity
+    (6000.5.9f1) y contra los assemblies de dominio/aplicación ya generados por Unity.
+
+    Sirve para detectar en segundos errores como CS0234/CS0012 (referencias de assembly)
+    sin esperar a que el editor recupere el foco.
+
+    Uso:  dotnet build tools/verify/VerifyUnity.csproj
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>VoidHex.VerifyUnity</AssemblyName>
+    <!-- Unity compila los asmdef de runtime con UNITY_EDITOR en el editor: replicamos eso. -->
+    <DefineConstants>UNITY_EDITOR</DefineConstants>
+    <NoWarn>CS0649;CS0169</NoWarn>
+    <UnityRoot>C:\Program Files\Unity\Hub\Editor\6000.5.9f1\Editor\Data</UnityRoot>
+    <UnityLibrary>$(MSBuildThisFileDirectory)..\..\Library\ScriptAssemblies</UnityLibrary>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Capa de presentación de cada prototipo + toolkit visual compartido + herramientas de editor -->
+    <Compile Include="..\..\Assets\Shared\UiKit\*.cs" />
+    <Compile Include="..\..\Assets\Prototypes\P1_GridState\Runtime\Unity\*.cs" />
+    <Compile Include="..\..\Assets\Prototypes\P2_CommandPipeline\Runtime\Unity\*.cs" />
+    <Compile Include="..\..\Assets\Prototypes\P3_Loadout\Runtime\Unity\*.cs" />
+    <Compile Include="..\..\Assets\Prototypes\Editor\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Assemblies de dominio/aplicación generados por Unity (no se recompilan acá) -->
+    <Reference Include="VoidHex.P1.Domain">
+      <HintPath>$(UnityLibrary)\VoidHex.P1.Domain.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="VoidHex.P2.Domain">
+      <HintPath>$(UnityLibrary)\VoidHex.P2.Domain.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="VoidHex.P2.Application">
+      <HintPath>$(UnityLibrary)\VoidHex.P2.Application.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="VoidHex.P3.Domain">
+      <HintPath>$(UnityLibrary)\VoidHex.P3.Domain.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="VoidHex.P3.Application">
+      <HintPath>$(UnityLibrary)\VoidHex.P3.Application.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="VContainer">
+      <HintPath>$(UnityLibrary)\VContainer.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(UnityLibrary)\UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.InputSystem">
+      <HintPath>$(UnityLibrary)\Unity.InputSystem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Motor y editor: la instalación usa UnityEditor.CoreModule (no el UnityEditor.dll legacy,
+         que también define MenuItem/InitializeOnLoad y provocaría CS0433 si se referencian ambos). -->
+    <Reference Include="$(UnityRoot)\Managed\UnityEngine\*.dll">
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

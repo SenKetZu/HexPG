@@ -66,9 +66,8 @@
 TestResults/
 test-results/
 
-# Excepci√≥n: el proyecto de la herramienta de auditor√≠a S√ç se versiona.
-# La regla *.csproj de arriba (template de Unity) lo ignorar√≠a por defecto.
-!tools/audit/Audit.csproj
+# Descargas de assets (los modelos usados ya viven en Assets/ThirdParty)
+_downloads/
 
 # Gradle cache directory
 .gradle/
@@ -137,3 +136,10 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# ---------------------------------------------------------------------------
+# ExcepciÛn: los proyectos de las herramientas de verificaciÛn SÕ se versionan.
+# Deben ir DESPU…S de la regla *.csproj: en gitignore gana la ˙ltima coincidencia.
+# ---------------------------------------------------------------------------
+!tools/audit/*.csproj
+!tools/verify/*.csproj

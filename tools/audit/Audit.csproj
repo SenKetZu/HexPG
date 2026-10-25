@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>VoidHex.Audit</RootNamespace>
+    <AssemblyName>VoidHex.Audit</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="*.cs" />
+    <Compile Include="..\..\Assets\Prototypes\P1_GridState\Runtime\Domain\*.cs" />
+    <Compile Include="..\..\Assets\Prototypes\P2_CommandPipeline\Runtime\Domain\*.cs" />
+    <Compile Include="..\..\Assets\Prototypes\P2_CommandPipeline\Runtime\Application\*.cs" />
+    <Compile Include="..\..\Assets\Prototypes\P3_Loadout\Runtime\Domain\*.cs" />
+    <Compile Include="..\..\Assets\Prototypes\P3_Loadout\Runtime\Application\*.cs" />
+  </ItemGroup>
+
+</Project>

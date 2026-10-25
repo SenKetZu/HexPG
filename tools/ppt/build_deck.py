@@ -388,9 +388,9 @@ def build():
           TEXT, bold=True, spacing=1.05)
     write(s, MARGIN, 3.55, CONTENT_W, 0.4, "Void Hex Tactics · TP2", 20, P2, bold=True)
 
-    chips = [("P1_GridState", "ISP + Observer", P1),
-             ("P2_CommandPipeline", "Pipeline async", P2),
-             ("P3_Loadout", "DI + Data-driven", P3)]
+    chips = [("P1_GridState", "ISP + Observer · 5 tests", P1),
+             ("P2_CommandPipeline", "Pipeline async · 8 tests", P2),
+             ("P3_Loadout", "DI + Data-driven · 9 tests", P3)]
     for i, (folder, tag, color) in enumerate(chips):
         cx = MARGIN + i * 4.06
         rect(s, cx, 4.55, 3.82, 1.05, fill=PANEL, line=color, width=1.3)
@@ -398,7 +398,7 @@ def build():
         write(s, cx + 0.22, 5.05, 3.4, 0.3, tag, 10.5, color, bold=True)
 
     write(s, MARGIN, 6.15, CONTENT_W, 0.6,
-          "Matias Andres Fahler   ·   Unity 6000.5.9f1   ·   tag tp2", 13, MUTED)
+          "Matias Andres Fahler   ·   Unity 6000.5.9f1   ·   tag tp2   ·   22 tests verdes", 13, MUTED)
     notes(s, """
 15 s. No voy a mostrar un juego. Voy a mostrar tres problemas técnicos del TP1,
 la solución declarada para cada uno, y la evidencia de que funciona.
@@ -416,7 +416,7 @@ Tiempo total objetivo: 18-19 minutos, dejando margen para preguntas.
         ["Servicios sin singletons + módulos MK I–III", "VContainer + ScriptableObjects", "P3_Loadout"],
     ], [3.4, 2.6, 2.0], row_h=0.78, font=13, accent=P1)
     write(s, MARGIN, 5.2, CONTENT_W, 0.7,
-          "Cada prototipo: carpeta independiente · una escena · su propia suite · dominio sin UnityEngine.",
+          "Una escena real por prototipo, con modelos 3D (Kenney CC0) y UI nativa: se puede jugar la prueba.",
           13, MUTED)
     takeaway(s, "La consigna pide 3 pruebas de concepto pulidas, no un juego completo.", P1)
     notes(s, """
@@ -486,9 +486,9 @@ y el asmdef lo impide hacia el dominio.
     s = blank(deck, 6, total)
     head(s, "P1 · Evidencia", "Reactivo de verdad: sin mutación real, no hay trabajo", P1)
 
-    stats = [("1", "evento", "cuando la celda cambia", GREEN),
-             ("0", "eventos", "si se escribe el mismo valor", TEXT),
-             ("—", "Update()", "el presentador no tiene", MUTED)]
+    stats = [("1", "evento", "por cada mutación real", GREEN),
+             ("0", "eventos", "al reescribir el mismo valor", TEXT),
+             ("4", "redibujos", "en un mapa 12×12 con 4 obstáculos", MUTED)]
     for i, (big, label, detail, color) in enumerate(stats):
         cx = MARGIN + i * 4.06
         rect(s, cx, 1.95, 3.82, 1.62, fill=PANEL, line=BORDER)
@@ -506,11 +506,13 @@ y el asmdef lo impide hacia el dominio.
 
     takeaway(s, "Los dos primeros no prueban comportamiento: prueban forma, por reflexión.", P1)
     notes(s, """
-60 s. Usan reflexión: verifican que el contrato de publicación solo tenga eventos
-y que el de lectura no tenga mutaciones.
+60 s. Escena real: mapa 12×12 con asteroides y cristales del Kenney Space Kit.
+La ruta al destino es de 21 celdas y costo 20; el contador de eventos queda en 4,
+que es exactamente la cantidad de obstáculos colocados.
 
-Si mañana alguien agrega SetCell a la interfaz de lectura, el test se pone rojo
-antes de que llegue a la UI.
+Los dos primeros tests usan reflexión: verifican que el contrato de publicación solo
+tenga eventos y que el de lectura no tenga mutaciones. Si mañana alguien agrega SetCell
+a la interfaz de lectura, el test se pone rojo antes de que llegue a la UI.
 """)
 
     # ---------------------------------------------------------- 7 P1 alcance
@@ -596,6 +598,13 @@ no hay estado a medio aplicar.
     write(s, 7.32, 3.42, 5.2, 0.6, "Submit_SecondCommand_QueuesUntil\nTheFirstAnimationCompletes",
           11, BODY, font=MONO)
 
+    # La corrida real de la demo, no un ejemplo genérico.
+    rect(s, 7.1, 4.25, 5.6, 1.62, fill=PANEL_HI, line=BORDER, width=1.1)
+    write(s, 7.32, 4.38, 5.2, 0.28, "CORRIDA REAL DE LA ESCENA", 10.5, P2, bold=True)
+    write(s, 7.32, 4.68, 5.2, 0.9,
+          "Mover (2,0) 2 PA → Atacar 2 PA → Mover (3,0) 1 PA", 11, BODY, font=MONO)
+    write(s, 7.32, 5.02, 5.2, 0.3, "PA 6 → 1   ·   hull enemigo 6 → 3", 11, GREEN, bold=True)
+
     takeaway(s, "Si alguien espera la animación antes de mutar el estado, este test falla.", P2)
     notes(s, """
 60 s. Este es el test que demuestra el desacoplamiento temporal.
@@ -615,7 +624,9 @@ Pregunta que invita: "¿qué error detectaría?"
           13, BODY, spacing=1.15)
     takeaway(s, "ShieldCommand ya existe y el pipeline no se enteró.", P2)
     notes(s, """
-50 s. Demo D4: agregar TractorBeamCommand en vivo. Valida PA, mueve la nave enemiga,
+50 s. En la escena, ShieldCommand cuesta 2 PA y suma 4 de escudo: el pipeline no cambió.
+
+Demo D4: agregar TractorBeamCommand en vivo. Valida PA, mueve la nave enemiga,
 y CommandProcessor no cambia una línea.
 """)
 
@@ -655,15 +666,15 @@ Eso es lo que permite testear el servicio sin escena.
     s = blank(deck, 14, total)
     head(s, "P3 · Evidencia", "Testeable sin Unity y ampliable sin recompilar", P3)
 
-    card(s, MARGIN, 1.95, 5.95, 2.15, "DIP: mock inyectado", [
+    card(s, MARGIN, 1.95, 5.95, 2.15, "DIP: catálogo inyectado", [
         "EquipmentService recibe IModuleCatalog",
-        "El fake cuenta las consultas",
+        "El test inyecta FakeCatalog y cuenta consultas",
         "Corre en Edit Mode, sin escena",
     ], P3)
     card(s, MARGIN + 6.18, 1.95, 5.95, 2.15, "Data-driven: sin código", [
-        "Crear un ShipModuleAsset MK III en el inspector",
-        "Se equipa y recalcula stats",
-        "No se recompila nada",
+        "laser-mk1 → laser-mk2 reemplaza en el slot",
+        "laser-mk3 se agregó como asset, no como clase",
+        "Stats: PA 6 · escudos 5 · movimiento 4",
     ], GREEN)
 
     for i, name in enumerate(["TryEquip_ReplacingModule_DoesNotDoubleCount",
@@ -674,10 +685,13 @@ Eso es lo que permite testear el servicio sin escena.
 
     takeaway(s, "Un slot por tipo: el estado inválido “módulo en slot incompatible” no puede existir.", P3)
     notes(s, """
-60 s. Columna izquierda demuestra DIP: si el catálogo viene de un servidor, el servicio no cambia.
-Columna derecha demuestra data-driven: el diseñador agrega contenido sin tocar C#.
+60 s. La escena equipa laser-mk1, lo reemplaza por laser-mk2, suma thruster-mk1 y shield-mk1.
+Resultado real: PA 6, escudos 5, movimiento 4, habilidades [beam, barrier].
 
-Demos: D5 (reemplazo MK I → MK II) y D6 (crear MK III como asset).
+Columna izquierda demuestra DIP: si el catálogo viene de un servidor, el servicio no cambia.
+Columna derecha demuestra data-driven: el MK III existe como asset, sin una clase nueva.
+
+Demos: D5 (reemplazo MK I → MK II) y D6 (equipar el MK III).
 """)
 
     # ---------------------------------------------------------- 15 trazabilidad
@@ -694,8 +708,12 @@ Demos: D5 (reemplazo MK I → MK II) y D6 (crear MK III como asset).
           13, BODY, spacing=1.15)
     takeaway(s, "No hay un test por método: hay un test por regla, y cada uno responde qué error detectaría.", TEXT)
     notes(s, """
-50 s. ANTES DE PRESENTAR: reemplazar los números por los reales del Test Runner
-y adjuntar la captura. No decir un número que no se pueda respaldar.
+50 s. 21 en Edit Mode y 1 en Play Mode: 22, corridos y verdes dos veces (antes y después
+ del rediseño de UI y de los assets).
+
+El único Play Mode es P2 porque es el único donde importa que Unity invoque al adaptador.
+
+Si preguntan qué detectaría cada uno, la matriz de docs/04 tiene la columna completa.
 """)
 
     # ---------------------------------------------------------- 16 exclusiones
@@ -705,7 +723,7 @@ y adjuntar la captura. No decir un número que no se pueda respaldar.
         ["Excluido", "Justificación", "Ruta de extensión"],
         ["Undo / Redo", "Capacidad habilitada, no requisito", "Historial de estados en el pipeline"],
         ["IA enemiga", "El desafío es el flujo, no la búsqueda", "El pipeline acepta cualquier ICommand"],
-        ["Arte y animaciones reales", "No demuestran la propiedad y acoplan tiempos", "ShipView es el punto de sustitución"],
+        ["Animación con clips", "Los modelos se mueven por transform, sin Animator", "Animator sobre el modelo actual"],
         ["Modificadores multiplicativos", "Ningún módulo del alcance los usa", "StatModifier con operación"],
         ["Mapas 3D / niebla de guerra", "Otro sistema, no exposición de estado", "Capa sobre IGridQueryService"],
     ], [2.4, 3.2, 3.3], row_h=0.68, font=11.5, accent=RED)
@@ -713,21 +731,52 @@ y adjuntar la captura. No decir un número que no se pueda respaldar.
     notes(s, """
 45 s. La consigna dice que excluir un caso necesita justificación (§4.1).
 Cada fila tiene por dónde crecer.
+
+Ojo: sí hay arte 3D real (modelos del Kenney Space Kit). Lo excluido es la animación
+con clips; el movimiento es por transform.
 """)
 
     # ---------------------------------------------------------- 17 cambios
     s = blank(deck, 17, total)
-    head(s, "Ajustes", "Qué cambié respecto del TP1", P2)
-    grid(s, MARGIN, 1.95, CONTENT_W, [
+    head(s, "Ajustes y hallazgos", "Qué cambié, y qué descubrí al implementar", P2)
+    grid(s, MARGIN, 1.85, CONTENT_W, [
         ["TP1", "TP2", "Motivo"],
         ["ExecuteAsync devuelve UniTask", "ICommand sync + Task en el puerto", "El PDF admite UniTask / Task"],
         ["ShipModuleSO entra al cálculo", "El dominio recibe ModuleDefinition", "Dominio libre de UnityEngine"],
-        ["Slots validan el tipo", "Un slot por tipo", "El estado inválido se elimina"],
         ["FSM con estados por acción", "Tres fases", "Evitar explosión de combinaciones"],
-    ], [2.8, 3.1, 2.6], row_h=0.78, font=12, accent=P2)
-    takeaway(s, "Ningún cambio altera qué resuelve cada prototipo: cambian cómo se respeta la regla de dependencia.", P2)
+    ], [2.8, 3.1, 2.6], row_h=0.56, font=11.5, accent=P2)
+
+    write(s, MARGIN, 4.30, CONTENT_W, 0.26, "QUÉ DESCUBRÍ AL IMPLEMENTAR", 10.5, GREEN, bold=True)
+
+    findings = [
+        ("Un FBX mal centrado parecía un bug de arquitectura",
+         "la nave se dibujaba al lado de su anillo; era el pivote del export, no el código"),
+        ("transform.Find por ruta cortó el panel con un NullReference",
+         "la vista no debe buscar referencias: la fábrica devuelve tipos"),
+        ("[Inject] llegaba después de Start",
+         "la nave 3D nunca se construía; se resuelve con un evento Ready, no con un orden implícito"),
+        ("El EventSystem del template no respondía",
+         "con el Input System nuevo, StandaloneInputModule es inerte: hace falta InputSystemUIInputModule"),
+    ]
+    for i, (what, detail) in enumerate(findings):
+        cy = 4.58 + i * 0.45
+        write(s, MARGIN, cy, 0.28, 0.26, "×", 12, RED, bold=True)
+        write(s, MARGIN + 0.30, cy, CONTENT_W - 0.4, 0.24, what, 11.5, TEXT, bold=True)
+        write(s, MARGIN + 0.30, cy + 0.21, CONTENT_W - 0.4, 0.22, detail, 9.5, MUTED)
+
+    takeaway(s, "Los cuatro cambios del TP1 están en docs/01 §5; estos cuatro hallazgos, en el código.", P2)
     notes(s, """
-35 s. Todos están documentados en docs/01-arquitectura.md §5.
+45 s. Esto responde "qué descubriste al implementar", que la consigna pide explícitamente (§4.1).
+
+El más útil para contar: el del pivote. Perdí tiempo buscando en la arquitectura algo que
+era un problema de importación de assets. Enseña a agotar la hipótesis barata antes.
+
+El segundo es el más arquitectónico: una vista que busca referencias por nombre de ruta
+no es una vista, es una dependencia oculta. Ahora la fábrica de UI devuelve tipos.
+
+Un quinto caso, si preguntan por los tests: una aserción mía estaba mal escrita
+(la ruta costaba 3, no 4). Lo detecté corriendo la lógica fuera del editor.
+Los tests también pueden estar equivocados; por eso el auditor existe.
 """)
 
     # ---------------------------------------------------------- 18 cierre
@@ -790,21 +839,29 @@ transparencia referencial, excepciones).
 
     # ---------------------------------------------------------- 21 backup cómo correr
     s = blank(deck, 0, 0)
-    head(s, "Respaldo · Si preguntan", "Cómo se reproduce todo en 4 comandos", P2)
+    head(s, "Respaldo · Si preguntan", "Cómo se reproduce y se verifica, sin abrir el editor", P2)
     code(s, MARGIN, 1.95, CONTENT_W, [
-        '$unity = "C:\\Program Files\\Unity\\Hub\\Editor\\6000.5.9f1\\Editor\\Unity.exe"',
+        "# Escenas: se generan solas si faltan ([InitializeOnLoad]) o por menú",
+        'unity command --project-path . menu --path "VoidHex/Build Prototype Scenes"',
         "",
-        "& $unity -batchmode -nographics -projectPath . -runTests `",
-        "    -testPlatform EditMode -testResults Logs/editmode-results.xml -quit",
+        "# Suite completa contra el editor en ejecución",
+        "unity command --project-path . run_tests --mode EditMode",
+        "unity command --project-path . run_tests --mode PlayMode --async_tests",
         "",
-        "& $unity -batchmode -nographics -projectPath . -runTests `",
-        "    -testPlatform PlayMode -testResults Logs/playmode-results.xml -quit",
-    ], accent=GREEN, size=12, line_h=0.33)
-    write(s, MARGIN, 4.95, CONTENT_W, 1.0,
-          "En el editor:  VoidHex → Build Prototype Scenes   ·   Window → General → Test Runner",
-          14, BODY)
-    takeaway(s, "Sin pasos manuales: la suite pasa en un proyecto recién clonado.", GREEN)
-    notes(s, "Código de salida 0 = suite verde.")
+        "# Evidencia visual de las tres escenas",
+        'unity command --project-path . capture_game_view --source screen --save_path captura.png',
+    ], accent=GREEN, size=11.5, line_h=0.32)
+    write(s, MARGIN, 5.05, CONTENT_W, 0.85,
+          "Tres verificadores propios: referencias de asmdef, integridad de escenas y auditoría de la lógica pura sin Unity.",
+          13, BODY, spacing=1.15)
+    takeaway(s, "Unity 6000.5.9f1 trae el paquete com.unity.pipeline: el editor se controla por CLI.", GREEN)
+    notes(s, """
+El CLI (com.unity.pipeline) permite recompilar, ejecutar menús, correr tests y capturar
+el game view con el editor abierto. Es lo que se usó para verificar cada cambio de esta entrega.
+
+Si preguntan por batchmode: también existe, pero requiere el proyecto sin lock, es decir
+el editor cerrado. El CLI no.
+""")
 
     deck.save(PPTX_PATH)
     return deck

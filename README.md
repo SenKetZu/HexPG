@@ -47,8 +47,10 @@ Assets/Prototypes/
               Tests/EditMode, Scenes, Assets, README.md}
   Editor/  PrototypeSceneBuilder.cs    genera escenas y assets de P3
            PrototypeSceneBootstrap.cs  las genera solo si faltan
+Assets/Shared/UiKit/   UI nativa + carga de modelos 3D (solo presentación)
+Assets/ThirdParty/Kenney/SpaceKit/   modelos CC0 usados por las escenas
   docs/    doctrina, arquitectura, tests, prototipos, trazabilidad, defensa, plan, presentación
-  tools/   ppt/ (deck) · audit/ (lógica sin Unity) · verify/ (referencias y compilación)
+  tools/   ppt/ (deck) · audit/ (lógica sin Unity) · verify/ (referencias, escenas, tests) · assets/
 ```
 
 Cada prototipo es independiente: no comparte escena, estado estático ni carpeta con otro.
@@ -75,7 +77,23 @@ Para abrirlas: **`VoidHex → Open P1/P2/P3 … Scene`**.
 | P2 | `P2_CommandPipeline.unity` | Nave y enemigo animados por `ShipView`. El HUD envía comandos intercalados (mover/atacar/escudo), fuerza un rechazo, termina el turno y pasa a turno enemigo, mostrando PA y fase en vivo |
 | P3 | `P3_Loadout.unity` | HUD con los 4 slots, estadísticas recalculadas y botones para equipar cada módulo del catálogo (incluye MK III) y quitar por slot |
 
-Abrir la escena y presionar **Play**. Cada prototipo se ejecuta solo; los paneles son IMGUI, sin prefabs.
+Abrir la escena y presionar **Play**. Cada prototipo se ejecuta solo; los paneles son uGUI nativa.
+
+## Assets 3D
+
+Los modelos son del **Kenney Space Kit** (CC0, dominio público): naves, asteroide, cristales y
+turret. Se cargan por nombre en runtime (`Resources/Models/<Nombre>.fbx`) desde
+`Assets/ThirdParty/Kenney/SpaceKit`, con atribución y licencia incluidas en esa carpeta.
+
+Los materiales **no** vienen del kit: los genera `VoidHex.UiKit.ModelLibrary` con el shader URP y
+la paleta de la UI, para que escena y paneles compartan el mismo lenguaje visual. Si un modelo
+faltara, la vista cae a una primitiva: la demo no se rompe por un asset ausente.
+
+Para reinstalar el subconjunto de modelos (requiere el zip descomprimido en `_downloads/`):
+
+```powershell
+python tools\assets\install_kenney_spacekit.py
+```
 
 ## Cómo correr los tests
 

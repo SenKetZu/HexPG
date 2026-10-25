@@ -3,7 +3,8 @@
 > **Deck generado:** [`presentacion/TP2-VoidHex-Tactics.pptx`](./presentacion/TP2-VoidHex-Tactics.pptx)
 > — 21 slides 16:9 con diagramas nativos y notas del orador. Los diagramas también están como PNG en
 > [`presentacion/assets/`](./presentacion/assets). Para regenerar: `python tools/ppt/build_deck.py`.
-> Este documento es la **fuente** del deck: si cambiás algo acá, regenerá el `.pptx`.
+> **El generador (`tools/ppt/build_deck.py`) define el layout real del deck**; este documento es la
+> referencia de contenido y guion. Si cambia un caso, se actualizan los dos.
 >
 > **Para qué sirve este archivo:** es el contenido listo para PowerPoint.
 > Cada bloque = una slide. Copiá el *título*, los *bullets* y el *visual*; las **notas del orador**
@@ -167,7 +168,10 @@ flowchart LR
 | --- | --- |
 | Celda cambia de verdad | **1** |
 | Se escribe el mismo valor | **0** |
-| Sin mutación, `Update()` | **no existe** |
+| Mapa 12×12 con 4 obstáculos | **4 redibujos** |
+
+**Caso real de la escena:** asteroides y cristales del Kenney Space Kit; ruta de **21 celdas**
+con costo **20**; el contador de eventos queda exactamente en 4, la cantidad de obstáculos.
 
 **Tests en verde (3 nombres, sin código):**
 
@@ -262,6 +266,9 @@ el segundo comando espera en la cola; no hay estado a medio aplicar."
 
 **Segundo test:** `Submit_SecondCommand_QueuesUntilTheFirstAnimationCompletes`
 
+**Corrida real de la escena:** mover (2,0) 2 PA → atacar 2 PA → mover (3,0) 1 PA.
+Resultado: **PA 6 → 1**, **hull enemigo 6 → 3**.
+
 **Notas del orador (60 s):** "Este es el test que demuestra el desacoplamiento temporal. Si alguien
 implementa la lógica esperando la animación, este test falla: la posición no habría cambiado."
 
@@ -279,7 +286,7 @@ interfaz `ICommand`. Un recuadro aparte: `TractorBeamCommand` marcado como **"en
 
 **Bullets:**
 
-- `ShieldCommand` ya existe: **cero cambios** en `CommandProcessor`
+- `ShieldCommand` ya existe (2 PA, +4 escudo): **cero cambios** en `CommandProcessor`
 - Test que lo respalda: `Submit_NewCommandVariant_RequiresNoPipelineChange`
 - Diferido: Undo/Redo (el TP1 lo menciona como capacidad habilitada, no como requisito)
 
@@ -336,9 +343,9 @@ existe VContainer: recibe una interfaz por constructor. Eso es lo que permite te
 
 | DIP (mock inyectado) | Data-driven (sin código) |
 | --- | --- |
-| `EquipmentService_WithInjectedFakeCatalog_ResolvesModulesById` | Crear un `ShipModuleAsset` MK III en el inspector |
-| El fake **cuenta** las consultas al catálogo | Se equipa y recalcula stats |
-| Corre en Edit Mode, sin escena | No se recompila nada |
+| `EquipmentService_WithInjectedFakeCatalog_ResolvesModulesById` | `laser-mk1` → `laser-mk2` reemplaza en el slot |
+| El fake **cuenta** las consultas al catálogo | `laser-mk3` existe como asset, no como clase |
+| Corre en Edit Mode, sin escena | Stats reales: **PA 6 · escudos 5 · movimiento 4** |
 
 **Bullets (2):**
 
@@ -369,8 +376,8 @@ C#."
 por método: tengo un test por regla, y cada uno responde esa pregunta. El único Play Mode es el de P2,
 porque es el único donde importa que Unity invoque al adaptador."
 
-> **Antes de presentar:** reemplazá `22 / 21 / 1` por los números reales del Test Runner. No digas un
-> número que no puedas respaldar con la captura.
+> **Números ya verificados:** 21 en Edit Mode y 1 en Play Mode (22), corridos dos veces: antes y
+> después del rediseño de UI y de los assets. Si pedís la captura, está en `Logs/tests-*.json`.
 
 ---
 
@@ -382,28 +389,42 @@ porque es el único donde importa que Unity invoque al adaptador."
 | --- | --- | --- |
 | Undo / Redo | Capacidad habilitada, no requisito del prototipo | Historial de estados en el pipeline |
 | IA enemiga | El desafío es el flujo de comandos, no la búsqueda de jugadas | El pipeline ya acepta cualquier `ICommand` |
-| Arte y animaciones reales | No demuestran la propiedad y acoplan tiempos | `ShipView` es el punto de sustitución |
+| Animación con clips | Los modelos se mueven por transform, sin `Animator` | `Animator` sobre el modelo actual |
 | Modificadores multiplicativos | Ningún módulo del alcance los usa | `StatModifier` con operación |
 | Mapas 3D / niebla de guerra | Otro sistema, no exposición de estado | Capa sobre `IGridQueryService` |
 
 **Notas del orador (45 s):** "La consigna dice que excluir un caso necesita justificación. Estas no
 son las cosas que no llegué a hacer: son las que decidí no hacer, y cada una tiene por dónde crecer."
 
+> **Aclaración necesaria:** sí hay arte 3D real (modelos del Kenney Space Kit). Lo excluido es la
+> **animación con clips**, no el arte. No digas "sin arte": es falso y se nota en la escena.
+
 ---
 
-### Slide 17 — "Qué cambié respecto del TP1"
+### Slide 17 — "Qué cambié, y qué descubrí al implementar"
 
-**Tabla (4 filas):**
+**Tabla superior (3 filas), los cambios del TP1:**
 
 | TP1 | TP2 | Motivo |
 | --- | --- | --- |
 | `ExecuteAsync` devuelve `UniTask` | `ICommand` sincrónico + `Task` en el puerto de vista | El PDF admite *UniTask / Task*; sustitución en una sola interfaz |
 | `ShipModuleSO` entra al cálculo | El dominio recibe `ModuleDefinition` | Mantener el dominio libre de `UnityEngine` |
-| Slots validan tipo | Un slot por tipo | El estado inválido se elimina, no se testea |
 | FSM con estados por acción | Tres fases | Evitar la explosión de combinaciones |
 
-**Notas del orador (35 s):** "Ningún cambio altera qué resuelve cada prototipo. Cambian cómo se
-respeta la regla de dependencia, y están documentados en `docs/01-arquitectura.md`."
+**Hallazgos reales (la parte que pide §4.1: "qué descubriste al implementar"):**
+
+| Qué parecía | Qué era |
+| --- | --- |
+| Un bug de arquitectura en P2 | El FBX de Kenney venía con el pivote descentrado: la nave se dibujaba al lado de su anillo |
+| Un fallo de layout | `transform.Find` por ruta lanzó `NullReferenceException` y cortó el panel: la fábrica debe devolver tipos, no nombres |
+| `[Inject]` no se ejecutaba | Llegaba **después** de `Start`: la nave 3D nunca se construía. Se resuelve con un evento `Ready`, no con un orden implícito |
+| Los botones no respondían | Con el Input System nuevo, `StandaloneInputModule` es inerte: hace falta `InputSystemUIInputModule` |
+
+**Bonus si preguntan por los tests:** una aserción propia estaba mal (la ruta costaba 3, no 4). Se
+detectó ejecutando la lógica pura fuera del editor. Los tests también pueden estar equivocados.
+
+**Notas del orador (45 s):** "Los cuatro cambios están en `docs/01 §5`; los cuatro hallazgos, en el
+código. El del pivote enseña algo: agoté hipótesis de arquitectura antes de mirar el asset."
 
 ---
 
@@ -443,21 +464,33 @@ lo habilita. Pero eso es otro prototipo, no una deuda escondida."
 | ¿Quién puede mutar? | `GridModel` el mapa, `CommandProcessor` la nave, `EquipmentService` el loadout. Nadie más |
 | ¿Por qué estructuras inmutables? | Permiten comparar antes/después y razonar sobre undo sin deriva |
 
-### B3 — Cómo se corre (si piden reproducirlo)
+### B3 — Cómo se corre (funciona con el editor abierto)
 
 ```powershell
-$unity = "C:\Program Files\Unity\Hub\Editor\6000.5.9f1\Editor\Unity.exe"
-& $unity -batchmode -nographics -projectPath . -runTests `
-  -testPlatform EditMode -testResults Logs/editmode-results.xml -quit
+# Escenas: se generan solas si faltan, o por menú
+unity command --project-path . menu --path "VoidHex/Build Prototype Scenes"
+
+# Suite completa
+unity command --project-path . run_tests --mode EditMode
+unity command --project-path . run_tests --mode PlayMode --async_tests
+
+# Evidencia visual
+unity command --project-path . capture_game_view --source screen --save_path captura.png
 ```
 
+Unity 6000.5.9f1 trae el paquete `com.unity.pipeline`: el editor se controla por CLI mientras está
+abierto. El `-batchmode` clásico también existe, pero exige el proyecto sin lock (editor cerrado).
+
 En el editor: `VoidHex → Build Prototype Scenes`, luego `Window → General → Test Runner`.
+
+**Verificadores propios:** `tools/verify/check_asmdef_refs.py` (referencias), `check_scenes.py`
+(integridad de escenas) y `tools/audit` (lógica pura sin Unity).
 
 ---
 
 ## 4. Checklist de ensayo
 
-- [ ] Reemplazar los números de tests por los reales del Test Runner (captura incluida).
+- [ ] Los números de tests (22 = 21 + 1) están respaldados por `Logs/tests-*.json`.
 - [ ] Verificar que cada slide se entienda **sin** leer las notas del orador.
 - [ ] Un solo mensaje por slide: si hay dos, se parte o se recorta.
 - [ ] Las 6 demos ensayadas dos veces, con plan B (test en lugar de escena).

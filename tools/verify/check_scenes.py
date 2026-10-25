@@ -24,17 +24,18 @@ EXPECTED = {
         "P1_GridState/Runtime/Unity/GridBootstrap.cs",
         "P1_GridState/Runtime/Unity/GridCellRenderer.cs",
         "P1_GridState/Runtime/Unity/GridPresenter.cs",
-        "P1_GridState/Runtime/Unity/GridHud.cs",
+        "P1_GridState/Runtime/Unity/GridScreen.cs",
     ],
     "P2_CommandPipeline/Scenes/P2_CommandPipeline.unity": [
         "P2_CommandPipeline/Runtime/Unity/ShipView.cs",
         "P2_CommandPipeline/Runtime/Unity/TurnDemoDriver.cs",
-        "P2_CommandPipeline/Runtime/Unity/TurnHud.cs",
+        "P2_CommandPipeline/Runtime/Unity/TurnScreen.cs",
     ],
     "P3_Loadout/Scenes/P3_Loadout.unity": [
         "P3_Loadout/Runtime/Unity/LoadoutDemo.cs",
-        "P3_Loadout/Runtime/Unity/LoadoutHud.cs",
+        "P3_Loadout/Runtime/Unity/LoadoutScreen.cs",
         "P3_Loadout/Runtime/Unity/EquipmentLifetimeScope.cs",
+        "P3_Loadout/Runtime/Unity/ShipPreview.cs",
     ],
 }
 
