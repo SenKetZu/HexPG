@@ -106,6 +106,7 @@ Los resultados quedan en `Logs/*.xml`. Código de salida `0` = suite verde.
 | [`docs/04-trazabilidad.md`](./docs/04-trazabilidad.md) | Matriz comportamiento → test → defecto que detecta, y cumplimiento de la consigna |
 | [`docs/05-defensa.md`](./docs/05-defensa.md) | Guion de 20 minutos, demos y banco de preguntas |
 | [`docs/06-plan.md`](./docs/06-plan.md) | Plan hasta la entrega, riesgos y procedimiento del tag |
+| [`docs/07-presentacion.md`](./docs/07-presentacion.md) | Contenido slide por slide, listo para volcar a PowerPoint |
 
 ## Alcance
 
