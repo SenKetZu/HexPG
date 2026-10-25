@@ -85,8 +85,8 @@ namespace VoidHex.P1.Tests
             Assert.That(result.IsFound, Is.True);
             Assert.That(result.Path[0], Is.EqualTo(HexCoordinates.Origin));
             Assert.That(result.Path[result.Path.Count - 1], Is.EqualTo(new HexCoordinates(2, 0)));
-            // El asteroide en (1,0) obliga a rodearlo: 4 pasos en lugar de 2.
-            Assert.That(result.TotalCost, Is.EqualTo(4));
+            // El asteroide en (1,0) obliga a rodearlo por (0,1) y (1,1): 3 pasos de costo 1.
+            Assert.That(result.TotalCost, Is.EqualTo(3));
             foreach (var step in result.Path)
             {
                 Assert.That(query.IsPassable(step), Is.True, "La ruta no puede atravesar una celda bloqueada.");

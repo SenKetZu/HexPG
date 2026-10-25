@@ -45,8 +45,10 @@ Assets/Prototypes/
                       Tests/EditMode, Tests/PlayMode, Scenes, README.md}
   P3_Loadout/{Runtime/Domain, Runtime/Application, Runtime/Unity,
               Tests/EditMode, Scenes, Assets, README.md}
-  Editor/PrototypeSceneBuilder.cs      genera escenas y assets de P3
-docs/   doctrina, arquitectura, tests, prototipos, trazabilidad, defensa, plan
+  Editor/  PrototypeSceneBuilder.cs    genera escenas y assets de P3
+           PrototypeSceneBootstrap.cs  las genera solo si faltan
+  docs/    doctrina, arquitectura, tests, prototipos, trazabilidad, defensa, plan, presentación
+  tools/   ppt/ (deck) · audit/ (lógica sin Unity) · verify/ (referencias y compilación)
 ```
 
 Cada prototipo es independiente: no comparte escena, estado estático ni carpeta con otro.
@@ -60,17 +62,20 @@ La separación de capas se impone con asmdefs: los assemblies de dominio declara
 3. Esperar la importación. El proyecto usa el registro **OpenUPM** para VContainer
    (`Packages/manifest.json`); requiere conexión la primera vez.
 
-## Cómo generar y ejecutar cada prototipo
+## Cómo ejecutar cada prototipo
 
-Una sola vez: menú **`VoidHex → Build Prototype Scenes`**. Crea las tres escenas y los assets de P3.
+Las escenas se generan **solas** la primera vez que Unity compila el proyecto: si falta alguna,
+`PrototypeSceneBootstrap` las crea (`[InitializeOnLoad]`, una vez por sesión, sin pisar cambios).
+Para forzar la regeneración: menú **`VoidHex → Build Prototype Scenes`**.
+Para abrirlas: **`VoidHex → Open P1/P2/P3 … Scene`**.
 
-| Prototipo | Escena | Qué se ve |
+| Prototipo | Escena | Qué se ve y qué se puede hacer |
 | --- | --- | --- |
-| P1 | `Assets/Prototypes/P1_GridState/Scenes/P1_GridState.unity` | Mapa 12×12 con celdas bloqueadas, ruta óptima dibujada con gizmos y un log por **mutación real** |
-| P2 | `Assets/Prototypes/P2_CommandPipeline/Scenes/P2_CommandPipeline.unity` | Secuencia mover → atacar → mover; cada animación se completa desde `Update` |
-| P3 | `Assets/Prototypes/P3_Loadout/Scenes/P3_Loadout.unity` | `LifetimeScope` inyecta el servicio; se equipan MK I / MK II y se registran las stats |
+| P1 | `P1_GridState.unity` | Mapa 12×12 con celdas reales coloreadas (asteroides, nebulosas, ocupación). El HUD permite bloquear/liberar celdas, ocupar y **reescribir una celda con el mismo valor**: el contador de eventos no debe subir. Muestra la ruta y su costo |
+| P2 | `P2_CommandPipeline.unity` | Nave y enemigo animados por `ShipView`. El HUD envía comandos intercalados (mover/atacar/escudo), fuerza un rechazo, termina el turno y pasa a turno enemigo, mostrando PA y fase en vivo |
+| P3 | `P3_Loadout.unity` | HUD con los 4 slots, estadísticas recalculadas y botones para equipar cada módulo del catálogo (incluye MK III) y quitar por slot |
 
-Abrir la escena y presionar **Play**. Cada prototipo se ejecuta solo.
+Abrir la escena y presionar **Play**. Cada prototipo se ejecuta solo; los paneles son IMGUI, sin prefabs.
 
 ## Cómo correr los tests
 
@@ -93,7 +98,22 @@ $unity = "C:\Program Files\Unity\Hub\Editor\6000.5.9f1\Editor\Unity.exe"
   -testPlatform PlayMode -testResults Logs/playmode-results.xml -quit
 ```
 
-Los resultados quedan en `Logs/*.xml`. Código de salida `0` = suite verde.
+Los resultados quedan en `Logs/*.xml` (ignorados por git). Código de salida `0` = suite verde.
+
+> Requiere el editor **cerrado**: Unity toma un lock sobre el proyecto.
+
+## Verificación rápida sin abrir Unity
+
+Dos chequeos que no necesitan el editor y atajan los errores de configuración más comunes:
+
+```powershell
+python tools\verify\check_asmdef_refs.py     # usings vs referencias declaradas en cada asmdef
+dotnet run --project tools\audit\Audit.csproj # ejecuta la lógica pura y compara con las aserciones
+dotnet build tools\verify\VerifyUnity.csproj  # compila las capas Unity contra los DLLs reales
+```
+
+`check_asmdef_refs.py` detecta `CS0234`/`CS0012` (falta de referencias) antes de recompilar.
+`Audit` detecta aserciones de test que no coinciden con el comportamiento real.
 
 ## Documentación
 
@@ -107,6 +127,7 @@ Los resultados quedan en `Logs/*.xml`. Código de salida `0` = suite verde.
 | [`docs/05-defensa.md`](./docs/05-defensa.md) | Guion de 20 minutos, demos y banco de preguntas |
 | [`docs/06-plan.md`](./docs/06-plan.md) | Plan hasta la entrega, riesgos y procedimiento del tag |
 | [`docs/07-presentacion.md`](./docs/07-presentacion.md) | Contenido slide por slide, listo para volcar a PowerPoint |
+| [`docs/presentacion/`](./docs/presentacion/) | **Deck `.pptx` de 21 slides** + diagramas PNG + cómo importarlo a Google Slides |
 
 ## Alcance
 

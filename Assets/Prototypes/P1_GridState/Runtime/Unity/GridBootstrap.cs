@@ -5,8 +5,10 @@ using VoidHex.P1.Domain;
 namespace VoidHex.P1.Unity
 {
     /// <summary>
-    /// Composition root del prototipo P1. Construye el modelo, expone los dos contratos segregados
-    /// y ejecuta una demo guionada para que la escena muestre el comportamiento sin depender de input.
+    /// Composition root del prototipo P1. Construye el modelo y expone los dos contratos segregados.
+    ///
+    /// Las mutaciones de demo viven acá y no en las interfaces: en el juego real las dispara un comando
+    /// (capa de aplicación). La escena las usa como si fueran la entrada del jugador.
     /// </summary>
     public sealed class GridBootstrap : MonoBehaviour
     {
@@ -17,10 +19,14 @@ namespace VoidHex.P1.Unity
         private GridModel _grid;
 
         /// <summary>
-        /// Se crea de forma perezosa para que la suscripción de la vista no dependa del orden
+        /// Creación perezosa: la suscripción de la vista no depende del orden
         /// en que Unity invoca Awake/OnEnable entre componentes del mismo GameObject.
         /// </summary>
         private GridModel Grid => _grid ??= new GridModel(width, height);
+
+        public int Width => width;
+
+        public int Height => height;
 
         /// <summary>La vista recibe únicamente el contrato de publicación.</summary>
         public IGridStatePublisher Publisher => Grid;
@@ -28,75 +34,77 @@ namespace VoidHex.P1.Unity
         /// <summary>La IA y el pathfinding reciben únicamente el contrato de lectura.</summary>
         public IGridQueryService Query => Grid;
 
-        private readonly List<HexCoordinates> _demoPath = new List<HexCoordinates>();
+        public HexCoordinates StartCell { get; private set; } = HexCoordinates.Origin;
+
+        public HexCoordinates GoalCell { get; private set; }
+
+        public bool LastPathFound { get; private set; }
+
+        public int LastPathCost { get; private set; }
+
+        public PathFailure LastFailure { get; private set; } = PathFailure.None;
+
+        public IReadOnlyList<HexCoordinates> LastPath { get; private set; } = new HexCoordinates[0];
+
+        /// <summary>Eventos recibidos por la vista. Demuestra que sin mutación real no hay trabajo.</summary>
+        public int ChangeCount { get; private set; }
 
         private void Start()
         {
-            if (!runDemoOnStart) return;
+            GoalCell = new HexCoordinates(width - 1, height - 3);
+            ApplyDefaultTerrain();
+            RecomputePath();
 
-            var start = HexCoordinates.Origin;
-            var goal = new HexCoordinates(width - 1, height - 3);
+            if (runDemoOnStart)
+            {
+                Debug.Log($"[P1] Ruta {(LastPathFound ? "encontrada" : "fallida: " + LastFailure)} " +
+                          $"({LastPath.Count} celdas, costo {LastPathCost}).");
+            }
+        }
 
-            // Dos mutaciones reales: la vista debe registrar exactamente dos redibujos.
+        private void ApplyDefaultTerrain()
+        {
             Grid.SetCell(HexCell.Asteroid(new HexCoordinates(3, 3)));
+            Grid.SetCell(HexCell.Asteroid(new HexCoordinates(3, 4)));
             Grid.SetCell(HexCell.Nebula(new HexCoordinates(4, 4)));
+            Grid.SetCell(HexCell.Nebula(new HexCoordinates(5, 3)));
+        }
 
-            // Escritura sin cambio: NO debe notificar (demostración de reactividad real).
-            var unchanged = Grid.GetCell(new HexCoordinates(4, 4));
-            var mutated = Grid.SetCell(unchanged);
-            Debug.Log($"[P1] Escritura idéntica -> mutó: {mutated} (se espera False y ningún redibujo).");
+        /// <summary>Bloquea una celda (simula el efecto de un comando de terreno).</summary>
+        public bool DemoBlock(HexCoordinates cell) => Grid.SetCell(HexCell.Asteroid(cell));
 
+        /// <summary>Libera una celda bloqueada.</summary>
+        public bool DemoOpen(HexCoordinates cell) => Grid.SetCell(HexCell.Open(cell));
+
+        /// <summary>
+        /// Reescribe una celda con su mismo valor. Debe devolver false y NO emitir evento:
+        /// es la demostración en vivo de que el render es reactivo y no polling.
+        /// </summary>
+        public bool DemoRewriteSame(HexCoordinates cell)
+        {
+            if (!Grid.TryGetCell(cell, out var current)) return false;
+            return Grid.SetCell(current);
+        }
+
+        /// <summary>Ocupa o libera una celda, para mostrar que la ocupación también notifica.</summary>
+        public bool DemoToggleOccupied(HexCoordinates cell)
+        {
+            if (!Grid.TryGetCell(cell, out var current)) return false;
+            return Grid.SetOccupied(cell, !current.IsOccupied);
+        }
+
+        public void RecomputePath()
+        {
             var pathfinder = new Pathfinder(Query);
-            var result = pathfinder.FindPath(start, goal, maxCost: 40);
+            var result = pathfinder.FindPath(StartCell, GoalCell, maxCost: 60);
 
-            if (!result.IsFound)
-            {
-                Debug.LogWarning($"[P1] Sin ruta: {result.Failure}");
-                return;
-            }
-
-            _demoPath.Clear();
-            _demoPath.AddRange(result.Path);
-            Debug.Log($"[P1] Ruta encontrada: {result.Path.Count} celdas, costo {result.TotalCost}.");
+            LastPathFound = result.IsFound;
+            LastPathCost = result.TotalCost;
+            LastFailure = result.Failure;
+            LastPath = result.Path;
         }
 
-        private void OnDrawGizmos()
-        {
-            var size = 0.9f;
-            for (var q = 0; q < width; q++)
-            {
-                for (var r = 0; r < height; r++)
-                {
-                    var coordinates = new HexCoordinates(q, r);
-                    if (!Grid.TryGetCell(coordinates, out var cell)) continue;
-
-                    Gizmos.color = ColorFor(cell);
-                    Gizmos.DrawCube(ToWorld(coordinates), new Vector3(size, 0.05f, size));
-                }
-            }
-
-            Gizmos.color = Color.cyan;
-            for (var i = 1; i < _demoPath.Count; i++)
-            {
-                Gizmos.DrawLine(ToWorld(_demoPath[i - 1]) + Vector3.up * 0.1f,
-                    ToWorld(_demoPath[i]) + Vector3.up * 0.1f);
-            }
-        }
-
-        private static Color ColorFor(HexCell cell)
-        {
-            if (cell.IsOccupied) return Color.magenta;
-            if (!cell.IsPassable) return new Color(0.4f, 0.2f, 0.1f);
-            if (cell.MovementCost > 1) return new Color(0.2f, 0.3f, 0.6f);
-            return new Color(0.15f, 0.2f, 0.25f);
-        }
-
-        /// <summary>Conversión axial a mundo solo para dibujar: la lógica no conoce Unity.</summary>
-        private static Vector3 ToWorld(HexCoordinates coordinates)
-        {
-            var x = 1.5f * coordinates.Q;
-            var z = 1.7320508f * (coordinates.R + coordinates.Q * 0.5f);
-            return new Vector3(x, 0f, z);
-        }
+        /// <summary>Lo llama la vista al recibir un evento; así el HUD lo muestra sin consultar el modelo.</summary>
+        internal void RegisterChange() => ChangeCount++;
     }
 }

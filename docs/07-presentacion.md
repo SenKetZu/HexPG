@@ -1,6 +1,11 @@
 # 07 — Presentación TP2 (guion de slides)
 
-> **Para qué sirve este archivo:** es el contenido listo para volcar a PowerPoint.
+> **Deck generado:** [`presentacion/TP2-VoidHex-Tactics.pptx`](./presentacion/TP2-VoidHex-Tactics.pptx)
+> — 21 slides 16:9 con diagramas nativos y notas del orador. Los diagramas también están como PNG en
+> [`presentacion/assets/`](./presentacion/assets). Para regenerar: `python tools/ppt/build_deck.py`.
+> Este documento es la **fuente** del deck: si cambiás algo acá, regenerá el `.pptx`.
+>
+> **Para qué sirve este archivo:** es el contenido listo para PowerPoint.
 > Cada bloque = una slide. Copiá el *título*, los *bullets* y el *visual*; las **notas del orador**
 > van en el recuadro de notas, no en la slide.
 > **Regla que ordena todo:** la devolución del TP1 dijo *"los problemas y soluciones están bien…

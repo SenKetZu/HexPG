@@ -49,6 +49,27 @@
 .codebase-memory/
 .tmp-*
 
+# ---------------------------------------------------------------------------
+# Artefactos de build de las herramientas (no van al repo)
+# ---------------------------------------------------------------------------
+# Salidas de dotnet build / msbuild en cualquier profundidad (tools/audit, etc.)
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+
+# Resultados de test y cobertura
+*.trx
+*.coverage
+*.coveragexml
+*-results.xml
+TestResults/
+test-results/
+
+# Excepción: el proyecto de la herramienta de auditoría SÍ se versiona.
+# La regla *.csproj de arriba (template de Unity) lo ignoraría por defecto.
+!tools/audit/Audit.csproj
+
 # Gradle cache directory
 .gradle/
 
