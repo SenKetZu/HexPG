@@ -138,8 +138,8 @@ InitTestScene*.unity*
 /[Aa]ssets/[Ss]ceneDependencyCache*
 
 # ---------------------------------------------------------------------------
-# Excepción: los proyectos de las herramientas de verificación SÍ se versionan.
-# Deben ir DESPUÉS de la regla *.csproj: en gitignore gana la última coincidencia.
+# Excepciï¿½n: los proyectos de las herramientas de verificaciï¿½n Sï¿½ se versionan.
+# Deben ir DESPUï¿½S de la regla *.csproj: en gitignore gana la ï¿½ltima coincidencia.
 # ---------------------------------------------------------------------------
 !tools/audit/*.csproj
 !tools/verify/*.csproj
