@@ -10,7 +10,8 @@
         "VoidHex.P3.Domain",
         "VoidHex.P3.Application",
         "VoidHex.P3.Unity",
-        "VoidHex.UiKit"
+        "VoidHex.UiKit",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

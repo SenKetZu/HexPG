@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using VoidHex.GameLoop.Logic;
 using VoidHex.P3.Domain;
@@ -50,6 +51,8 @@ namespace VoidHex.GameLoop.Unity
         private Text _turnValue;
         private Text _rangeValue;
         private Text _sightValue;
+        private Text _hoverValue;
+        private Text _reachValue;
         private Text _statusValue;
         private Image _apBar;
 
@@ -88,13 +91,88 @@ namespace VoidHex.GameLoop.Unity
         private void Update()
         {
             if (driver == null) return;
-            if (driver.Session.Phase != LoopPhase.Combat || driver.IsBusy) return;
-            if (!Input.GetMouseButtonDown(0)) return;
 
-            if (!GridPointer.TryPickCell(Camera.main, Input.mousePosition,
+            // El proyecto usa SOLO el Input System nuevo (activeInputHandler = 1).
+            // UnityEngine.Input lanza InvalidOperationException en ese modo, así que el puntero
+            // se lee del dispositivo actual y no de la API clásica.
+            var mouse = Mouse.current;
+            if (mouse == null) return;
+
+            var pointer = mouse.position.ReadValue();
+            var inCombat = driver.Session.Phase == LoopPhase.Combat && !driver.IsBusy;
+
+            // Hover: se recalcula cada frame porque depende del mouse, no del estado del juego.
+            // Es una consulta pura (no muta nada) y dibuja la ruta previsualizada.
+            if (inCombat && GridPointer.TryPickCell(Camera.main, pointer,
+                    driver.Bootstrap.Width, driver.Bootstrap.Height, out var hovered))
+            {
+                UpdateHoverLabel(driver.Hover(hovered), hovered);
+            }
+            else
+            {
+                driver.Hover(null);
+                UpdateHoverLabel(default, null);
+            }
+
+            if (!inCombat || !mouse.leftButton.wasPressedThisFrame) return;
+
+            // El clic sobre UI no debe mover la nave: GridPointer ya descarta ese caso.
+            if (!GridPointer.TryPickCell(Camera.main, pointer,
                     driver.Bootstrap.Width, driver.Bootstrap.Height, out var cell)) return;
 
             _ = MoveAsync(cell);
+        }
+
+        /// <summary>
+        /// Refleja la previsualización en el panel. Se actualiza por frame porque depende del mouse,
+        /// pero solo escribe texto: no consulta el modelo ni recalcula reglas.
+        /// </summary>
+        private void UpdateHoverLabel(MovePreview preview, P1Coords? cell)
+        {
+            if (_hoverValue == null) return;
+
+            if (!cell.HasValue || preview.Path.Count == 0)
+            {
+                _hoverValue.text = "—";
+                _hoverValue.color = UiTheme.Dim;
+                UpdateReachLabel(null);
+                return;
+            }
+
+            if (preview.IsValid)
+            {
+                _hoverValue.text = $"{preview.Cost} PA  ·  {preview.Path.Count - 1} casillas";
+                _hoverValue.color = UiTheme.Success;
+            }
+            else
+            {
+                _hoverValue.text = !preview.WithinRange
+                    ? "fuera de alcance"
+                    : !preview.CanAfford ? "sin PA suficientes" : "camino bloqueado";
+                _hoverValue.color = UiTheme.Danger;
+            }
+
+            UpdateReachLabel(cell);
+        }
+
+        /// <summary>
+        /// "Desde esa casilla, ¿alcanzo?" — la misma pregunta que responde el área dibujada.
+        /// </summary>
+        private void UpdateReachLabel(P1Coords? cell)
+        {
+            if (_reachValue == null) return;
+
+            if (!cell.HasValue)
+            {
+                _reachValue.text = "—";
+                _reachValue.color = UiTheme.Dim;
+                return;
+            }
+
+            var canShoot = driver.Session.CanAttackFrom(cell.Value);
+
+            _reachValue.text = canShoot ? "sí · desde acá le pegás" : "no · no llegás";
+            _reachValue.color = canShoot ? UiTheme.Success : UiTheme.Muted;
         }
 
         private async System.Threading.Tasks.Task MoveAsync(P1Coords cell)
@@ -150,8 +228,8 @@ namespace VoidHex.GameLoop.Unity
                 var label = modules[i].DisplayName;
 
                 Ui.Button(panel, "mod_" + id, Pad, y, ContentW, label, UiTheme.Amber,
-                    () => Equip(id), 34f, Describe(modules[i]));
-                y += 38f;
+                    () => Equip(id), 40f, Describe(modules[i]));
+                y += 44f;
             }
 
             Ui.Separator(panel, Pad, y + 4f, ContentW);
@@ -179,37 +257,50 @@ namespace VoidHex.GameLoop.Unity
             _phaseValue = Ui.Row(panel, "r_phase", Pad, 236f, ContentW, "Fase", "—");
             _turnValue = Ui.Row(panel, "r_turn", Pad, 260f, ContentW, "Turno", "1");
             _rangeValue = Ui.Row(panel, "r_range", Pad, 284f, ContentW, "Distancia a la torreta", "—");
-            _sightValue = Ui.Row(panel, "r_sight", Pad, 308f, ContentW, "Línea de visión", "—");
+            _sightValue = Ui.Row(panel, "r_sight", Pad, 308f, ContentW, "La torreta te ve", "—");
             _combatDamage = Ui.Row(panel, "r_damage", Pad, 332f, ContentW, "Daño por disparo", "—");
+            _hoverValue = Ui.Row(panel, "r_hover", Pad, 356f, ContentW, "Camino bajo el mouse", "—");
+            _reachValue = Ui.Row(panel, "r_reach", Pad, 380f, ContentW, "Alcance desde esa casilla", "—");
 
-            Ui.Separator(panel, Pad, 360f, ContentW);
-            Ui.Label(panel, "act_title", Pad, 372f, ContentW, 18f, "ACCIONES", UiTheme.KickerSize,
+            // Leyenda del tablero: sin esto los aros se leen como decoración.
+            const float legendY = 408f;
+            Ui.Dot(panel, "legend_amber", Pad, legendY + 1f, 10f, new Color(0.98f, 0.75f, 0.15f));
+            Ui.Label(panel, "legend_amber_t", Pad + 18f, legendY - 3f, ContentW * 0.5f, 18f,
+                "Tu nave", UiTheme.SmallSize, UiTheme.Muted);
+
+            Ui.Dot(panel, "legend_red", Pad + ContentW * 0.5f, legendY + 1f, 10f,
+                new Color(0.85f, 0.30f, 0.28f));
+            Ui.Label(panel, "legend_red_t", Pad + ContentW * 0.5f + 18f, legendY - 3f, ContentW * 0.46f, 18f,
+                "Alcance desde el mouse", UiTheme.SmallSize, UiTheme.Muted);
+
+            Ui.Separator(panel, Pad, 438f, ContentW);
+            Ui.Label(panel, "act_title", Pad, 450f, ContentW, 18f, "ACCIONES", UiTheme.KickerSize,
                 UiTheme.Muted, bold: true);
 
-            _attackButton = Ui.Button(panel, "attack", Pad, 396f, ContentW, "Atacar torreta  ·  2 PA",
+            _attackButton = Ui.Button(panel, "attack", Pad, 474f, ContentW, "Atacar torreta  ·  2 PA",
                 UiTheme.Danger, () => _ = AttackAsync(), 46f, "Necesita rango y línea de visión");
 
-            _endTurnButton = Ui.Button(panel, "end_turn", Pad, 448f, ContentW, "Terminar turno",
+            _endTurnButton = Ui.Button(panel, "end_turn", Pad, 526f, ContentW, "Terminar turno",
                 UiTheme.Success, () => _ = EndTurnAsync(), 46f, "La torreta responde y recargás PA");
 
-            write_hint(panel, 508f, "Clic en una casilla para moverte. El costo depende del camino.");
+            write_hint(panel, 584f, "Movés con clic · el área roja es tu alcance desde la casilla apuntada.");
 
-            _statusValue = Ui.Label(panel, "status", Pad, 550f, ContentW, 46f, string.Empty,
+            _statusValue = Ui.Label(panel, "status", Pad, 626f, ContentW, 46f, string.Empty,
                 UiTheme.SmallSize, UiTheme.Amber);
 
-            Ui.Separator(panel, Pad, 602f, ContentW);
-            Ui.Label(panel, "log_title", Pad, 614f, ContentW, 18f, "REGISTRO", UiTheme.KickerSize,
+            Ui.Separator(panel, Pad, 678f, ContentW);
+            Ui.Label(panel, "log_title", Pad, 690f, ContentW, 18f, "REGISTRO", UiTheme.KickerSize,
                 UiTheme.Muted, bold: true);
 
             for (var i = 0; i < LogLines; i++)
             {
-                _logRows.Add(Ui.Label(panel, "log_" + i, Pad, 638f + i * 22f, ContentW, 20f, "—",
+                _logRows.Add(Ui.Label(panel, "log_" + i, Pad, 714f + i * 22f, ContentW, 20f, "—",
                     UiTheme.SmallSize, UiTheme.Dim));
             }
 
-            Ui.Label(panel, "loop_note", Pad, 782f, ContentW, 90f,
+            Ui.Label(panel, "loop_note", Pad, 852f, ContentW, 90f,
                 "Hangar (P3) → despliegue → combate (P1 + P2) → resultado → hangar.\n" +
-                "Mover consulta la grilla; atacar valida rango y visión; el daño viene del loadout.",
+                "El alcance lo calcula la sesión con rango y línea de visión.",
                 UiTheme.SmallSize, UiTheme.Dim);
 
             _returnButton = Ui.Button(panel, "return", Pad, PanelH - 92f, ContentW, "Volver al hangar",
@@ -294,7 +385,7 @@ namespace VoidHex.GameLoop.Unity
             _hangarHull.Value.text = stats.Hull.ToString();
 
             var damage = driver.Bootstrap.ResolveAttackDamage();
-            _damageValue.text = $"{damage} de daño por disparo  ·  alcance 3  ·  victorias: " +
+            _damageValue.text = $"{damage} de daño por disparo  ·  alcance {driver.Session.AttackRange}  ·  victorias: " +
                                 $"{driver.Session.Victories}";
 
             foreach (var slot in Slots)
@@ -335,8 +426,10 @@ namespace VoidHex.GameLoop.Unity
             };
 
             _turnValue.text = session.Turn.ToString();
-            _rangeValue.text = $"{session.DistanceToTurret}  (alcance de la torreta: {session.TurretRange})";
-            _sightValue.text = session.TurretHasLineOfSight ? "libre" : "bloqueada";
+            _rangeValue.text = $"{session.DistanceToTurret}  (la torreta llega a {session.TurretRange})";
+
+            // Se lee como peligro, no como error: si la torreta tiene línea de visión, te va a disparar.
+            _sightValue.text = session.TurretHasLineOfSight ? "sí · te puede disparar" : "no · estás a cubierto";
             _sightValue.color = session.TurretHasLineOfSight ? UiTheme.Danger : UiTheme.Success;
 
             var inCombat = session.Phase == LoopPhase.Combat;
@@ -344,7 +437,8 @@ namespace VoidHex.GameLoop.Unity
             _endTurnButton.interactable = inCombat;
             _returnButton.gameObject.SetActive(!inCombat);
 
-            _combatDamage.text = $"{session.AttackDamage}  ·  rango 3  ·  victorias: {session.Victories}";
+            _combatDamage.text =
+                $"{session.AttackDamage}  ·  rango {session.AttackRange}  ·  victorias: {session.Victories}";
 
             _statusValue.text = inCombat
                 ? "Tu turno: elegí una casilla o atacá."

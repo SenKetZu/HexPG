@@ -15,14 +15,22 @@ namespace VoidHex.P1.Domain
     public readonly struct PathResult
     {
         public bool IsFound { get; }
-        public IReadOnlyList<HexCoordinates> Path { get; }
+
+        /// <summary>
+        /// Nunca null, ni en <c>default(PathResult)</c>: un struct creado por defecto no ejecuta el
+        /// constructor y la auto-propiedad quedaría en null. La ausencia se resuelve en el tipo.
+        /// </summary>
+        public IReadOnlyList<HexCoordinates> Path => _path ?? System.Array.Empty<HexCoordinates>();
+
         public int TotalCost { get; }
         public PathFailure Failure { get; }
+
+        private readonly IReadOnlyList<HexCoordinates> _path;
 
         private PathResult(bool isFound, IReadOnlyList<HexCoordinates> path, int totalCost, PathFailure failure)
         {
             IsFound = isFound;
-            Path = path;
+            _path = path ?? System.Array.Empty<HexCoordinates>();
             TotalCost = totalCost;
             Failure = failure;
         }

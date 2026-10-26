@@ -242,22 +242,39 @@ namespace VoidHex.UiKit
 
             var hasSubtitle = !string.IsNullOrEmpty(subtitle);
 
-            // El texto se reparte dentro de la altura disponible: con botones compactos (40 px)
-            // las posiciones fijas desbordaban y el subtítulo caía fuera del botón.
+            // El texto se reparte dentro de la altura disponible y la tipografía se ajusta a la caja.
+            // Unity usa Truncate vertical: si la caja es más baja que la línea, el texto desaparece
+            // por completo (así quedaban los botones del catálogo: barras sin ninguna etiqueta).
             var innerH = h - 2f;
-            var labelTop = hasSubtitle ? Mathf.Max(2f, innerH * 0.10f) : 0f;
-            var labelH = hasSubtitle ? innerH * 0.50f : innerH;
-            var subtitleTop = labelTop + labelH - 1f;
-            var subtitleH = Mathf.Max(10f, innerH * 0.36f);
+            float labelTop;
+            float labelH;
+            float subtitleTop = 0f;
+            var subtitleH = 0f;
+
+            if (hasSubtitle)
+            {
+                var gap = Mathf.Max(1f, innerH * 0.04f);
+
+                labelTop = Mathf.Max(1f, innerH * 0.08f);
+                labelH = (innerH - gap) * 0.55f;
+                subtitleTop = labelTop + labelH;
+                subtitleH = Mathf.Max(8f, innerH - subtitleTop);
+            }
+            else
+            {
+                labelTop = 0f;
+                labelH = innerH;
+            }
 
             Label(fill, "label", 18f, labelTop, w - 40f, labelH,
-                title, UiTheme.ButtonSize, UiTheme.Text,
-                hasSubtitle ? TextAnchor.LowerLeft : TextAnchor.MiddleLeft, bold: true);
+                title, FitFont(UiTheme.ButtonSize, labelH), UiTheme.Text,
+                hasSubtitle ? TextAnchor.UpperLeft : TextAnchor.MiddleLeft, bold: true);
 
             if (hasSubtitle)
             {
                 Label(fill, "subtitle", 18f, subtitleTop, w - 40f, subtitleH, subtitle,
-                    UiTheme.SmallSize - 1, UiTheme.Muted.WithAlpha(0.95f), TextAnchor.UpperLeft);
+                    FitFont(UiTheme.SmallSize - 1, subtitleH), UiTheme.Muted.WithAlpha(0.95f),
+                    TextAnchor.UpperLeft);
             }
 
             var button = outer.gameObject.AddComponent<Button>();
@@ -275,6 +292,19 @@ namespace VoidHex.UiKit
 
             if (onClick != null) button.onClick.AddListener(onClick);
             return button;
+        }
+
+        /// <summary>
+        /// Mayor tamaño de fuente que entra en una caja de texto sin que Unity la recorte.
+        ///
+        /// El Text de uGUI con <c>VerticalWrapMode.Truncate</c> no reduce la tipografía: descarta la
+        /// línea que no entra. Por eso hay que calcularlo antes de crear la etiqueta.
+        /// 1,35 es la altura de línea de la fuente LegacyRuntime respecto del tamaño de fuente.
+        /// </summary>
+        private static int FitFont(int preferred, float boxHeight)
+        {
+            var fitting = Mathf.FloorToInt(boxHeight / 1.35f);
+            return Mathf.Clamp(Mathf.Min(preferred, fitting), 9, preferred);
         }
 
         /// <summary>Barra de progreso con etiqueta y valor numérico.</summary>

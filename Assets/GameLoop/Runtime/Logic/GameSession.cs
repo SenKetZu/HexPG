@@ -65,6 +65,12 @@ namespace VoidHex.GameLoop.Logic
 
         public int TurretRange => 3;
 
+        /// <summary>
+        /// Alcance del arma de la nave. Es una regla distinta de <see cref="TurretRange"/>, aunque
+        /// hoy compartan valor: equilibrar una no debería mover la otra.
+        /// </summary>
+        public int AttackRange => 3;
+
         public int AttackCost => 2;
 
         /// <summary>Alcance de movimiento del turno: sale del stat Movement del loadout.</summary>
@@ -83,6 +89,73 @@ namespace VoidHex.GameLoop.Logic
             _grid.HasLineOfSight(_playerCell, _turret);
 
         public bool TurretCanFire => DistanceToTurret <= TurretRange && TurretHasLineOfSight;
+
+        // ------------------------------------------------------------------ alcance de ataque
+
+        /// <summary>
+        /// Celdas que el arma alcanza <b>desde</b> <paramref name="origin"/>.
+        ///
+        /// Es el alcance del arma, no el área del enemigo: sirve para responder "si me paro acá,
+        /// ¿a qué llego?". El centro lo elige la presentación (la casilla bajo el mouse), no la sesión.
+        ///
+        /// No es solo "distancia ≤ alcance": un asteroide corta la línea de visión desde ese origen.
+        /// Se usa la misma pareja (rango + LOS) que valida <see cref="GridAttackCommand"/>, así lo que
+        /// se pinta y lo que se acepta al disparar no pueden divergir.
+        /// </summary>
+        public IReadOnlyList<P1Coords> AttackReach(P1Coords origin)
+        {
+            var cells = new List<P1Coords>();
+
+            var originP2 = HexCoords.FromGrid(origin);
+
+            for (var dq = -TurretRange; dq <= TurretRange; dq++)
+            {
+                for (var dr = -TurretRange; dr <= TurretRange; dr++)
+                {
+                    var cell = new P1Coords(origin.Q + dq, origin.R + dr);
+
+                    if (cell.Equals(origin)) continue;
+                    if (!IsOpenGround(cell)) continue;
+
+                    var distance = P2Coords.Distance(originP2, HexCoords.FromGrid(cell));
+                    if (distance > TurretRange) continue;
+
+                    if (!_grid.HasLineOfSight(origin, cell)) continue;
+
+                    cells.Add(cell);
+                }
+            }
+
+            return cells;
+        }
+
+        /// <summary>True si desde <paramref name="origin"/> se alcanza la torreta ahora.</summary>
+        public bool CanAttackFrom(P1Coords origin)
+        {
+            // Parado sobre la torreta no hay disparo: es el propio objetivo, y <see cref="AttackReach"/>
+            // nunca incluye el origen, así que sin esta guarda ambas respuestas se contradecían.
+            if (origin.Equals(_turret)) return false;
+
+            if (!IsOpenGround(origin)) return false;
+
+            var distance = P2Coords.Distance(HexCoords.FromGrid(origin), State.EnemyPosition);
+            if (distance > TurretRange) return false;
+
+            return _grid.HasLineOfSight(origin, _turret);
+        }
+
+        /// <summary>True si desde la posición actual de la nave un disparo sería válido.</summary>
+        public bool IsInAttackRange(P1Coords cell) => CanAttackFrom(cell);
+
+        /// <summary>
+        /// Terreno donde una nave puede estar: existe y no está bloqueado.
+        ///
+        /// Deliberadamente NO usa <c>IGridQueryService.IsPassable</c>: ese contrato también descarta
+        /// las celdas occupadas, y la nave ocupa su propia celda. Usarlo hacía que el área de ataque
+        /// y el rango nunca incluyeran la posición actual del jugador.
+        /// </summary>
+        private bool IsOpenGround(P1Coords cell)
+            => _grid.TryGetCell(cell, out var data) && data.IsPassable;
 
         // ------------------------------------------------------------------ ciclo
 
@@ -130,9 +203,41 @@ namespace VoidHex.GameLoop.Logic
 
         // ------------------------------------------------------------------ acciones
 
-        public LoopActionResult TryMove(P1Coords target)
+        /// <summary>
+        /// Calcula qué pasaría al intentar moverse a <paramref name="target"/>, sin mutar nada.
+        ///
+        /// La usa la previsualización: la pantalla pide la ruta al pasar el mouse y la dibuja.
+        /// Devuelve la misma evaluación que usaría <see cref="TryMove"/>, así lo que se muestra
+        /// y lo que ocurre al hacer clic no pueden divergir.
+        /// </summary>
+        public MovePreview PreviewMove(P1Coords target)
         {
-            if (Phase != LoopPhase.Combat)
+            if (Phase != LoopPhase.Combat) return MovePreview.Blocked(PathFailure.None);
+
+            // La casilla actual se evalúa ANTES de la transitabilidad: la nave la ocupa, así que
+            // `IsPassable` es false para ella. Comparar después hacía que apuntar a la propia
+            // casilla se reportara como "camino bloqueado".
+            if (target.Equals(_playerCell))
+            {
+                return MovePreview.Evaluate(new[] { target }, 0, 0, MaxSteps, State.ActionPoints);
+            }
+
+            if (!_grid.Contains(target) || !_grid.IsPassable(target))
+            {
+                return MovePreview.Blocked(PathFailure.InvalidGoal);
+            }
+
+            var pathfinder = new Pathfinder(_grid);
+            var path = pathfinder.FindPath(_playerCell, target, maxCost: 999);
+
+            if (!path.IsFound) return MovePreview.Blocked(path.Failure);
+
+            return MovePreview.Evaluate(path.Path, path.TotalCost, path.Path.Count - 1, MaxSteps,
+                State.ActionPoints);
+        }
+
+        public LoopActionResult TryMove(P1Coords target)
+        {            if (Phase != LoopPhase.Combat)
             {
                 return LoopActionResult.Rejected(
                     CommandValidation.Rejected(CommandRejection.WrongPhase, 0, State.ActionPoints),
@@ -192,7 +297,7 @@ namespace VoidHex.GameLoop.Logic
                     "No es el turno de la nave.");
             }
 
-            var command = new GridAttackCommand(_grid, AttackDamage, TurretRange, AttackCost);
+            var command = new GridAttackCommand(_grid, AttackDamage, AttackRange, AttackCost);
             var validation = command.Validate(State);
 
             if (!validation.IsAllowed)
@@ -272,7 +377,7 @@ namespace VoidHex.GameLoop.Logic
                 case CommandRejection.LineOfSightBlocked:
                     return "Un asteroide corta la línea de visión.";
                 case CommandRejection.OutOfRange:
-                    return $"Fuera de rango: la torreta está a {DistanceToTurret}, el arma llega a {TurretRange}.";
+                    return $"Fuera de rango: la torreta está a {DistanceToTurret}, el arma llega a {AttackRange}.";
                 case CommandRejection.TargetDestroyed:
                     return "La torreta ya está destruida.";
                 case CommandRejection.NotEnoughActionPoints:

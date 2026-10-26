@@ -26,8 +26,21 @@ namespace VoidHex.UiKit
             if (_mesh != null) return _mesh;
 
             const int sides = 6;
-            var vertices = new Vector3[(sides * 4) + 2];
-            var triangles = new int[(sides * 3) + (sides * 6)];
+
+            // Conteo explícito: 1 centro + 6 borde por tapa (2 tapas) y 4 vértices por lado.
+            // Un array corto lanzaba IndexOutOfRange dentro de la construcción y dejaba el
+            // tablero sin malla: el síntoma era un mapa invisible, no un error visible.
+            const int capVertices = 1 + sides;
+            const int sideVertices = sides * 4;
+            const int vertexCount = (capVertices * 2) + sideVertices;
+
+            // 6 triángulos por tapa (abanico) y 2 por lado.
+            const int capTriangles = sides * 3;
+            const int sideTriangles = sides * 6;
+            const int indexCount = (capTriangles * 2) + sideTriangles;
+
+            var vertices = new Vector3[vertexCount];
+            var triangles = new int[indexCount];
 
             var v = 0;
             var t = 0;
@@ -133,6 +146,53 @@ namespace VoidHex.UiKit
             go.transform.localScale = new Vector3(radius, height, radius);
 
             return go;
+        }
+
+        /// <summary>
+        /// Contorno hexagonal hecho con 6 segmentos finos.
+        ///
+        /// Se construye con cubos en lugar de una malla extra: es más simple, no necesita materiales
+        /// con máscara de recorte y se ve igual desde cualquier ángulo de la cámara cenital.
+        /// El hexágono regular tiene lado = radio, y la apotema (distancia al centro de cada lado)
+        /// es radio · cos(30°).
+        /// </summary>
+        public static Transform CreateOutline(string name, Transform parent, float radius, float thickness,
+            float height, Material material)
+        {
+            var root = new GameObject(name).transform;
+            root.SetParent(parent, false);
+
+            const int sides = 6;
+            var apothem = radius * 0.8660254f;
+
+            for (var i = 0; i < sides; i++)
+            {
+                // Centro de cada lado: a mitad de camino entre dos vértices (vértices en 60°·k).
+                var angleDeg = (60f * i) + 30f;
+                var angleRad = angleDeg * Mathf.Deg2Rad;
+
+                var segment = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                segment.name = name + "_" + i;
+                segment.transform.SetParent(root, false);
+
+                segment.transform.localPosition = new Vector3(
+                    Mathf.Cos(angleRad) * apothem,
+                    height,
+                    Mathf.Sin(angleRad) * apothem);
+
+                // El lado de un hexágono regular mide lo mismo que su radio.
+                segment.transform.localScale = new Vector3(radius, thickness, thickness);
+
+                // El eje local X del cubo se alinea con la tangente del lado.
+                segment.transform.localRotation = Quaternion.Euler(0f, -(angleDeg + 90f), 0f);
+
+                var collider = segment.GetComponent<Collider>();
+                SafeObjects.Destroy(collider);
+
+                segment.GetComponent<MeshRenderer>().sharedMaterial = material;
+            }
+
+            return root;
         }
     }
 }

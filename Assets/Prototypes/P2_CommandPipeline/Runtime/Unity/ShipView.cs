@@ -126,25 +126,35 @@ namespace VoidHex.P2.Unity
 
             var start = ShipModel.Start();
 
-            _player = SpawnModel(ModelLibrary.ShipSpeederA, "PlayerShip", 0.62f);
+            _player = SpawnModel(ModelLibrary.ShipSpeederA, "PlayerShip", 1.02f,
+                new Color(0.30f, 0.85f, 0.95f), emission: 0.45f);
             _player.position = ToWorld(start.Position);
 
-            _enemy = SpawnModel(ModelLibrary.EnemyTurret, "EnemyTurret", 0.55f);
+            // El enemigo es más grande que la nave y más grande que una casilla: es el objetivo del
+            // juego, no un detalle del decorado. Con 0.55 se confundía con una roca.
+            //
+            // El acento es un rojo apagado y no saturado: el metalRed del kit es una chapa plana y
+            // un rojo puro la convertía en un rectángulo neón que tapaba la forma de la torreta.
+            _enemy = SpawnModel(ModelLibrary.EnemyTurret, "EnemyTurret", 1.12f,
+                new Color(0.70f, 0.16f, 0.16f), emission: 0.10f);
             _enemy.position = ToWorld(start.EnemyPosition);
             _enemyBaseScale = _enemy.localScale;
 
             _ringMaterial = ModelLibrary.CreateLitMaterial(new Color(0.25f, 0.85f, 0.95f), emission: 1.1f);
-            _playerRing = BuildRing("PlayerRing", _ringMaterial, 0.34f, _player);
+            _playerRing = BuildRing("PlayerRing", _ringMaterial, 0.42f, _player);
             _enemyRing = BuildRing("EnemyRing", ModelLibrary.CreateLitMaterial(
-                new Color(0.95f, 0.40f, 0.40f), emission: 0.9f), 0.32f, _enemy);
+                new Color(0.98f, 0.30f, 0.26f), emission: 0.90f), 0.58f, _enemy);
         }
 
-        private Transform SpawnModel(string modelName, string name, float size)
+        private Transform SpawnModel(string modelName, string name, float size, Color accent, float emission = 0f)
         {
             var holder = new GameObject(name).transform;
             holder.SetParent(transform, false);
 
-            var instance = ModelLibrary.Spawn(modelName, holder, size);
+            // El modelo se deja tal como viene de Kenney (acero, paneles oscuros y cristales) y solo
+            // se repinta el submesh de acento: así el jugador y la torreta se distinguen por color
+            // sin dejar de ser las naves del kit. Repintar todo las volvía siluetas planas.
+            var instance = ModelLibrary.Spawn(modelName, holder, size, accent, emission);
             if (instance == null)
             {
                 // Respaldo: si el modelo falta, una primitiva mantiene la demo funcionando.
@@ -152,8 +162,9 @@ namespace VoidHex.P2.Unity
                 instance.transform.SetParent(holder, false);
                 instance.transform.localScale = Vector3.one * size;
 
-                var collider = instance.GetComponent<Collider>();
-                if (collider != null) Destroy(collider);
+                SafeObjects.Destroy(instance.GetComponent<Collider>());
+
+                ModelLibrary.TintRenderers(instance, accent, emission);
             }
 
             holder.localPosition = new Vector3(0f, hoverHeight, 0f);
@@ -183,8 +194,7 @@ namespace VoidHex.P2.Unity
                 segment.transform.localScale = new Vector3(radius * 0.42f, 0.02f, 0.035f);
                 segment.transform.localRotation = Quaternion.Euler(0f, -angle * Mathf.Rad2Deg, 0f);
 
-                var collider = segment.GetComponent<Collider>();
-                if (collider != null) Destroy(collider);
+                SafeObjects.Destroy(segment.GetComponent<Collider>());
 
                 segment.GetComponent<Renderer>().sharedMaterial = material;
             }

@@ -107,7 +107,7 @@ namespace VoidHex.P3.Unity
                 segment.transform.localRotation = Quaternion.Euler(0f, -angle * Mathf.Rad2Deg, 0f);
 
                 var collider = segment.GetComponent<Collider>();
-                if (collider != null) Destroy(collider);
+                SafeObjects.Destroy(collider);
 
                 segment.GetComponent<Renderer>().sharedMaterial = _energyMaterial;
             }

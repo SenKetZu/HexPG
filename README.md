@@ -122,15 +122,24 @@ Los resultados quedan en `Logs/*.xml` (ignorados por git). Código de salida `0`
 
 ## Verificación rápida sin abrir Unity
 
-Dos chequeos que no necesitan el editor y atajan los errores de configuración más comunes:
+Cuatro chequeos que no necesitan el editor y atajan los errores de configuración más comunes:
 
 ```powershell
 python tools\verify\check_asmdef_refs.py     # usings vs referencias declaradas en cada asmdef
+python tools\verify\check_layers.py          # MonoBehaviours, dominio puro y destrucción de objetos
 dotnet run --project tools\audit\Audit.csproj # ejecuta la lógica pura y compara con las aserciones
 dotnet build tools\verify\VerifyUnity.csproj  # compila las capas Unity contra los DLLs reales
 ```
 
 `check_asmdef_refs.py` detecta `CS0234`/`CS0012` (falta de referencias) antes de recompilar.
+`check_layers.py` hace cumplir las separaciones que el proyecto declara:
+
+| Regla | Qué impide |
+| --- | --- |
+| R1 | Un `MonoBehaviour` fuera de `Unity/`, `Editor/` o tests: la regla deja de depender del motor |
+| R2 | Tipos de Unity en un assembly con `noEngineReferences: true` |
+| R3 | `Object.Destroy` directo: en el editor no destruye y tira "Destroy may not be called from edit mode" |
+
 `Audit` detecta aserciones de test que no coinciden con el comportamiento real.
 
 ## Documentación
@@ -145,6 +154,7 @@ dotnet build tools\verify\VerifyUnity.csproj  # compila las capas Unity contra l
 | [`docs/05-defensa.md`](./docs/05-defensa.md) | Guion de 20 minutos, demos y banco de preguntas |
 | [`docs/06-plan.md`](./docs/06-plan.md) | Plan hasta la entrega, riesgos y procedimiento del tag |
 | [`docs/07-presentacion.md`](./docs/07-presentacion.md) | Contenido slide por slide, listo para volcar a PowerPoint |
+| [`docs/08-assessment-materiales.md`](./docs/08-assessment-materiales.md) | **Diagnóstico medido** de por qué los modelos del kit no se ven bien, y qué queda abierto |
 | [`docs/presentacion/`](./docs/presentacion/) | **Deck `.pptx` de 21 slides** + diagramas PNG + cómo importarlo a Google Slides |
 
 ## Alcance

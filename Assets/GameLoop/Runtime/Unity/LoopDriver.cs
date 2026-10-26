@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using UnityEngine;
 using VoidHex.GameLoop.Logic;
-using VoidHex.P2.Domain;
 using VoidHex.P2.Unity;
 using P1Coords = VoidHex.P1.Domain.HexCoordinates;
 
@@ -18,6 +17,7 @@ namespace VoidHex.GameLoop.Unity
     public sealed class LoopDriver : MonoBehaviour
     {
         [SerializeField] private LoopBootstrap bootstrap;
+        [SerializeField] private LoopGridView gridView;
         [SerializeField] private ShipView presentation;
 
         private ShipView _presentation;
@@ -53,27 +53,69 @@ namespace VoidHex.GameLoop.Unity
             }
         }
 
+        private LoopGridView GridView => gridView != null ? gridView : gridView = GetComponent<LoopGridView>();
+
+        // ------------------------------------------------------------------ previsualización
+
+        /// <summary>
+        /// Informa qué casilla está bajo el mouse y dibuja la ruta que se recorrería.
+        ///
+        /// La consulta la resuelve la sesión (<see cref="GameSession.PreviewMove"/>), no la vista:
+        /// lo que se muestra y lo que ocurre al hacer clic salen de la misma evaluación.
+        /// </summary>
+        public MovePreview Hover(P1Coords? cell)
+        {
+            var canPreview = Session.Phase == LoopPhase.Combat && !_busy;
+
+            if (!canPreview)
+            {
+                GridView?.SetHover(null, false);
+                GridView?.SetPath(null, false);
+                GridView?.SetAttackArea(null, false);
+                return default;
+            }
+
+            if (!cell.HasValue)
+            {
+                GridView?.SetHover(null, false);
+                GridView?.SetPath(null, false);
+
+                // Sin casilla apuntada, la celda resaltada es la de la nave: muestra el alcance actual.
+                // Así el jugador ve su alcance real antes de mover el mouse, y el área nunca "desaparece".
+                GridView?.SetAttackArea(Session.AttackReach(Session.PlayerCell), true);
+                return default;
+            }
+
+            var preview = Session.PreviewMove(cell.Value);
+
+            GridView?.SetHover(cell.Value, preview.IsValid);
+            GridView?.SetPath(preview.Path, preview.IsValid);
+
+            // El alcance se centra en la casilla apuntada: responde "si me paro acá, a qué llego".
+            GridView?.SetAttackArea(Session.AttackReach(cell.Value), true);
+
+            return preview;
+        }
+
+        /// <summary>Marca la casilla de la nave mientras sea su turno.</summary>
+        private void RefreshSelection()
+        {
+            var active = Session.Phase == LoopPhase.Combat;
+            GridView?.SetSelectedCell(active ? Session.PlayerCell : (P1Coords?)null);
+
+            // El alcance sigue a la nave cuando no hay casilla apuntada; se recalcula tras cada acción.
+            if (active) GridView?.SetAttackArea(Session.AttackReach(Session.PlayerCell), true);
+            else GridView?.SetAttackArea(null, false);
+        }
+
         private void Start()
         {
             // Muestra las naves desde el hangar: sin esto el tablero aparece vacío hasta desplegar.
-            Presentation.SnapTo(PreviewState(), Session.TurretHullMax);
+            // La sesión ya nace en su posición inicial, así que no hace falta fabricar estado acá.
+            Presentation.SnapTo(Session.State, Session.TurretHullMax);
 
+            RefreshSelection();
             Refreshed?.Invoke();
-        }
-
-        /// <summary>Estado mínimo para ubicar las naves antes de desplegar (no altera la sesión).</summary>
-        private ShipModel PreviewState()
-        {
-            var session = Session;
-
-            return new ShipModel(
-                VoidHex.GameLoop.Logic.HexCoords.FromGrid(Bootstrap.StartCell),
-                0,
-                0,
-                0,
-                1,
-                VoidHex.GameLoop.Logic.HexCoords.FromGrid(Bootstrap.TurretCell),
-                session.TurretHullMax);
         }
 
         // ------------------------------------------------------------------ fase hangar
@@ -86,6 +128,7 @@ namespace VoidHex.GameLoop.Unity
             Session.Deploy(Bootstrap.CurrentStats, Bootstrap.ResolveAttackDamage());
             Presentation.SnapTo(Session.State, Session.TurretHullMax);
 
+            RefreshSelection();
             Refreshed?.Invoke();
         }
 
@@ -95,6 +138,10 @@ namespace VoidHex.GameLoop.Unity
             if (Session.Phase == LoopPhase.Combat) return;
 
             Session.ReturnToHangar();
+            GridView?.SetHover(null, false);
+            GridView?.SetPath(null, false);
+            GridView?.SetAttackArea(null, false);
+            RefreshSelection();
             Refreshed?.Invoke();
         }
 
@@ -134,6 +181,9 @@ namespace VoidHex.GameLoop.Unity
             var result = Session.TryMove(cell);
 
             await PlayIfAnyAsync(result);
+
+            // Moverse cambia el área de ataque: la vista se refresca después de la animación.
+            RefreshSelection();
             Refreshed?.Invoke();
 
             return result;
@@ -146,6 +196,7 @@ namespace VoidHex.GameLoop.Unity
             var result = Session.TryAttack();
 
             await PlayIfAnyAsync(result);
+            RefreshSelection();
             Refreshed?.Invoke();
 
             return result;
@@ -165,6 +216,7 @@ namespace VoidHex.GameLoop.Unity
                 await PlayIfAnyAsync(results[i]);
             }
 
+            RefreshSelection();
             Refreshed?.Invoke();
             return messages;
         }

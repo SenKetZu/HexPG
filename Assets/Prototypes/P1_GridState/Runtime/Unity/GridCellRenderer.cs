@@ -20,8 +20,11 @@ namespace VoidHex.P1.Unity
         /// <summary>Separación entre celdas. La usa también el generador de escenas para encuadrar.</summary>
         public const float Spacing = 0.7f;
 
-        /// <summary>Tamaño de la losa de cada celda.</summary>
-        public const float TileSize = 0.66f;
+        /// <summary>
+        /// Radio del hexágono. Con radio = separación las casillas se tocan; 4% menos deja la junta.
+        /// La malla es flat-top con ancho 2R, la misma orientación que la proyección axial.
+        /// </summary>
+        public const float TileRadius = Spacing * 0.96f;
 
         private readonly Dictionary<HexCoordinates, CellView> _views = new Dictionary<HexCoordinates, CellView>();
         private IGridStatePublisher _publisher;
@@ -79,16 +82,8 @@ namespace VoidHex.P1.Unity
                 {
                     var cell = new HexCoordinates(q, r);
 
-                    var tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    tile.name = "tile" + cell;
-                    tile.transform.SetParent(_root, false);
-                    tile.transform.localPosition = ToWorld(cell, tileHeight * 0.5f);
-                    tile.transform.localScale = new Vector3(TileSize, tileHeight, TileSize);
-
-                    var collider = tile.GetComponent<Collider>();
-                    if (collider != null) Destroy(collider);
-
-                    tile.GetComponent<Renderer>().sharedMaterial = tileMaterial;
+                    var tile = HexMesh.CreateTile("tile" + cell, _root, TileRadius, tileHeight, tileMaterial);
+                    tile.transform.localPosition = ToWorld(cell);
 
                     var view = new CellView { Tile = tile.transform };
                     _views[cell] = view;
@@ -127,9 +122,9 @@ namespace VoidHex.P1.Unity
             var desired = PropFor(cell);
             if (view.Prop != null && view.PropTerrain == cell.Terrain && view.PropOccupied == cell.IsOccupied) return;
 
-            if (view.Prop != null) Destroy(view.Prop);
+            SafeObjects.Destroy(view.Prop);
 
-            view.Prop = desired == null ? null : SpawnProp(desired, coordinates, TintFor(cell));
+            view.Prop = desired == null ? null : SpawnProp(desired, coordinates, AccentFor(cell));
             view.PropTerrain = cell.Terrain;
             view.PropOccupied = cell.IsOccupied;
         }
@@ -155,36 +150,36 @@ namespace VoidHex.P1.Unity
         }
 
         /// <summary>
-        /// Color del propietario. Los FBX de Kenney vienen con un material claro neutro: sin tinte
-        /// las rocas se confunden con las losas y el mapa deja de leerse.
+        /// Acento de color, o <c>null</c> para dejar el modelo como viene del kit.
+        ///
+        /// Las rocas y los cristales de Kenney ya traen su propia paleta (arena y teal): repintarlas
+        /// las apagaba contra el tablero. Solo la nave que marca una casilla ocupada necesita
+        /// distinguirse, y para eso alcanza con el submesh de acento.
         /// </summary>
-        private static Color TintFor(HexCell cell)
+        private static Color? AccentFor(HexCell cell)
         {
-            if (cell.IsOccupied) return new Color(0.25f, 0.85f, 0.80f);
-
-            return cell.Terrain switch
-            {
-                CellTerrain.Asteroid => new Color(0.48f, 0.36f, 0.28f),
-                CellTerrain.Nebula => new Color(0.40f, 0.45f, 0.75f),
-                _ => Color.white,
-            };
+            return cell.IsOccupied ? new Color(0.25f, 0.85f, 0.80f) : (Color?)null;
         }
 
-        private GameObject SpawnProp(string modelName, HexCoordinates coordinates, Color tint)
+        /// <summary>
+        /// Algunos bloques sobresalen de la losa: los asteroides se leen como obstáculo, no como adorno.
+        /// El resto queda a la altura del tablero para no tapar las casillas vecinas.
+        /// </summary>
+        private GameObject SpawnProp(string modelName, HexCoordinates coordinates, Color? accent)
         {
             var holder = new GameObject("prop" + coordinates);
             holder.transform.SetParent(_root, false);
-            holder.transform.localPosition = ToWorld(coordinates, tileHeight);
+            holder.transform.localPosition = ToWorld(coordinates);
 
             // Variación determinista: mismo mapa, misma escena. Nunca Random sin semilla.
             var seed = Hash(coordinates);
             var rotation = Quaternion.Euler(0f, seed % 360, 0f);
 
-            // Las rocas que bloquean sobresalen de la losa: se leen como obstáculo, no como adorno.
             var size = modelName.StartsWith("Rock_Meteor") || modelName == ModelLibrary.RockLargeA
-                ? TileSize * 1.05f
-                : TileSize * 0.90f;
-            var instance = ModelLibrary.Spawn(modelName, holder.transform, size, tint);
+                ? TileRadius * 1.9f
+                : TileRadius * 1.6f;
+
+            var instance = ModelLibrary.Spawn(modelName, holder.transform, size, accent);
             if (instance == null) return holder;
 
             holder.transform.localRotation = rotation;

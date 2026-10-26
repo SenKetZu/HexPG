@@ -9,6 +9,7 @@ using VoidHex.P1.Unity;
 using VoidHex.P2.Unity;
 using VoidHex.P3.Domain;
 using VoidHex.P3.Unity;
+using VoidHex.UiKit;
 
 namespace VoidHex.Prototypes.Editor
 {
@@ -38,7 +39,12 @@ namespace VoidHex.Prototypes.Editor
 
         // Fondo y ambiente comunes: las tres escenas comparten estética con el HUD.
         private static readonly Color Background = new Color(0.06f, 0.09f, 0.16f);
-        private static readonly Color Ambient = new Color(0.34f, 0.38f, 0.46f);
+
+        /// <summary>
+        /// Relleno de escena. Bajo a propósito: el volumen de los modelos tiene que venir de la luz
+        /// direccional. Un ambiente alto los aplana contra el tablero.
+        /// </summary>
+        private static readonly Color Ambient = new Color(0.16f, 0.19f, 0.26f);
 
         public static bool ScenesExist()
         {
@@ -245,7 +251,7 @@ namespace VoidHex.Prototypes.Editor
             var center = new Vector3(extentX * 0.5f, 0f, extentZ * 0.5f);
 
             FrameInFreeArea(center, halfExtentX: extentX * 0.5f, halfExtentZ: extentZ * 0.5f,
-                panelFraction: 0.30f);
+                panelFraction: 0.30f, pitchDeg: 54f);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, GameLoopScene);
@@ -255,37 +261,60 @@ namespace VoidHex.Prototypes.Editor
 
         /// <summary>Cámara, luz direccional y ambiente. Sin esto las escenas se ven negras.</summary>
         /// <summary>
-        /// Encuadre ortográfico cenital que deja el contenido DENTRO del área libre de UI.
+        /// Encuadre ortográfico que deja el contenido DENTRO del área libre de UI.
         ///
         /// A diferencia de un simple desplazamiento, calcula el tamaño ortográfico para que el tablero
         /// entre completo en la franja derecha y centra el contenido en esa franja. Un desplazamiento
         /// fijo dependía del aspect ratio y cortaba la grilla en 16:9.
+        ///
+        /// <paramref name="pitchDeg"/> es la inclinación respecto de la horizontal. 90° es cenital
+        /// puro; menos que eso inclina la cámara hacia el tablero.
+        ///
+        /// La inclinación NO es cosmética: los modelos del Kenney Space Kit están modelados para
+        /// verse en 3/4. Vistos desde 90°, una nave es una mancha plana, una torreta un rectángulo
+        /// y un asteroide un hexágono beige. Con 58° se leen las tres cosas.
         /// </summary>
         private static void FrameInFreeArea(Vector3 center, float halfExtentX, float halfExtentZ,
-            float panelFraction, float assumedAspect = 16f / 9f)
+            float panelFraction, float pitchDeg = 90f, float assumedAspect = 16f / 9f)
         {
             var camera = Camera.main;
             if (camera == null) return;
 
             var free = Mathf.Clamp(1f - panelFraction, 0.25f, 1f);
+            var pitch = pitchDeg * Mathf.Deg2Rad;
 
-            // El tamaño vertical debe cubrir el alto del tablero y también su ancho dentro de `free`.
-            var neededByHeight = halfExtentZ * 1.10f;
-            var neededByWidth = halfExtentX * 1.10f / (assumedAspect * free);
+            // El margen incluye el radio del hexágono: el rombo es más alto que su eje de centros,
+            // y con 1.10 las casillas quedaban cortadas por el borde superior e inferior.
+            const float margin = 1.44f;
+
+            // La profundidad del tablero se comprime en pantalla por sin(pitch), mientras que la
+            // altura de las piezas (asteroides, torreta) se expande por cos(pitch). Ignorar el
+            // segundo término recortaba la punta de los modelos en la primera fila.
+            var heightTerm = 0.6f;
+            var verticalExtent = halfExtentZ * Mathf.Sin(pitch) + heightTerm * Mathf.Cos(pitch);
+
+            var neededByHeight = (verticalExtent + 0.6f) * margin;
+            var neededByWidth = (halfExtentX + 0.6f) * margin / (assumedAspect * free);
 
             var orthoSize = Mathf.Max(neededByHeight, neededByWidth);
 
+            // Centro de la franja libre, en coordenadas normalizadas de pantalla (-1..1).
+            // Con el panel a la izquierda, la franja va de (-1 + 2·panel) a 1, así que su centro
+            // es (1 - panel)·... en concreto 1 - free. Usar (-1 + free) centraba al revés y dejaba
+            // el tablero cargado a la izquierda, con un hueco a la derecha.
+            var worldOffset = orthoSize * assumedAspect * (1f - free);
+
             camera.orthographic = true;
             camera.orthographicSize = orthoSize;
+
+            // El objetivo sigue siendo el centro del tablero; la cámara se retira sobre la
+            // inclinación. En ortográfica la distancia no cambia el tamaño, solo los planos de corte.
+            var target = new Vector3(center.x - worldOffset, 0f, center.z);
+            const float distance = 40f;
+
             camera.transform.SetPositionAndRotation(
-                new Vector3(center.x, 40f, center.z),
-                Quaternion.Euler(90f, 0f, 0f));
-
-            // Centro de la franja libre en coordenadas normalizadas (-1..1).
-            var freeCenterNormalized = -1f + free;
-            var worldOffset = orthoSize * assumedAspect * freeCenterNormalized;
-
-            camera.transform.position = new Vector3(center.x - worldOffset, 40f, center.z);
+                target + new Vector3(0f, Mathf.Sin(pitch) * distance, -Mathf.Cos(pitch) * distance),
+                Quaternion.Euler(pitchDeg, 0f, 0f));
         }
 
         private static void SetupEnvironment()
@@ -303,9 +332,16 @@ namespace VoidHex.Prototypes.Editor
             var light = lightObject.AddComponent<Light>();
             light.type = LightType.Directional;
             light.color = new Color(1f, 0.97f, 0.92f);
-            light.intensity = 1.1f;
+
+            // Intensidad alta + ambiente bajo: es lo que hace que se vea el facetado de los modelos
+            // del Kenney. Con el ambiente en 0.34-0.46 todas las caras reciben casi el mismo relleno
+            // y las naves quedaban como calcomanías blancas sin volumen.
+            light.intensity = 1.45f;
             light.shadows = LightShadows.Soft;
-            lightObject.transform.rotation = Quaternion.Euler(48f, -32f, 0f);
+
+            // Elevación baja (38°) a propósito: los laterales de los modelos reciben menos luz que
+            // las caras superiores, así se distingue la silueta del cuerpo y de las alas.
+            lightObject.transform.rotation = Quaternion.Euler(38f, -42f, 0f);
 
             RenderSettings.ambientMode = AmbientMode.Flat;
             RenderSettings.ambientLight = Ambient;
@@ -389,21 +425,18 @@ namespace VoidHex.Prototypes.Editor
             {
                 for (var r = 0; r < height; r++)
                 {
-                    var tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    tile.name = "tile_" + q + "_" + r;
-                    tile.transform.SetParent(board, false);
+                    // Misma proyección axial y misma malla que los otros dos tableros:
+                    // si diverge, el tablero deja de coincidir con las casillas clicables.
+                    const float spacing = HexProjection.Spacing;
+                    const float radius = spacing * 0.96f;
 
-                    // Misma conversión axial y separación que la lógica: el tablero coincide con las celdas.
-                    const float spacing = 0.7f;
+                    var tile = HexMesh.CreateTile("tile_" + q + "_" + r, board, radius, 0.06f,
+                        (q + r) % 2 == 0 ? baseMaterial : accentMaterial);
+
                     tile.transform.localPosition = new Vector3(
                         1.5f * q * spacing,
-                        -0.03f,
+                        -0.06f,
                         1.7320508f * (r + q * 0.5f) * spacing);
-                    tile.transform.localScale = new Vector3(0.66f, 0.06f, 0.66f);
-
-                    RemoveCollider(tile);
-                    tile.GetComponent<Renderer>().sharedMaterial =
-                        (q + r) % 2 == 0 ? baseMaterial : accentMaterial;
                 }
             }
         }

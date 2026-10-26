@@ -131,6 +131,24 @@ Reglas particulares:
 - **P3:** VContainer se usa solo en la capa de presentación (composition root). El servicio no
   conoce el contenedor: recibe `IModuleCatalog` y `ShipConfig` por constructor.
 
+### Disciplina de la capa de presentación
+
+La presentación es la **única** capa con `MonoBehaviour`, y se usa solo donde hace falta el ciclo
+de vida del motor: dibujar, escuchar eventos y animar. Las decisiones de juego nunca viven ahí.
+
+| Regla | Cómo se sostiene | Verificación |
+| --- | --- | --- |
+| Un `MonoBehaviour` solo en `Runtime/Unity/` o `Editor/` | Revisión de estructura + chequeo automático | `check_layers.py` R1 |
+| Dominio y aplicación sin tipos de Unity | `noEngineReferences: true` en el asmdef | compilador + `check_layers.py` R2 |
+| La vista no decide: pide y muestra | Consume contratos (`IGridQueryService`, `GameSession`); recibe resultados con motivo | tests de dominio + `TurnScreen`/`GameLoopScreen` como consumidores |
+| Sin reglas duplicadas en la vista | Los valores se leen del dominio (`session.AttackRange`), no se repiten como literales | revisión |
+| Destrucción de objetos vía `SafeObjects.Destroy` | `Object.Destroy` no funciona en edit mode: no destruye y ensucia la consola | `check_layers.py` R3 |
+
+El caso que motivó R3: el mismo camino de código (poblar el tablero) corre en Play Mode desde una
+escena y en edit mode desde el generador de escenas. `Object.Destroy` avisa
+`Destroy may not be called from edit mode` y **deja el objeto vivo**, así que los props se
+duplicaban. `SafeObjects.Destroy` elige `Destroy` o `DestroyImmediate` según `Application.isPlaying`.
+
 ## 5. Ajustes respecto del diseño del TP1
 
 | TP1 (documento) | TP2 (implementación) | Motivo |

@@ -9,6 +9,7 @@
         "VoidHex.P3.Unity",
         "VoidHex.GameLoop.Logic",
         "VoidHex.GameLoop.Unity",
+        "VoidHex.UiKit",
         "VContainer"
     ],
     "includePlatforms": [

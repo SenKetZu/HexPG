@@ -143,3 +143,11 @@ InitTestScene*.unity*
 # ---------------------------------------------------------------------------
 !tools/audit/*.csproj
 !tools/verify/*.csproj
+
+# ---------------------------------------------------------------------------
+# Capturas y sondas de depuración: artefactos de verificación visual, no del juego.
+# Viven dentro de Assets/ (para que Unity resuelva save_path), así que hay que
+# excluirlas explícitamente o entrarían al commit con sus .meta.
+# ---------------------------------------------------------------------------
+/[Aa]ssets/Logs/
+/Logs/
