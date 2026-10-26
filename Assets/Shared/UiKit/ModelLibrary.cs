@@ -16,6 +16,12 @@ namespace VoidHex.UiKit
     {
         public const string Root = "Models";
 
+        /// <summary>
+        /// Gris pizarra para asteroides. El kit pinta las rocas con <c>rockTrack</c> (arena de
+        /// planeta); sobre el tablero espacial oscuro eso se lee como una mancha pastel.
+        /// </summary>
+        public static readonly Color AsteroidColor = new Color(0.34f, 0.33f, 0.40f);
+
         private static readonly Dictionary<string, GameObject> Cache = new Dictionary<string, GameObject>();
 
         // Nombres lógicos: coinciden con los archivos en Assets/Resources/Models.
@@ -49,9 +55,13 @@ namespace VoidHex.UiKit
         ///
         /// Importante: se MULTIPLICA la escala existente en lugar de asignarla. Los FBX traen su
         /// propia escala de importación y pisarla convierte el modelo en una mota invisible.
+        ///
+        /// El modelo conserva su paleta ORIGINAL del kit. No se repinta ningún submesh: el material
+        /// de acento (<c>metalRed</c>) no es un detalle, es una pieza estructural (la cúpula de la
+        /// torreta, el trim de las alas). Pintarlo de color de equipo borra la lectura del modelo;
+        /// el color de equipo va en un canal externo, el aro del piso o la losa de la casilla.
         /// </summary>
-        public static GameObject Spawn(string modelName, Transform parent, float targetSize = 1f,
-            Color? accent = null, float emission = 0f)
+        public static GameObject Spawn(string modelName, Transform parent, float targetSize = 1f)
         {
             var prefab = Load(modelName);
             if (prefab == null) return null;
@@ -88,8 +98,6 @@ namespace VoidHex.UiKit
                 instance.transform.localPosition -= new Vector3(localCenter.x, localBottom.y, localCenter.z);
             }
 
-            if (accent.HasValue) TintAccents(instance, accent.Value, emission);
-
             return instance;
         }
 
@@ -103,21 +111,6 @@ namespace VoidHex.UiKit
             for (var i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
             return bounds;
         }
-
-        /// <summary>
-        /// Repinta SOLO los submeshes de acento del modelo (trim, luces, cristales).
-        ///
-        /// Los FBX del Kenney Space Kit no traen texturas, pero sí traen sus materiales embebidos
-        /// con la paleta del kit: <c>metal</c>, <c>metalDark</c>, <c>dark</c>, <c>metalRed</c>,
-        /// <c>rock</c> y <c>crystal</c>. Repintar todo con un único material plano destruye ese
-        /// desglose y deja las naves como siluetas de un solo color.
-        ///
-        /// Por eso se conserva el modelo tal cual viene y el color de equipo se aplica únicamente
-        /// al acento: la nave se sigue leyendo como una nave de Kenney, pero se distingue a quién
-        /// pertenece.
-        /// </summary>
-        public static void TintAccents(GameObject instance, Color color, float emission = 0f)
-            => RepaintByMaterialName(instance, AccentKeywords, CreateLitMaterial(color, emission));
 
         /// <summary>
         /// Cambia el material de roca del kit por uno de asteroide.
@@ -167,12 +160,6 @@ namespace VoidHex.UiKit
                 if (changed) renderer.sharedMaterials = materials;
             }
         }
-
-        /// <summary>
-        /// Materiales de acento del kit. En la nave es el trim; en la torreta es la CÚPULA, que es
-        /// la pieza que comunica a quién pertenece el arma.
-        /// </summary>
-        private static readonly string[] AccentKeywords = { "metalred", "accent" };
 
         /// <summary>Materiales de roca. <c>crystal</c> queda afuera a propósito.</summary>
         private static readonly string[] RockKeywords = { "rock" };

@@ -68,10 +68,10 @@ namespace VoidHex.GameLoop.Unity
         private static readonly Color HazardColor = new Color(1f, 0.62f, 0.20f);
 
         /// <summary>
-        /// Material de asteroide. Gris pizarra: la roca del kit viene en arena, que es el color del
-        /// suelo de un planeta y sobre el tablero espacial no se lee como obstáculo.
+        /// Material de asteroide. El color vive en <see cref="ModelLibrary.AsteroidColor"/> para que
+        /// P1 y el bucle no diverjan: la roca del kit viene en arena y no se lee como obstáculo.
         /// </summary>
-        private static readonly Color RockColor = new Color(0.34f, 0.33f, 0.40f);
+        private static readonly Color RockColor = ModelLibrary.AsteroidColor;
 
         /// <summary>Radio de los marcadores de ruta: más chicos que la casilla para no taparla.</summary>
         private const float PathMarkerRadius = TileRadius * 0.34f;

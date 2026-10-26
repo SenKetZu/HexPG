@@ -130,7 +130,11 @@ namespace VoidHex.Prototypes.Editor
             var extentZ = hexZ * spacing * ((height - 1) + (width - 1) * 0.5f);
             var center = new Vector3(extentX * 0.5f, 0f, extentZ * 0.5f);
 
-            FrameOrthoTopDown(center, halfExtentZ: extentZ * 0.5f, shiftRightFraction: 0.16f);
+            // Misma inclinación que el bucle: a 90° los modelos del kit se aplastan (la nave queda
+            // como una mancha, la torreta como un rectángulo). A 54° se leen cabina, cañón y patas
+            // sin perder la lectura de la grilla.
+            FrameInFreeArea(center, halfExtentX: extentX * 0.5f, halfExtentZ: extentZ * 0.5f,
+                panelFraction: 0.25f, pitchDeg: 54f);
 
             EditorUtility.SetDirty(bootstrap);
             EditorSceneManager.MarkSceneDirty(scene);
@@ -272,7 +276,7 @@ namespace VoidHex.Prototypes.Editor
         ///
         /// La inclinación NO es cosmética: los modelos del Kenney Space Kit están modelados para
         /// verse en 3/4. Vistos desde 90°, una nave es una mancha plana, una torreta un rectángulo
-        /// y un asteroide un hexágono beige. Con 58° se leen las tres cosas.
+        /// y un asteroide un hexágono beige. Con 54° se leen las tres cosas.
         /// </summary>
         private static void FrameInFreeArea(Vector3 center, float halfExtentX, float halfExtentZ,
             float panelFraction, float pitchDeg = 90f, float assumedAspect = 16f / 9f)
@@ -359,26 +363,6 @@ namespace VoidHex.Prototypes.Editor
         }
 
         /// <summary>
-        /// Encuadre ortográfico cenital: el tamaño depende solo de la extensión del mapa, así que
-        /// entra completo sin importar el aspect ratio. Desplaza la cámara en -X para que el mapa
-        /// quede a la derecha y el HUD (izquierda) no lo tape.
-        /// </summary>
-        private static void FrameOrthoTopDown(Vector3 center, float halfExtentZ, float shiftRightFraction = 0.30f)
-        {
-            var camera = Camera.main;
-            if (camera == null) return;
-
-            camera.orthographic = true;
-            camera.orthographicSize = halfExtentZ * 1.12f;
-            camera.transform.SetPositionAndRotation(
-                center + new Vector3(0f, 40f, 0f),
-                Quaternion.Euler(90f, 0f, 0f));
-
-            var visibleHalfWidth = camera.orthographicSize * Mathf.Max(camera.aspect, 1.2f);
-            camera.transform.position += Vector3.left * (visibleHalfWidth * shiftRightFraction);
-        }
-
-        /// <summary>
         /// Encuadre perspectiva: distancia derivada del FOV para que la extensión vertical entre
         /// con margen. El desplazamiento lateral corre el contenido a la derecha, lejos del HUD.
         /// </summary>
@@ -419,6 +403,11 @@ namespace VoidHex.Prototypes.Editor
             var accentMaterial = CreateOrLoadMaterial(P2Materials + "/P2_TileAccentMaterial.mat",
                 new Color(0.20f, 0.30f, 0.44f));
 
+            // La malla tiene que ser un ASSET: si se referencia la malla en memoria de HexMesh, el
+            // MeshFilter queda en m_Mesh: {fileID: 0} al guardar la escena y el tablero desaparece
+            // al recargarla (las naves flotaban sobre el fondo).
+            var tileMesh = CreateOrLoadMeshAsset(P2Materials + "/P2_TileMesh.asset");
+
             var board = new GameObject("Board").transform;
 
             for (var q = 0; q < width; q++)
@@ -431,7 +420,7 @@ namespace VoidHex.Prototypes.Editor
                     const float radius = spacing * 0.96f;
 
                     var tile = HexMesh.CreateTile("tile_" + q + "_" + r, board, radius, 0.06f,
-                        (q + r) % 2 == 0 ? baseMaterial : accentMaterial);
+                        (q + r) % 2 == 0 ? baseMaterial : accentMaterial, tileMesh);
 
                     tile.transform.localPosition = new Vector3(
                         1.5f * q * spacing,
@@ -462,6 +451,26 @@ namespace VoidHex.Prototypes.Editor
             material.SetColor("_Color", color);
             AssetDatabase.CreateAsset(material, path);
             return material;
+        }
+
+        /// <summary>
+        /// Copia serializable de la malla hexagonal.
+        ///
+        /// <see cref="HexMesh.Get"/> la genera con <c>HideAndDontSave</c>, correcto para P1 y el
+        /// bucle (la construyen en runtime), pero un tablero armado en el editor no puede guardar esa
+        /// referencia. Se clona y se guarda como asset para que el MeshFilter la conserve.
+        /// </summary>
+        private static Mesh CreateOrLoadMeshAsset(string path)
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (existing != null) return existing;
+
+            var mesh = Object.Instantiate(HexMesh.Get());
+            mesh.name = Path.GetFileNameWithoutExtension(path);
+            mesh.hideFlags = HideFlags.None;
+
+            AssetDatabase.CreateAsset(mesh, path);
+            return mesh;
         }
 
         private static ShipModuleAsset CreateModule(

@@ -134,12 +134,14 @@ namespace VoidHex.UiKit
         /// igual a la separación entre centros (Spacing). Se usa algo menor para dejar una junta.
         /// </summary>
         public static GameObject CreateTile(string name, Transform parent, float radius, float height,
-            Material material)
+            Material material, Mesh mesh = null)
         {
             var go = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
             go.transform.SetParent(parent, false);
 
-            go.GetComponent<MeshFilter>().sharedMesh = Get();
+            // Una vista que arma el tablero en el editor necesita pasar una malla serializada como
+            // asset: la de <see cref="Get"/> vive en memoria y se pierde al recargar la escena.
+            go.GetComponent<MeshFilter>().sharedMesh = mesh != null ? mesh : Get();
             go.GetComponent<MeshRenderer>().sharedMaterial = material;
 
             // La malla es unitaria: escala X/Z por el radio y Y por la altura.

@@ -127,16 +127,17 @@ namespace VoidHex.P2.Unity
             var start = ShipModel.Start();
 
             _player = SpawnModel(ModelLibrary.ShipSpeederA, "PlayerShip", 1.02f,
-                new Color(0.30f, 0.85f, 0.95f), emission: 0.45f);
+                new Color(0.30f, 0.85f, 0.95f));
             _player.position = ToWorld(start.Position);
 
             // El enemigo es más grande que la nave y más grande que una casilla: es el objetivo del
             // juego, no un detalle del decorado. Con 0.55 se confundía con una roca.
             //
-            // El acento es un rojo apagado y no saturado: el metalRed del kit es una chapa plana y
-            // un rojo puro la convertía en un rectángulo neón que tapaba la forma de la torreta.
+            // El modelo se deja con la paleta del kit. El color de equipo vive en el aro del piso:
+            // el material de acento de la torreta (metalRed) es la CÚPULA, la pieza que más se ve
+            // desde arriba; pintarla de rojo la convierte en un óvalo de color sin forma.
             _enemy = SpawnModel(ModelLibrary.EnemyTurret, "EnemyTurret", 1.12f,
-                new Color(0.70f, 0.16f, 0.16f), emission: 0.10f);
+                new Color(0.70f, 0.16f, 0.16f));
             _enemy.position = ToWorld(start.EnemyPosition);
             _enemyBaseScale = _enemy.localScale;
 
@@ -146,15 +147,16 @@ namespace VoidHex.P2.Unity
                 new Color(0.98f, 0.30f, 0.26f), emission: 0.90f), 0.58f, _enemy);
         }
 
-        private Transform SpawnModel(string modelName, string name, float size, Color accent, float emission = 0f)
+        private Transform SpawnModel(string modelName, string name, float size, Color fallbackColor)
         {
             var holder = new GameObject(name).transform;
             holder.SetParent(transform, false);
 
-            // El modelo se deja tal como viene de Kenney (acero, paneles oscuros y cristales) y solo
-            // se repinta el submesh de acento: así el jugador y la torreta se distinguen por color
-            // sin dejar de ser las naves del kit. Repintar todo las volvía siluetas planas.
-            var instance = ModelLibrary.Spawn(modelName, holder, size, accent, emission);
+            // El modelo se deja tal como viene de Kenney (acero, paneles oscuros y cristales). El
+            // color de equipo no se aplica sobre la malla: vive en el aro del piso, donde no compite
+            // con la lectura del modelo. Solo la primitiva de respaldo se tiñe, porque no tiene una
+            // paleta que preservar.
+            var instance = ModelLibrary.Spawn(modelName, holder, size);
             if (instance == null)
             {
                 // Respaldo: si el modelo falta, una primitiva mantiene la demo funcionando.
@@ -164,7 +166,7 @@ namespace VoidHex.P2.Unity
 
                 SafeObjects.Destroy(instance.GetComponent<Collider>());
 
-                ModelLibrary.TintRenderers(instance, accent, emission);
+                ModelLibrary.TintRenderers(instance, fallbackColor);
             }
 
             holder.localPosition = new Vector3(0f, hoverHeight, 0f);

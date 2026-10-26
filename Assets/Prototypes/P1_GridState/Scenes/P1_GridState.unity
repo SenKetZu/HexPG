@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &219310550
+--- !u!1 &398373418
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,9 +127,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 219310553}
-  - component: {fileID: 219310552}
-  - component: {fileID: 219310551}
+  - component: {fileID: 398373421}
+  - component: {fileID: 398373420}
+  - component: {fileID: 398373419}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -137,21 +137,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &219310551
+--- !u!81 &398373419
 AudioListener:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 219310550}
+  m_GameObject: {fileID: 398373418}
   m_Enabled: 1
---- !u!20 &219310552
+--- !u!20 &398373420
 Camera:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 219310550}
+  m_GameObject: {fileID: 398373418}
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
@@ -180,7 +180,7 @@ Camera:
   far clip plane: 200
   field of view: 60
   orthographic: 1
-  orthographic size: 11.202905
+  orthographic size: 13.024713
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -196,22 +196,22 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!4 &219310553
+--- !u!4 &398373421
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 219310550}
+  m_GameObject: {fileID: 398373418}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 3.0826375, y: 40, z: 10.002593}
+  m_LocalRotation: {x: 0.4539905, y: 0, z: 0, w: 0.8910065}
+  m_LocalPosition: {x: -0.013761044, y: 32.36068, z: -13.508819}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &700508697
+--- !u!1 &1210893360
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -219,8 +219,98 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 700508699}
-  - component: {fileID: 700508698}
+  - component: {fileID: 1210893365}
+  - component: {fileID: 1210893364}
+  - component: {fileID: 1210893363}
+  - component: {fileID: 1210893362}
+  - component: {fileID: 1210893361}
+  m_Layer: 0
+  m_Name: P1_Grid
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1210893361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1210893360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ec9a2ff7566cb7419caa19aa65934bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VoidHex.P1.Unity::VoidHex.P1.Unity.GridScreen
+  bootstrap: {fileID: 0}
+--- !u!114 &1210893362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1210893360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b24325c408f9ba745bc2cf58e646ccd4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VoidHex.P1.Unity::VoidHex.P1.Unity.GridPresenter
+  bootstrap: {fileID: 0}
+--- !u!114 &1210893363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1210893360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b4a1303dbd13254fa53eb5d572f7e00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VoidHex.P1.Unity::VoidHex.P1.Unity.GridCellRenderer
+  bootstrap: {fileID: 0}
+  tileHeight: 0.08
+--- !u!114 &1210893364
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1210893360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5ded62ceb25dbd4fb18efba50a89bf7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VoidHex.P1.Unity::VoidHex.P1.Unity.GridBootstrap
+  width: 12
+  height: 12
+  runDemoOnStart: 1
+--- !u!4 &1210893365
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1210893360}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1441894132
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1441894134}
+  - component: {fileID: 1441894133}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -228,13 +318,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!108 &700508698
+--- !u!108 &1441894133
 Light:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 700508697}
+  m_GameObject: {fileID: 1441894132}
   m_Enabled: 1
   serializedVersion: 13
   m_Type: 1
@@ -293,105 +383,15 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
---- !u!4 &700508699
+--- !u!4 &1441894134
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 700508697}
+  m_GameObject: {fileID: 1441894132}
   serializedVersion: 2
   m_LocalRotation: {x: 0.30394405, y: -0.33884358, z: 0.116673194, w: 0.88271767}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1919503488
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1919503493}
-  - component: {fileID: 1919503492}
-  - component: {fileID: 1919503491}
-  - component: {fileID: 1919503490}
-  - component: {fileID: 1919503489}
-  m_Layer: 0
-  m_Name: P1_Grid
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1919503489
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1919503488}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ec9a2ff7566cb7419caa19aa65934bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VoidHex.P1.Unity::VoidHex.P1.Unity.GridScreen
-  bootstrap: {fileID: 0}
---- !u!114 &1919503490
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1919503488}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b24325c408f9ba745bc2cf58e646ccd4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VoidHex.P1.Unity::VoidHex.P1.Unity.GridPresenter
-  bootstrap: {fileID: 0}
---- !u!114 &1919503491
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1919503488}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2b4a1303dbd13254fa53eb5d572f7e00, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VoidHex.P1.Unity::VoidHex.P1.Unity.GridCellRenderer
-  bootstrap: {fileID: 0}
-  tileHeight: 0.08
---- !u!114 &1919503492
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1919503488}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b5ded62ceb25dbd4fb18efba50a89bf7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: VoidHex.P1.Unity::VoidHex.P1.Unity.GridBootstrap
-  width: 12
-  height: 12
-  runDemoOnStart: 1
---- !u!4 &1919503493
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1919503488}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -402,6 +402,6 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 219310553}
-  - {fileID: 700508699}
-  - {fileID: 1919503493}
+  - {fileID: 398373421}
+  - {fileID: 1441894134}
+  - {fileID: 1210893365}

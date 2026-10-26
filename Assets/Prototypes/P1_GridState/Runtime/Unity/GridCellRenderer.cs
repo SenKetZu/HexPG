@@ -124,7 +124,7 @@ namespace VoidHex.P1.Unity
 
             SafeObjects.Destroy(view.Prop);
 
-            view.Prop = desired == null ? null : SpawnProp(desired, coordinates, AccentFor(cell));
+            view.Prop = desired == null ? null : SpawnProp(desired, coordinates);
             view.PropTerrain = cell.Terrain;
             view.PropOccupied = cell.IsOccupied;
         }
@@ -150,22 +150,14 @@ namespace VoidHex.P1.Unity
         }
 
         /// <summary>
-        /// Acento de color, o <c>null</c> para dejar el modelo como viene del kit.
-        ///
-        /// Las rocas y los cristales de Kenney ya traen su propia paleta (arena y teal): repintarlas
-        /// las apagaba contra el tablero. Solo la nave que marca una casilla ocupada necesita
-        /// distinguirse, y para eso alcanza con el submesh de acento.
-        /// </summary>
-        private static Color? AccentFor(HexCell cell)
-        {
-            return cell.IsOccupied ? new Color(0.25f, 0.85f, 0.80f) : (Color?)null;
-        }
-
-        /// <summary>
         /// Algunos bloques sobresalen de la losa: los asteroides se leen como obstáculo, no como adorno.
         /// El resto queda a la altura del tablero para no tapar las casillas vecinas.
+        ///
+        /// El modelo conserva la paleta del kit. La casilla ocupada ya se distingue por el color de
+        /// su losa; repintar el acento del modelo (en la nave, el trim de las alas) lo único que
+        /// hacía era borrar la lectura de la nave.
         /// </summary>
-        private GameObject SpawnProp(string modelName, HexCoordinates coordinates, Color? accent)
+        private GameObject SpawnProp(string modelName, HexCoordinates coordinates)
         {
             var holder = new GameObject("prop" + coordinates);
             holder.transform.SetParent(_root, false);
@@ -179,8 +171,13 @@ namespace VoidHex.P1.Unity
                 ? TileRadius * 1.9f
                 : TileRadius * 1.6f;
 
-            var instance = ModelLibrary.Spawn(modelName, holder.transform, size, accent);
+            var instance = ModelLibrary.Spawn(modelName, holder.transform, size);
             if (instance == null) return holder;
+
+            // La roca del kit viene en arena (rockTrack es el color del suelo de un planeta). Sobre
+            // el tablero espacial se lee como una mancha pastel, así que se reestila a gris pizarra.
+            // El cristal de la nebulosa conserva su teal: no matchea la clave "rock".
+            ModelLibrary.RestyleRocks(instance, ModelLibrary.AsteroidColor);
 
             holder.transform.localRotation = rotation;
             return holder;

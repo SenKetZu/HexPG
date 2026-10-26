@@ -56,6 +56,10 @@ mancha de color sobre un casco blanco.
 Conclusión: **el acento no sirve como canal de color de equipo** en este kit. Solo hay tres
 materiales neutros (`metal`, `metalDark`, `dark`) y un acento que ya tiene un rol visual.
 
+Decisión aplicada: **no se repinta ningún submesh del kit**. El color de equipo vive en el
+aro del piso (P2 y bucle) y en el color de la losa ocupada (P1). El modelo se lee completo y
+el color sigue siendo inequívoco.
+
 ## Causa raíz 2: las rocas usan el color del suelo de un planeta
 
 `rockTrack` y `rock` son `0.99, 0.79, 0.70`: un **salmón muy claro**. En el kit ese material
@@ -63,8 +67,10 @@ está pensado para pistas y superficies de planeta, no para asteroides en el vac
 tablero espacial oscuro (`#0F1A2B`) esas rocas se leen como manchas pastel, no como obstáculos.
 
 Mitigación aplicada: `ModelLibrary.RestyleRocks` reemplaza solo los materiales `rock*`
-por un gris pizarra, y deja `crystal` en su teal original (que sí funciona como acento).
-**Pendiente de evaluar**: si conviene elegir otro modelo del kit para asteroides.
+por un gris pizarra (`ModelLibrary.AsteroidColor`), y deja `crystal` en su teal original (que
+sí funciona como acento). Se aplica en las **dos** vistas con props de terreno: P1
+(`GridCellRenderer.SpawnProp`) y el bucle (`LoopGridView`). Sigue abierta, como mejora
+opcional, la idea de elegir otro modelo del kit para asteroides.
 
 ## Causa raíz 3 (la más importante): la cámara cenital aplana el kit
 
@@ -82,7 +88,9 @@ Comparación medida, misma escena y misma luz, cambiando solo el ángulo:
 | 90° cenital (antes) | mancha blanca | rectángulo rojo | hexágono beige |
 | 54–58° inclinada | cabina, alas, motor | cañón y patas | facetas con volumen |
 
-Aplicado: `FrameInFreeArea(..., pitchDeg: 54f)`.
+Aplicado: `FrameInFreeArea(..., pitchDeg: 54f)` en el bucle **y en P1**, que era la última
+escena que seguía con `FrameOrthoTopDown` a 90°. P2 y P3 ya usaban cámara perspectiva inclinada
+(`44°` y `32°`).
 
 ## Causa raíz 4: el ambiente tapaba el sombreado
 
@@ -102,7 +110,9 @@ Aplicado: ambiente `0.16, 0.19, 0.26`, luz direccional `1.45` a `38°` de elevac
 ## Bugs de código encontrados en el camino (ya corregidos)
 
 1. **`Spawn` seguía llamando a `TintRenderers`** en lugar de `TintAccents`. La edición no se
-   había aplicado y el síntoma era exactamente el medido: todo el modelo de un color.
+   había aplicado y el síntoma era exactamente el medido: todo el modelo de un color. El
+   problema de fondo era otro: incluso repintando el submesh "correcto", ese submesh es una
+   pieza estructural. Se eliminó el tintado de malla (`TintAccents` ya no existe).
 2. **`renderer.sharedMaterial = m` solo escribe el slot 0** en Unity 6. Los demás submeshes
    conservaban el material del kit, así que los modelos quedaban a medio pintar.
 3. **`Object.Destroy` en edit mode** no destruye y tira un error: los props se duplicaban al
@@ -110,18 +120,26 @@ Aplicado: ambiente `0.16, 0.19, 0.26`, luz direccional `1.45` a `38°` de elevac
 4. **Materiales sin inicializar**: los aros de peligro se creaban antes que su material y
    salían con el magenta de shader faltante.
 5. **Rango de ataque duplicado como literal `3`** en la UI, en vez de leerse del dominio.
+6. **Tablero de P2 sin malla**: `HexMesh.Get` genera con `HideAndDontSave`, así que el tablero
+   armado en el editor guardaba `m_Mesh: {fileID: 0}` y desaparecía al recargar la escena (las
+   naves flotaban sobre el fondo). Se serializa una copia como `P2_TileMesh.asset`.
 
-## Qué queda abierto (para el chat nuevo)
+## Decisiones tomadas (antes "qué queda abierto")
 
-1. **Decidir la política de color de equipo.** Hoy el acento (`metalRed`) cumple una función
-   visual del kit y repintarlo rompe el modelo. Alternativas:
-   - no repintar nada y distinguir por el **aro en el piso** (ya existe, es el canal correcto);
-   - repintar solo `metal` (casco) dejando `metalRed` como acento del kit;
-   - agregar un marcador externo (bandera, halo, color de anillo) en vez de tocar materiales.
-2. **Elegir modelos de asteroide** que no usen `rockTrack`, o aceptar el gris pizarra actual.
-3. **Verificar en la escena de P1 y P3** el mismo criterio: ahí `GridCellRenderer.SpawnProp` y
-   `ShipPreview` usan tintes propios que conviene revisar con esta misma lupa.
-4. **Revisar la iluminación en P2/P3**, que usan `FrameCameraOnExtent` con su propia luz.
+1. **Color de equipo: canal externo, no materiales.** Se eliminó `TintAccents`; `Spawn` ya no
+   tiñe ningún submesh. Jugador y torreta se distinguen por el **aro del piso** (cian/rojo) en
+   P2 y el bucle, y por el color de la losa ocupada en P1. Solo la primitiva de respaldo (si
+   falta un FBX) se tiñe entera, porque no tiene paleta que preservar.
+2. **Rocas: gris pizarra compartido.** `ModelLibrary.AsteroidColor` es la única fuente del
+   color; P1 y el bucle llaman a `RestyleRocks`. `crystal` conserva su teal.
+3. **P1 y P3 verificados con la misma lupa.** P1 pasó a 54° y reestila sus rocas; en P3 el
+   `Pad` se repinta entero a propósito (es decorado, no un modelo de nave) y la nave conserva
+   su paleta. La emisión de PA en `ShipPreview` es feedback de energía, no color de equipo.
+4. **Iluminación unificada.** Las cuatro escenas usan `SetupEnvironment`: ambiente
+   `0.16, 0.19, 0.26` y direccional `1.45` a `38°`, sin luces propias por escena.
+
+Queda como mejora opcional, no como defecto: elegir modelos de asteroide que no usen
+`rockTrack` en lugar de reestilarlos.
 
 ## Herramientas usadas para medir
 
