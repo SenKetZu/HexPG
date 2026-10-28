@@ -151,3 +151,9 @@ InitTestScene*.unity*
 # ---------------------------------------------------------------------------
 /[Aa]ssets/Logs/
 /Logs/
+
+# ---------------------------------------------------------------------------
+# Configuración local de herramientas del editor (codebase-memory MCP).
+# Contiene rutas absolutas de la máquina de desarrollo: no es parte del TP.
+# ---------------------------------------------------------------------------
+/.codebase-memory/

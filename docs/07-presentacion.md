@@ -377,8 +377,8 @@ Reparto Edit Mode: P1 5 · P2 7 · P3 9 · bucle jugable 59.
 por método: tengo un test por regla, y cada uno responde esa pregunta. El único Play Mode es el de P2,
 porque es el único donde importa que Unity invoque al adaptador."
 
-> **Números ya verificados:** 80 en Edit Mode y 1 en Play Mode (81), corridos el 28/10, antes de
-> crear el tag. Si pedís la captura, está en `Logs/tests-editmode.json`.
+> **Números ya verificados:** 80 en Edit Mode y 1 en Play Mode (81), corridos el 28/10 antes de
+> crear el tag. Reproducible con `Window → General → Test Runner → Run All`.
 
 ---
 

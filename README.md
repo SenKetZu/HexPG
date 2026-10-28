@@ -130,14 +130,14 @@ $unity = "C:\Program Files\Unity\Hub\Editor\6000.5.9f1\Editor\Unity.exe"
 
 & $unity -batchmode -nographics -projectPath . -runTests `
   -testPlatform EditMode -testResults Logs/editmode-results.xml -quit
-
-& $unity -batchmode -nographics -projectPath . -runTests `
-  -testPlatform PlayMode -testResults Logs/playmode-results.xml -quit
 ```
 
-Los resultados quedan en `Logs/*.xml` (ignorados por git). Código de salida `0` = suite verde.
+Los resultados quedan en `Logs/editmode-results.xml` (ignorado por git). Código de salida `0` = suite verde.
 
-> Requiere el editor **cerrado**: Unity toma un lock sobre el proyecto.
+> Dos condiciones para que esto funcione: el editor tiene que estar **cerrado** (Unity toma un lock
+> sobre el proyecto) y la **licencia de Unity tiene que estar activada** en la máquina. Sin licencia
+> el proceso sale sin ejecutar los tests y no escribe el XML. Si dudás, usá el Test Runner del
+> editor, que es el camino recomendado y el que se usó para verificar los 80 + 1 tests.
 
 ## Verificación rápida sin abrir Unity
 
