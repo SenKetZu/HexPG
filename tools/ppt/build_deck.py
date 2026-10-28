@@ -398,7 +398,7 @@ def build():
         write(s, cx + 0.22, 5.05, 3.4, 0.3, tag, 10.5, color, bold=True)
 
     write(s, MARGIN, 6.15, CONTENT_W, 0.6,
-          "Matias Andres Fahler   ·   Unity 6000.5.9f1   ·   tag tp2   ·   22 tests verdes", 13, MUTED)
+          "Matias Andres Fahler   ·   Unity 6000.5.9f1   ·   tag tp2   ·   81 tests verdes", 13, MUTED)
     notes(s, """
 15 s. No voy a mostrar un juego. Voy a mostrar tres problemas técnicos del TP1,
 la solución declarada para cada uno, y la evidencia de que funciona.
@@ -704,12 +704,12 @@ Demos: D5 (reemplazo MK I → MK II) y D6 (equipar el MK III).
         ["Reemplazar un módulo no duplica stats", "TryEquip_ReplacingModule_…", "Sumar el módulo viejo y el nuevo"],
     ], [3.1, 2.8, 3.0], row_h=0.86, font=12, accent=BORDER)
     write(s, MARGIN, 5.35, CONTENT_W, 0.9,
-          "21 tests en Edit Mode  ·  1 en Play Mode  ·  el único Play Mode es P2, porque es el único donde importa que Unity invoque al adaptador.",
+          "80 tests en Edit Mode (P1 5 · P2 7 · P3 9 · bucle 59)  ·  1 en Play Mode  ·  el único Play Mode es P2, porque es el único donde importa que Unity invoque al adaptador.",
           13, BODY, spacing=1.15)
     takeaway(s, "No hay un test por método: hay un test por regla, y cada uno responde qué error detectaría.", TEXT)
     notes(s, """
-50 s. 21 en Edit Mode y 1 en Play Mode: 22, corridos y verdes dos veces (antes y después
- del rediseño de UI y de los assets).
+50 s. 80 en Edit Mode y 1 en Play Mode: 81, corridos y verdes dos veces (antes y después
+ del rediseño de UI y de los assets). Reparto: P1 5, P2 7, P3 9 y 59 del bucle jugable.
 
 El único Play Mode es P2 porque es el único donde importa que Unity invoque al adaptador.
 
@@ -798,7 +798,7 @@ Los tests también pueden estar equivocados; por eso el auditor existe.
         write(s, cx, 5.15, 3.82, 0.72, name, 12.5, color, bold=True, font=MONO,
               align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
 
-    write(s, MARGIN, 6.25, CONTENT_W, 0.4, "22 tests verdes · tag tp2", 13, MUTED)
+    write(s, MARGIN, 6.25, CONTENT_W, 0.4, "81 tests verdes · tag tp2", 13, MUTED)
     notes(s, """
 20 s. Con más tiempo, el siguiente paso sería Undo/Redo, porque el pipeline ya lo habilita.
 Pero eso es otro prototipo, no una deuda escondida.

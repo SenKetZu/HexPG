@@ -370,14 +370,15 @@ C#."
 | El estado cambia antes de la animación | `Submit_AppliesLogicBeforeTheAnimationCompletes` | Regla acoplada al tiempo del arte |
 | Reemplazar un módulo no duplica stats | `TryEquip_ReplacingModule_DoesNotDoubleCount` | Sumar el módulo viejo y el nuevo |
 
-**Bullets (1):** 22 tests: 21 en Edit Mode, 1 en Play Mode (el único que depende del ciclo de vida de Unity).
+**Bullets (1):** 81 tests: 80 en Edit Mode, 1 en Play Mode (el único que depende del ciclo de vida de Unity).
+Reparto Edit Mode: P1 5 · P2 7 · P3 9 · bucle jugable 59.
 
 **Notas del orador (50 s):** "La consigna pregunta qué error detectaría cada test. No tengo un test
 por método: tengo un test por regla, y cada uno responde esa pregunta. El único Play Mode es el de P2,
 porque es el único donde importa que Unity invoque al adaptador."
 
-> **Números ya verificados:** 21 en Edit Mode y 1 en Play Mode (22), corridos dos veces: antes y
-> después del rediseño de UI y de los assets. Si pedís la captura, está en `Logs/tests-*.json`.
+> **Números ya verificados:** 80 en Edit Mode y 1 en Play Mode (81), corridos el 28/10, antes de
+> crear el tag. Si pedís la captura, está en `Logs/tests-editmode.json`.
 
 ---
 
@@ -436,7 +437,7 @@ código. El del pivote enseña algo: agoté hipótesis de arquitectura antes de 
 2. Las propiedades de diseño se demuestran: ISP por reflexión, OCP con un comando nuevo, DIP con un fake.
 3. Lo que no está, está afuera por decisión y con ruta de extensión.
 
-**Visual:** los tres nombres de carpeta + "22 tests verdes".
+**Visual:** los tres nombres de carpeta + "81 tests verdes".
 
 **Notas del orador (20 s):** "Con más tiempo, el siguiente paso sería Undo/Redo, porque el pipeline ya
 lo habilita. Pero eso es otro prototipo, no una deuda escondida."
@@ -490,7 +491,7 @@ En el editor: `VoidHex → Build Prototype Scenes`, luego `Window → General �
 
 ## 4. Checklist de ensayo
 
-- [ ] Los números de tests (22 = 21 + 1) están respaldados por `Logs/tests-*.json`.
+- [ ] Los números de tests (81 = 80 + 1) están respaldados por `Logs/tests-*.json`.
 - [ ] Verificar que cada slide se entienda **sin** leer las notas del orador.
 - [ ] Un solo mensaje por slide: si hay dos, se parte o se recorta.
 - [ ] Las 6 demos ensayadas dos veces, con plan B (test en lugar de escena).
