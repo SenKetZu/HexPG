@@ -26,13 +26,19 @@ Diseño de referencia (TP1): [`GDD.md`](./GDD.md) · [`DIAGRAMS.md`](./DIAGRAMS.
 
 ## Estado
 
-Se actualiza el mismo día que cambia el código.
+Se actualiza el mismo día que cambia el código. Última verificación: **28/10/2026**.
 
 | Prototipo | Estructura | Dominio | Escena | Tests Edit | Tests Play |
 | --- | --- | --- | --- | --- | --- |
-| P1 GridState | ☑ | ☑ | ☐ | ☑ (5) | — |
-| P2 CommandPipeline | ☑ | ☑ | ☐ | ☑ (7) | ☑ (1) |
-| P3 Loadout | ☑ | ☑ | ☐ | ☑ (9) | — |
+| P1 GridState | ☑ | ☑ | ☑ `P1_GridState.unity` | ☑ (5) | — |
+| P2 CommandPipeline | ☑ | ☑ | ☑ `P2_CommandPipeline.unity` | ☑ (7) | ☑ (1) |
+| P3 Loadout | ☑ | ☑ | ☑ `P3_Loadout.unity` | ☑ (9) | — |
+| GameLoop (composición) | ☑ | ☑ | ☑ `GameLoop.unity` | ☑ (59) | — |
+| **Total** | | | | **80** | **1** |
+
+`GameLoop` no es un cuarto desafío: es la **capa de composición** que enchufa los tres
+prototipos entre sí para mostrar que encajan (ver [`docs/03-prototipos.md`](./docs/03-prototipos.md)).
+Se puede evaluar por separado de los tres prototipos, que siguen siendo independientes.
 
 > Las escenas se generan con `VoidHex → Build Prototype Scenes` (menú del editor).
 
@@ -47,10 +53,15 @@ Assets/Prototypes/
               Tests/EditMode, Scenes, Assets, README.md}
   Editor/  PrototypeSceneBuilder.cs    genera escenas y assets de P3
            PrototypeSceneBootstrap.cs  las genera solo si faltan
+Assets/GameLoop/
+  Runtime/Logic/   VoidHex.GameLoop.Logic   composición pura (noEngineReferences)
+  Runtime/Unity/   VoidHex.GameLoop.Unity   escena jugable del bucle
+  Tests/EditMode/  VoidHex.GameLoop.Tests.EditMode
+  Scenes/GameLoop.unity
 Assets/Shared/UiKit/   UI nativa + carga de modelos 3D (solo presentación)
 Assets/ThirdParty/Kenney/SpaceKit/   modelos CC0 usados por las escenas
   docs/    doctrina, arquitectura, tests, prototipos, trazabilidad, defensa, plan, presentación
-  tools/   ppt/ (deck) · audit/ (lógica sin Unity) · verify/ (referencias, escenas, tests) · assets/
+  tools/   ppt/ (deck) · audit/ (lógica sin Unity) · verify/ (referencias, capas, escenas, tests) · assets/
 ```
 
 Cada prototipo es independiente: no comparte escena, estado estático ni carpeta con otro.
@@ -69,15 +80,17 @@ La separación de capas se impone con asmdefs: los assemblies de dominio declara
 Las escenas se generan **solas** la primera vez que Unity compila el proyecto: si falta alguna,
 `PrototypeSceneBootstrap` las crea (`[InitializeOnLoad]`, una vez por sesión, sin pisar cambios).
 Para forzar la regeneración: menú **`VoidHex → Build Prototype Scenes`**.
-Para abrirlas: **`VoidHex → Open P1/P2/P3 … Scene`**.
+Para abrirlas, menú **`VoidHex`** → `Open P1 GridState Scene` / `Open P2 CommandPipeline Scene` /
+`Open P3 Loadout Scene` / `Open Game Loop Scene`.
 
 | Prototipo | Escena | Qué se ve y qué se puede hacer |
 | --- | --- | --- |
 | P1 | `P1_GridState.unity` | Mapa 12×12 con celdas reales coloreadas (asteroides, nebulosas, ocupación). El HUD permite bloquear/liberar celdas, ocupar y **reescribir una celda con el mismo valor**: el contador de eventos no debe subir. Muestra la ruta y su costo |
 | P2 | `P2_CommandPipeline.unity` | Nave y enemigo animados por `ShipView`. El HUD envía comandos intercalados (mover/atacar/escudo), fuerza un rechazo, termina el turno y pasa a turno enemigo, mostrando PA y fase en vivo |
 | P3 | `P3_Loadout.unity` | HUD con los 4 slots, estadísticas recalculadas y botones para equipar cada módulo del catálogo (incluye MK III) y quitar por slot |
+| GameLoop | `GameLoop.unity` | Bucle jugable completo: hangar (equipar + desplegar) → combate hexagonal (clic para mover, hover con camino previsualizado, área de alcance, atacar, terminar turno) → victoria/derrota → volver al hangar |
 
-Abrir la escena y presionar **Play**. Cada prototipo se ejecuta solo; los paneles son uGUI nativa.
+Abrir la escena y presionar **Play**. Cada escena se ejecuta sola; los paneles son uGUI nativa.
 
 ## Assets 3D
 
@@ -85,9 +98,15 @@ Los modelos son del **Kenney Space Kit** (CC0, dominio público): naves, asteroi
 turret. Se cargan por nombre en runtime (`Resources/Models/<Nombre>.fbx`) desde
 `Assets/ThirdParty/Kenney/SpaceKit`, con atribución y licencia incluidas en esa carpeta.
 
-Los materiales **no** vienen del kit: los genera `VoidHex.UiKit.ModelLibrary` con el shader URP y
-la paleta de la UI, para que escena y paneles compartan el mismo lenguaje visual. Si un modelo
-faltara, la vista cae a una primitiva: la demo no se rompe por un asset ausente.
+Los materiales **sí** son los del kit: los FBX traen sus materiales embebidos con la paleta de Kenney
+(`metal`, `metalDark`, `dark`, `metalRed`, rocas y cristales) y sin texturas, así que el color es lo
+que comunica la forma. `VoidHex.UiKit.ModelLibrary` los **conserva** y solo repinta el submesh de
+acento (`metalRed`) para distinguir jugador de enemigo, más un material propio para las rocas, que
+en el kit vienen en color de suelo de planeta. Los indicadores del tablero (hover, ruta, alcance,
+peligro) los genera `ModelLibrary` con el shader URP y la paleta de la UI.
+
+Si un modelo faltara, la vista cae a una primitiva: la demo no se rompe por un asset ausente.
+El diagnóstico completo está en [`docs/08-assessment-materiales.md`](./docs/08-assessment-materiales.md).
 
 Para reinstalar el subconjunto de modelos (requiere el zip descomprimido en `_downloads/`):
 
@@ -122,11 +141,13 @@ Los resultados quedan en `Logs/*.xml` (ignorados por git). Código de salida `0`
 
 ## Verificación rápida sin abrir Unity
 
-Cuatro chequeos que no necesitan el editor y atajan los errores de configuración más comunes:
+Seis chequeos que no necesitan el editor y atajan los errores de configuración más comunes:
 
 ```powershell
-python tools\verify\check_asmdef_refs.py     # usings vs referencias declaradas en cada asmdef
-python tools\verify\check_layers.py          # MonoBehaviours, dominio puro y destrucción de objetos
+python tools\verify\check_asmdef_refs.py      # usings vs referencias declaradas en cada asmdef
+python tools\verify\check_layers.py           # MonoBehaviours, dominio puro y destrucción de objetos
+python tools\verify\check_scenes.py           # escenas generadas y assets de P3 referenciados
+python tools\verify\check_delivery.py         # condiciones de entrega de la consigna §2
 dotnet run --project tools\audit\Audit.csproj # ejecuta la lógica pura y compara con las aserciones
 dotnet build tools\verify\VerifyUnity.csproj  # compila las capas Unity contra los DLLs reales
 ```

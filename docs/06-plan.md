@@ -68,7 +68,14 @@
 
 ## 4. Procedimiento de entrega
 
+Condiciones de la consigna (§2): repositorio de GitHub con TP1 + prototipos + tests +
+instrucciones + documentación de alcance/exclusiones/decisiones. Se entrega **por tag**, y
+el enlace que se envía es **el del tag**, no el de la rama.
+
 ```powershell
+# 0. El repositorio tiene que ser PÚBLICO: el docente abre el enlace sin credenciales.
+#    GitHub devuelve 404 a un repo privado, así que el enlace no le serviría.
+
 # 1. Suite verde y todo commiteado
 git -C c:\Users\Mati\HexPG status --short
 
@@ -76,20 +83,25 @@ git -C c:\Users\Mati\HexPG status --short
 git -C c:\Users\Mati\HexPG tag -a tp2 -m "TP2: 3 prototipos + tests"
 git -C c:\Users\Mati\HexPG push origin main --tags
 
-# 3. Enviar el enlace del TAG (no de la rama) a diego.freijo@udelaciudad.edu.ar
-#    antes del 28/10 23:59. No mover el tag después.
+# 3. Verificar que el tag llegó al remoto (sin esto se envía un enlace roto)
+git -C c:\Users\Mati\HexPG ls-remote --tags origin
+
+# 4. Enviar el enlace del TAG a diego.freijo@udelaciudad.edu.ar antes del 28/10 23:59
+#    Formato: https://github.com/SenKetZu/HexPG/releases/tag/tp2
+#    (o .../tree/tp2 si todavía no hay release). No mover el tag después.
 ```
 
 Reentrega: tag `rtp2` (04/11 23:59). Defensa: 04/11, 20 min + 10 de preguntas.
 
 ## 5. Checklist final
 
-- [ ] Repositorio clonable; sin `Library/`, `Temp/`, `Logs/`, `UserSettings/`.
-- [ ] TP1 incluido (`GDD.md`, `DIAGRAMS.md`).
-- [ ] 3 prototipos en carpetas independientes, 1 escena cada uno.
-- [ ] Tests verdes en Edit Mode y Play Mode.
-- [ ] README con versión de Unity y pasos reproducibles (incluye `Build Prototype Scenes`).
-- [ ] Documentación por prototipo: alcance, exclusiones, ajustes, decisiones.
-- [ ] Matriz comportamiento → test → defecto completa.
+- [x] Repositorio clonable; sin `Library/`, `Temp/`, `Logs/`, `UserSettings/` (verificado: 0 archivos).
+- [x] TP1 incluido (`GDD.md`, `DIAGRAMS.md`).
+- [x] 3 prototipos en carpetas independientes, 1 escena cada uno (+ `GameLoop` como composición).
+- [x] Tests verdes en Edit Mode (80) y Play Mode (1).
+- [x] README con versión de Unity y pasos reproducibles (incluye `Build Prototype Scenes`).
+- [x] Documentación por prototipo: alcance, exclusiones, ajustes, decisiones.
+- [x] Matriz comportamiento → test → defecto completa.
+- [ ] Repositorio **público** para que el docente pueda abrir el enlace del tag.
 - [ ] Dos ensayos de defensa hechos.
-- [ ] Tag `tp2` creado y enviado por mail.
+- [ ] Tag `tp2` creado, pusheado y enviado por mail.

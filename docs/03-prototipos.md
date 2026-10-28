@@ -293,7 +293,53 @@ sin tocar código ni recompilar.
 
 ---
 
-## Ajustes respecto del diseño del TP1 (para la defensa)
+## GameLoop — capa de composición (no es un cuarto desafío)
+
+`Assets/GameLoop/` **no** agrega un problema nuevo del TP1. Existe para responder la pregunta
+que la defensa va a recibir: *¿los tres prototipos encajan entre sí, o son tres demos sueltas?*
+
+### Alcance comprometido
+
+Una escena jugable (`GameLoop.unity`) que usa **los tres prototipos a la vez**:
+
+| Etapa | Qué prototipo aporta | Qué se ve |
+| --- | --- | --- |
+| Hangar | P3 (VContainer + ScriptableObjects) | Equipar módulos; las stats se recalculan |
+| Despliegue | P3 → P1 | La nave y la torreta ocupan celdas de la grilla |
+| Combate | P1 (consulta) + P2 (pipeline) | Clic para mover, hover con camino previsualizado, área de alcance, atacar, terminar turno |
+| Resolución | P2 (presentación async) | Animación de la ejecución, victoria/derrota, vuelta al hangar |
+
+La lógica vive en `VoidHex.GameLoop.Logic` con `noEngineReferences: true`: `GameSession` decide,
+`LoopDriver` orquesta contra Unity y `LoopGridView`/`GameLoopScreen` solo dibujan.
+
+### Decisiones
+
+- **La composición no reimplementa reglas.** `GameSession` consulta `IGridQueryService` (P1) y
+  emite `ICommand` al pipeline (P2); el loadout viene de P3. Si una regla cambia, cambia en su
+  prototipo, no acá.
+- **El alcance de ataque se calcula en el dominio** (`AttackReach`, `CanAttackFrom`) y la vista
+  solo pinta el resultado: lo que se dibuja y lo que se valida salen de la misma evaluación.
+- **`IsOpenGround` vs `IsPassable`**: `IsPassable` excluye celdas ocupadas, así que usarlo para
+  calcular alcance dejaba fuera la celda de la propia nave. Fue un defecto real, con test.
+
+### Exclusiones (y por qué)
+
+| Excluido | Por qué | Cómo se extendería |
+| --- | --- | --- |
+| Más de un enemigo, IA | No demuestra ninguna propiedad de los tres desafíos | `GameSession` ya itera comandos: un `TurretModel` por entidad |
+| Guardado, progresión, menús | Fuera del alcance declarado (§4.1) | Capa de persistencia sobre `ShipConfig` |
+| Arte y VFX | No aporta a la evaluación | El `ModelLibrary` ya centraliza la presentación |
+
+### Propiedad de diseño y demostración
+
+- **D1**: en la escena del bucle, la UI y la grilla conviven sin que la vista consulte el modelo
+  por frame → el hover se recalcula por mouse, no por estado.
+- **D2**: un comando rechazado (fuera de PA/rango) devuelve motivo y la nave no se mueve.
+
+Evidencia: 59 tests EditMode en `Assets/GameLoop/Tests/EditMode/`
+(`GameSessionTests`, `AttackAreaTests`, `HexProjectionTests`, `ResultStructInvariantTests`).
+
+---
 
 1. **P1 cambia de eje.** El informe largo del TP1 desarrolla la matemática hexagonal y el A*; el
    *resumen ejecutivo* declara como desafío la **exposición del estado (ISP + Observer)**. El TP2
