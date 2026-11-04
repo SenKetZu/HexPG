@@ -1,0 +1,412 @@
+{
+  "source": "unity command run_tests",
+  "summary": {
+    "Total": 80,
+    "Passed": 80,
+    "Failed": 0,
+    "Skipped": 0,
+    "Inconclusive": 0
+  },
+  "results": [
+    {
+      "test": "VoidHex.GameLoop.Tests.AttackAreaTests.AttackReach_ExcludesBlockedCells",
+      "status": "Passed",
+      "duration": 0.0275
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.AttackAreaTests.AttackReach_IsCentredOnTheOriginNotTheTurret",
+      "status": "Passed",
+      "duration": 0.0115
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.AttackAreaTests.AttackReach_NeverContainsTheOriginItself",
+      "status": "Passed",
+      "duration": 0.0007
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.AttackAreaTests.AttackReach_ShrinksWhenABlockerCutsLineOfSight",
+      "status": "Passed",
+      "duration": 0.0013
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.AttackAreaTests.CanAttackFrom_AgreesWithTheReachContainingTheTurret",
+      "status": "Passed",
+      "duration": 0.0096
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.AttackAreaTests.MovingIntoTheAttackArea_EnablesTheShot",
+      "status": "Passed",
+      "duration": 0.0191
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.ActionsOutsideCombat_AreRejectedWithWrongPhase",
+      "status": "Passed",
+      "duration": 0.0015
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.Deploy_MarksBothOccupiedOnTheGrid",
+      "status": "Passed",
+      "duration": 0.0022
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.Deploy_TakesStatsFromLoadoutAndEntersCombat",
+      "status": "Passed",
+      "duration": 0.0012
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.EndTurn_RefillsActionPointsAndAdvancesTheTurn",
+      "status": "Passed",
+      "duration": 0.0027
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.EndTurn_WhenHullReachesZero_EndsInDefeat",
+      "status": "Passed",
+      "duration": 0.0011
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.EndTurn_WhenOutOfSight_DoesNotDamageAndReportsIt",
+      "status": "Passed",
+      "duration": 0.0007
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.EndTurn_WhenShieldsAreGone_DamagesHull",
+      "status": "Passed",
+      "duration": 0.0005
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.EndTurn_WhenTurretCanFire_DamagesShieldsBeforeHull",
+      "status": "Passed",
+      "duration": 0.0006
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.FullLoop_HangarCombatVictoryHangar_CanStartAgain",
+      "status": "Passed",
+      "duration": 0.0009
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.NewSession_StartsInHangar",
+      "status": "Passed",
+      "duration": 0.0003
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.ReturnToHangar_AfterVictory_AwardsOneVictoryAndReleasesTheCell",
+      "status": "Passed",
+      "duration": 0.0005
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.TryAttack_AfterVictory_IsRejected",
+      "status": "Passed",
+      "duration": 0.0005
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.TryAttack_OutOfRange_RejectsWithDistance",
+      "status": "Passed",
+      "duration": 0.0015
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.TryAttack_WhenTurretHullReachesZero_EndsInVictory",
+      "status": "Passed",
+      "duration": 0.0005
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.TryAttack_WithoutLineOfSight_RejectsWithItsOwnReason",
+      "status": "Passed",
+      "duration": 0.0006
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.TryMove_BeyondMovementRange_RejectsWithOutOfRange",
+      "status": "Passed",
+      "duration": 0.0016
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.TryMove_MovesTheOccupancyToTheNewCell",
+      "status": "Passed",
+      "duration": 0.0006
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.TryMove_OntoBlockedCell_IsRejected",
+      "status": "Passed",
+      "duration": 0.0006
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.TryMove_SpendsThePathCostComputedFromTheGrid",
+      "status": "Passed",
+      "duration": 0.001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.GameSessionTests.TryMove_WithoutEnoughActionPoints_RejectsAndKeepsState",
+      "status": "Passed",
+      "duration": 0.0006
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(0,0)",
+      "status": "Passed",
+      "duration": 0.0012
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(0,1)",
+      "status": "Passed",
+      "duration": 0.0002
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(0,2)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(0,4)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(0,5)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(1,0)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(1,1)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(1,2)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(1,4)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(1,5)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(3,0)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(3,1)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(3,2)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(3,4)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(3,5)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(5,0)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(5,1)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(5,2)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(5,4)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(5,5)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(7,0)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(7,1)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(7,2)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(7,4)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.ToWorld_ThenTryToCell_ReturnsTheSameCell(7,5)",
+      "status": "Passed",
+      "duration": 0.0001
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.TryToCell_NearTheCenterOfACell_StillResolvesToThatCell",
+      "status": "Passed",
+      "duration": 0.0005
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.TryToCell_OutsideTheMap_ReturnsFalse",
+      "status": "Passed",
+      "duration": 0.0003
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.HexProjectionTests.TryToCell_WithDegenerateMap_ReturnsFalse",
+      "status": "Passed",
+      "duration": 0.0002
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.ResultStructInvariantTests.DefaultMovePreview_HasEmptyPathNotNull",
+      "status": "Passed",
+      "duration": 0.0012
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.ResultStructInvariantTests.DefaultPathResult_HasEmptyPathNotNull",
+      "status": "Passed",
+      "duration": 0.0005
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.ResultStructInvariantTests.DefaultShipStats_HasEmptyAbilitiesNotNull",
+      "status": "Passed",
+      "duration": 0.0005
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.ResultStructInvariantTests.PreviewMove_OnBlockedCell_IsNotValid",
+      "status": "Passed",
+      "duration": 0.0014
+    },
+    {
+      "test": "VoidHex.GameLoop.Tests.ResultStructInvariantTests.PreviewMove_ToTheCurrentCell_ReturnsZeroCostAndNoSteps",
+      "status": "Passed",
+      "duration": 0.0006
+    },
+    {
+      "test": "VoidHex.P1.Tests.GridContractTests.FindPath_AvoidsBlockedCells_AndReturnsMinimumCost",
+      "status": "Passed",
+      "duration": 0.0015
+    },
+    {
+      "test": "VoidHex.P1.Tests.GridContractTests.IGridQueryService_ExposesNoMutatingMembers",
+      "status": "Passed",
+      "duration": 0.0018
+    },
+    {
+      "test": "VoidHex.P1.Tests.GridContractTests.IGridStatePublisher_ExposesOnlyEvents",
+      "status": "Passed",
+      "duration": 0.0009
+    },
+    {
+      "test": "VoidHex.P1.Tests.GridContractTests.SetCell_WithDifferentValue_RaisesExactlyOneChange",
+      "status": "Passed",
+      "duration": 0.0032
+    },
+    {
+      "test": "VoidHex.P1.Tests.GridContractTests.SetCell_WithSameValue_DoesNotRaiseChange",
+      "status": "Passed",
+      "duration": 0.0005
+    },
+    {
+      "test": "VoidHex.P2.Tests.CommandPipelineTests.EndTurn_RefillsActionPointsToMaximum",
+      "status": "Passed",
+      "duration": 0.0011
+    },
+    {
+      "test": "VoidHex.P2.Tests.CommandPipelineTests.Submit_AppliesLogicBeforeTheAnimationCompletes",
+      "status": "Passed",
+      "duration": 0.0131
+    },
+    {
+      "test": "VoidHex.P2.Tests.CommandPipelineTests.Submit_DuringEnemyTurn_IsRejectedWithWrongPhase",
+      "status": "Passed",
+      "duration": 0.0048
+    },
+    {
+      "test": "VoidHex.P2.Tests.CommandPipelineTests.Submit_InterleavedCommands_SpendsExactActionPoints",
+      "status": "Passed",
+      "duration": 0.005
+    },
+    {
+      "test": "VoidHex.P2.Tests.CommandPipelineTests.Submit_NewCommandVariant_RequiresNoPipelineChange",
+      "status": "Passed",
+      "duration": 0.0044
+    },
+    {
+      "test": "VoidHex.P2.Tests.CommandPipelineTests.Submit_RejectedCommand_KeepsStateAndDoesNotAnimate",
+      "status": "Passed",
+      "duration": 0.0044
+    },
+    {
+      "test": "VoidHex.P2.Tests.CommandPipelineTests.Submit_SecondCommand_QueuesUntilTheFirstAnimationCompletes",
+      "status": "Passed",
+      "duration": 0.0466
+    },
+    {
+      "test": "VoidHex.P3.Tests.LoadoutTests.Calculate_AddsAllBonusesToBaseStats",
+      "status": "Passed",
+      "duration": 0.0037
+    },
+    {
+      "test": "VoidHex.P3.Tests.LoadoutTests.Calculate_IsIdempotent_AndDoesNotMutateInputs",
+      "status": "Passed",
+      "duration": 0.0016
+    },
+    {
+      "test": "VoidHex.P3.Tests.LoadoutTests.EquipmentService_UnknownModule_KeepsStatsUnchanged",
+      "status": "Passed",
+      "duration": 0.0043
+    },
+    {
+      "test": "VoidHex.P3.Tests.LoadoutTests.EquipmentService_WithInjectedFakeCatalog_ResolvesModulesById",
+      "status": "Passed",
+      "duration": 0.0018
+    },
+    {
+      "test": "VoidHex.P3.Tests.LoadoutTests.ShipModuleAsset_MapsToDefinition_AllFields",
+      "status": "Passed",
+      "duration": 0.0018
+    },
+    {
+      "test": "VoidHex.P3.Tests.LoadoutTests.TryEquip_ReplacingModule_DoesNotDoubleCount",
+      "status": "Passed",
+      "duration": 0.001
+    },
+    {
+      "test": "VoidHex.P3.Tests.LoadoutTests.TryEquip_ReturnsNewLoadout_WithoutMutatingTheOriginal",
+      "status": "Passed",
+      "duration": 0.0004
+    },
+    {
+      "test": "VoidHex.P3.Tests.LoadoutTests.TryEquip_WithUnknownSlotType_ReturnsWrongSlotTypeAndKeepsLoadout",
+      "status": "Passed",
+      "duration": 0.0007
+    },
+    {
+      "test": "VoidHex.P3.Tests.LoadoutTests.Unequip_RemovesExactBonuses",
+      "status": "Passed",
+      "duration": 0.0011
+    }
+  ]
+}
