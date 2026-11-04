@@ -6,7 +6,10 @@ Contenido listo para exponer, generado desde [`docs/07-presentacion.md`](../07-p
 
 | Archivo | Qué es |
 | --- | --- |
-| `TP2-VoidHex-Tactics.pptx` | Deck de 20 slides, 16:9, con diagramas **nativos** (vectores editables), el código real de un test por prototipo y notas del orador |
+| `TP2-VoidHex-Tactics.pptx` | Deck de 26 slides, 16:9, con diagramas **nativos** (vectores editables), capturas reales de las tres escenas, el código de cada patrón aplicado, el código de los tests y notas del orador |
+| `assets/escena-p1.png` | Captura real de `P1_GridState` en Play (4 eventos, 144 celdas, costo 20) |
+| `assets/escena-p2.png` | Captura real de `P2_CommandPipeline` en Play (PA 6 → 1, hull 6 → 3) |
+| `assets/escena-p3.png` | Captura real de `P3_Loadout` en Play (PA 6 · escudos 5 · movimiento 4) |
 | `assets/diagrama-p1-isp-observer.png` | P1: dos contratos segregados sobre un único `GridModel` |
 | `assets/diagrama-p2-pipeline.png` | P2: `ICommand` → validar → ejecutar → notificar → animar |
 | `assets/diagrama-p2-ocp.png` | P2: comandos intercambiables sin tocar el pipeline |
@@ -14,28 +17,33 @@ Contenido listo para exponer, generado desde [`docs/07-presentacion.md`](../07-p
 
 Los PNG son para usar en Google Slides, Keynote o cualquier editor que no abra el `.pptx` con fidelidad.
 
+Las tres capturas `escena-*` salen del editor (`capture_game_view`), no son mockups. Si cambia una
+escena, se vuelven a tomar y se pisan esos archivos: `build_deck.py` las lee de ahí.
+
 ## Estructura del deck
 
 | Slides | Bloque | Tiempo |
 | --- | --- | --- |
-| 1–2 | Marco: qué entrego | 2:00 |
-| 3–6 | **P1** ISP + Observer | 5:00 |
-| 7–10 | **P2** Pipeline async | 5:30 |
-| 11–13 | **P3** DI + Data-driven | 4:00 |
-| 14–16 | Tests, exclusiones y ajustes | 2:30 |
-| 17 | Cierre | 1:00 |
-| 18–20 | **Respaldo** (no se muestran salvo que pregunten) | — |
+| 1–3 | Marco: qué entrego y qué se puede abrir | 2:30 |
+| 4–8 | **P1** ISP + Observer | 5:00 |
+| 9–13 | **P2** Pipeline async | 5:00 |
+| 14–18 | **P3** DI + Data-driven | 4:30 |
+| 19–22 | Cómo se testea, trazabilidad, exclusiones y ajustes | 2:30 |
+| 23 | Cierre | 0:30 |
+| 24–26 | **Respaldo** (no se muestran salvo que pregunten) | — |
 
-Las slides de evidencia (5, 9 y 13) muestran el código del test que sostiene el número, copiado
-literalmente de `Assets/Prototypes/*/Tests`.
+Slides de **código de patrón**: 6 (ISP + Observer), 11 (Command + cola), 16 (DI + DIP),
+17 (Flyweight + inmutable). Slides de **código de test**: 7, 12 y 18. La 19 explica **cómo se
+testea cada patrón**, que es la pregunta que suele venir después.
 
 Cada slide tiene **notas del orador** con lo que hay que decir y cuánto tiempo tomar.
 
 ## Cómo regenerar
 
 ```powershell
-python tools/ppt/build_deck.py      # genera el pptx y los PNG
+python tools/ppt/build_deck.py      # genera el pptx y los PNG de diagrama
 python tools/ppt/verify_deck.py     # valida límites y desbordes de texto
+python tools/ppt/preview_deck.py    # PPTX -> PNG por slide, para revisar a ojo
 ```
 
 Requisitos: `python-pptx` y `matplotlib`.
