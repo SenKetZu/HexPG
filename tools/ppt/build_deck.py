@@ -481,7 +481,7 @@ a la interfaz de lectura, el test se pone rojo antes de que llegue a la UI.
     write(s, MARGIN, 1.95, CONTENT_W, 0.95,
           "El informe largo del TP1 desarrolla grilla y pathfinding; el desafío declarado es la exposición del estado.",
           15, BODY, spacing=1.2)
-    grid(s, MARGIN, 3.05, CONTENT_W, [
+    grid(s, MARGIN, 2.65, CONTENT_W, [
         ["Fuera de alcance", "Justificación"],
         ["Mapas 3D multicapa", "El desafío es de exposición de estado, no de geometría"],
         ["Niebla de guerra", "Es un sistema de conocimiento, ajeno a la exposición"],
