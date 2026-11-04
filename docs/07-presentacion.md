@@ -1,8 +1,9 @@
 # 07 — Presentación TP2 (guion de slides)
 
 > **Deck generado:** [`presentacion/TP2-VoidHex-Tactics.pptx`](./presentacion/TP2-VoidHex-Tactics.pptx)
-> — 20 slides 16:9 con diagramas nativos, el código real de un test por prototipo y notas del orador.
-> Los diagramas también están como PNG en
+> — 26 slides 16:9 con diagramas nativos, capturas reales de las tres escenas, el código de cada
+> patrón aplicado, el código de un test por prototipo y notas del orador. Los diagramas y las
+> capturas también están como PNG en
 > [`presentacion/assets/`](./presentacion/assets). Para regenerar: `python tools/ppt/build_deck.py`.
 > **El generador (`tools/ppt/build_deck.py`) define el layout real del deck**; este documento es la
 > referencia de contenido y guion. Si cambia un caso, se actualizan los dos.
@@ -26,8 +27,30 @@
 | (implícito) | Nada de muros de texto | 12 bullets por slide | ≤ 6 líneas, ≤ 12 palabras por línea |
 | (implícito) | Una evidencia por slide | "es escalable" | Nombre del test en verde |
 
-**Paleta y formato sugeridos:** fondo oscuro, una tipografía, tamaño mínimo 20 pt, código en
-monoespaciada con máximo 8 líneas. Nada de animaciones.
+**Paleta y formato sugeridos:** fondo oscuro, una tipografía, tamaño mínimo 20 pt en prosa, código en
+monoespaciada de 8–9 pt con como mucho 16 líneas. Nada de animaciones.
+
+---
+
+## 1bis. Arquetipos cubiertos con código
+
+Cada patrón que la solución declara tiene **una slide con su código real** y **un test** que verifica
+la propiedad. Si un patrón no aparece acá, no se declara en la defensa.
+
+| Patrón | Slide | Código que se muestra | Test que lo respalda |
+| --- | --- | --- | --- |
+| ISP | 6 | las tres interfaces de P1 | `IGridQueryService_ExposesNoMutatingMembers` |
+| Observer | 6 | `SetCell` + suscripción del presentador | `SetCell_WithSameValue_DoesNotRaiseChange` |
+| Command | 11 | `ICommand` + `MoveCommand.Execute` | `Submit_NewCommandVariant_RequiresNoPipelineChange` |
+| Cola serializada | 11 | `SemaphoreSlim` en `SubmitAsync` | `Submit_SecondCommand_QueuesUntilTheFirstAnimationCompletes` |
+| OCP | 11 y 13 | comando nuevo por la misma interfaz | mismo test del Command |
+| DI (contenedor) | 16 | `LifetimeScope.Configure` + `[Inject]` | `EquipmentService_WithInjectedFakeCatalog_ResolvesModulesById` |
+| DIP | 16 | constructor con `IModuleCatalog` | mismo test (fake inyectado) |
+| Flyweight | 17 | `ShipModuleAsset.ToDefinition` | `ShipModuleAsset_MapsToDefinition_AllFields` |
+| Inmutable | 17 | `Loadout.TryEquip` sobre copia | `TryEquip_ReturnsNewLoadout_WithoutMutatingTheOriginal` |
+| Adapter (SO → dominio) | 17 | el mismo `ToDefinition` | mismo test del Flyweight |
+
+La slide 19 condensa esto en una tabla: **patrón → propiedad verificada → test**.
 
 ---
 
@@ -88,7 +111,26 @@ independiente, con su escena y su suite."
 
 ---
 
-### Slide 3 — P1 · El problema
+### Slide 3 — "Tres escenas que corren solas, con UI nativa y modelos CC0"
+
+**Tres capturas reales**, una por prototipo, tomadas del editor el 04/11:
+
+| Escena | Imagen | Pie |
+| --- | --- | --- |
+| P1 · GridState | `assets/escena-p1.png` | 4 eventos · 144 celdas · ruta de 21 celdas, costo 20 |
+| P2 · CommandPipeline | `assets/escena-p2.png` | PA 6 → 1 · hull 6 → 3 · cola libre al terminar |
+| P3 · Loadout | `assets/escena-p3.png` | PA 6 · escudos 5 · movimiento 4 |
+
+**Línea al pie:** `VoidHex → Open P1 / P2 / P3 Scene`, `Play`. Los paneles son uGUI nativa.
+
+**Notas del orador (40 s):** "Estas son las tres escenas, tal como se abren. Lo que importa no es
+el arte: es que el HUD muestra el dato que después se verifica en un test. En P1 el contador queda
+en 4 porque el terreno inicial tiene 4 celdas no vacías; en P2 los PA bajan de 6 a 1 con los tres
+comandos; en P3 el loadout da 6 / 5 / 4."
+
+---
+
+### Slide 4 — P1 · El problema
 
 **Título:** "Exponer el mapa sin God Object ni polling en `Update()`"
 
@@ -106,7 +148,7 @@ IA queda escuchando eventos visuales."
 
 ---
 
-### Slide 4 — P1 · La solución: dos contratos, ningún consumidor puede hacer lo del otro
+### Slide 5 — P1 · La solución: dos contratos, ningún consumidor puede hacer lo del otro
 
 **Visual (diagrama):**
 
@@ -133,7 +175,59 @@ flowchart LR
 
 ---
 
-### Slide 5 — P1 · La evidencia: reactivo de verdad
+### Slide 6 — P1 · Patrón · ISP + Observer (código)
+
+**Título:** "Tres contratos y un evento: nadie hace lo que no le toca"
+
+**Columna izquierda — ISP.** Código real de las tres interfaces (sin los cuerpos completos):
+
+```csharp
+public interface IGridQueryService      // lectura
+{
+    HexCell GetCell(HexCoordinates c);
+    bool IsPassable(HexCoordinates c);
+    int MovementCostToEnter(HexCoordinates c);
+}
+
+public interface IGridStatePublisher    // notificación
+{
+    event Action<GridChange> Changed;
+}
+
+public interface IGridCommands          // escritura
+{
+    bool SetCell(HexCell cell);
+}
+```
+
+**Columna derecha — Observer.** Código real de la mutación y de la suscripción:
+
+```csharp
+public bool SetCell(HexCell cell)
+{
+    if (!_cells.TryGetValue(cell.Coordinates, out var current))
+        return false;
+
+    if (current.Equals(cell)) return false;  // mismo valor: no notifica
+
+    _cells[cell.Coordinates] = cell;
+    Changed?.Invoke(new GridChange(cell.Coordinates, CellChanged));
+    return true;
+}
+
+// GridPresenter: una suscripción, sin Update()
+_publisher.Changed += HandleChanged;
+```
+
+**Cómo se testea (en la slide):** `IGridQueryService_ExposesNoMutatingMembers` recorre los miembros
+por reflexión; `SetCell_WithSameValue_DoesNotRaiseChange` verifica que el contador quede en 0.
+
+**Notas del orador (70 s):** ver `build_deck.py`; el argumento clave es que la interfaz de lectura
+no declara mutaciones, así que el `Pathfinder` no tiene forma de escribir el mapa.
+
+---
+
+### Slide 7 — P1 · La evidencia: reactivo de verdad
 
 **Números grandes (los protagonistas):**
 
@@ -179,7 +273,7 @@ es polling disfrazado de reactividad."
 
 ---
 
-### Slide 6 — P1 · Lo que dejé afuera (y por qué)
+### Slide 8 — P1 · Lo que dejé afuera (y por qué)
 
 **Título:** "El A* es el sustrato, no la tesis"
 
@@ -199,7 +293,7 @@ documentada, no porque no supiera cómo hacerlo."
 
 ---
 
-### Slide 7 — P2 · El problema
+### Slide 9 — P2 · El problema
 
 **Título:** "Mover → Atacar → Mover, sin que la animación decida las reglas"
 
@@ -216,7 +310,7 @@ documentada, no porque no supiera cómo hacerlo."
 
 ---
 
-### Slide 8 — P2 · La solución: la regla se aplica al instante, la animación espera después
+### Slide 10 — P2 · La solución: la regla se aplica al instante, la animación espera después
 
 **Visual (diagrama de flujo):**
 
@@ -242,7 +336,52 @@ el segundo comando espera en la cola; no hay estado a medio aplicar."
 
 ---
 
-### Slide 9 — P2 · La evidencia: el estado cambia antes de que termine la animación
+### Slide 11 — P2 · Patrón · Command + cola (código)
+
+**Título:** "Cada acción es un objeto; el pipeline no tiene un switch"
+
+**Columna izquierda — Command (OCP).**
+
+```csharp
+public interface ICommand
+{
+    int ActionPointCost { get; }
+    string VisualKey { get; }              // dato, no lógica
+    CommandValidation Validate(ShipModel model);
+    ShipModel Execute(ShipModel model);
+}
+
+public ShipModel Execute(ShipModel model)   // MoveCommand
+    => model.WithPosition(Target)
+            .WithActionPoints(model.ActionPoints - ActionPointCost);
+```
+
+**Columna derecha — cola serializada.** Núcleo de `CommandProcessor.SubmitAsync`:
+
+```csharp
+await _queue.WaitAsync();          // SemaphoreSlim(1, 1)
+try
+{
+    var validation = command.Validate(before);
+    if (!validation.IsAllowed)
+        return CommandOutcome.Rejected(validation, before);
+
+    SetPhase(TurnPhase.Executing);
+    _state = command.Execute(before);   // la regla, al instante
+
+    await _presentation.PlayAsync(execution);  // la vista, después
+    return outcome;
+}
+finally { SetPhase(TurnPhase.PlayerTurn); _queue.Release(); }
+```
+
+**Notas del orador (70 s):** el orden es el argumento: validar → ejecutar → notificar → esperar.
+El `SemaphoreSlim` impide que dos comandos se intercalen y es lo que testea
+`Submit_SecondCommand_QueuesUntilTheFirstAnimationCompletes`.
+
+---
+
+### Slide 12 — P2 · La evidencia: el estado cambia antes de que termine la animación
 
 **Tres aserciones, en texto grande (columna izquierda):**
 
@@ -288,7 +427,7 @@ intercalar dos comandos y corromper el estado.
 
 ---
 
-### Slide 10 — P2 · Extensible sin tocar el pipeline
+### Slide 13 — P2 · Extensible sin tocar el pipeline
 
 **Título:** "Agregar una habilidad es crear una clase, no modificar el sistema"
 
@@ -310,7 +449,7 @@ mueve la nave enemiga, y el pipeline no se entera. Plan B si no compila en vivo:
 
 ---
 
-### Slide 11 — P3 · El problema
+### Slide 14 — P3 · El problema
 
 **Título:** "Sin `GameManager.Instance` y sin Service Locator"
 
@@ -325,7 +464,7 @@ la dependencia está mal puesta."
 
 ---
 
-### Slide 12 — P3 · La solución: dependencias por constructor, datos como assets
+### Slide 15 — P3 · La solución: dependencias por constructor, datos como assets
 
 **Visual (diagrama):**
 
@@ -350,7 +489,90 @@ existe VContainer: recibe una interfaz por constructor. Eso es lo que permite te
 
 ---
 
-### Slide 13 — P3 · La evidencia: testeable sin Unity y ampliable sin recompilar
+### Slide 16 — P3 · Patrón · DI por constructor (código)
+
+**Título:** "El contenedor compone; el servicio no busca nada"
+
+**Izquierda — composition root.**
+
+```csharp
+protected override void Configure(IContainerBuilder builder)
+{
+    builder.RegisterInstance<IModuleCatalog>(moduleCatalog);
+    builder.RegisterInstance(shipConfig.ToConfig());
+    builder.Register<EquipmentService>(Lifetime.Singleton)
+           .As<IEquipmentService>();
+    builder.RegisterComponentInHierarchy<LoadoutDemo>();
+}
+```
+
+**Derecha arriba — consumidor.**
+
+```csharp
+[Inject]
+public void Construct(IEquipmentService service,
+                     IModuleCatalog catalog)
+{
+    _service = service;
+    _catalog = catalog;
+    Ready?.Invoke(service);    // evento, no un orden implícito
+}
+```
+
+**Derecha abajo — DIP.** El servicio depende de la interfaz, no del asset:
+
+```csharp
+public EquipmentService(ShipConfig config, IModuleCatalog catalog)
+{
+    _config = config ?? throw new ArgumentNullException(nameof(config));
+    _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
+}
+```
+
+**Cómo se testea:** `EquipmentService_WithInjectedFakeCatalog_ResolvesModulesById` construye el
+servicio con `FakeCatalog`, equipa `laser-mk1` y asserta que el catálogo recibió una consulta.
+
+---
+
+### Slide 17 — P3 · Patrón · Flyweight + inmutable (código)
+
+**Título:** "Un asset por módulo; equipar devuelve un loadout nuevo"
+
+**Izquierda — Flyweight y adaptador.**
+
+```csharp
+[CreateAssetMenu(menuName = "VoidHex/Module")]
+public sealed class ShipModuleAsset : ScriptableObject
+{
+    [SerializeField] private int bonusShields;   // datos, no reglas
+
+    public ModuleDefinition ToDefinition() => new ModuleDefinition(
+        moduleId, displayName, slot, tier,
+        bonusActionPoints, bonusShields, bonusMovement,
+        grantedAbilityId);   // el dominio nunca ve el asset
+}
+```
+
+**Derecha — inmutable.**
+
+```csharp
+public EquipResult TryEquip(ModuleDefinition module)
+{
+    if (!IsKnownSlot(module.Slot))
+        return EquipResult.Failed(WrongSlotType, this);
+
+    var copy = CopySlots();          // nunca el arreglo propio
+    copy[(int)module.Slot] = module; // un slot por tipo ⇒ reemplaza
+    return EquipResult.Success(new Loadout(copy));
+}
+```
+
+**Cómo se testea:** `ShipModuleAsset_MapsToDefinition_AllFields` compara los ocho campos;
+`TryEquip_ReturnsNewLoadout_WithoutMutatingTheOriginal` guarda la referencia original.
+
+---
+
+### Slide 18 — P3 · La evidencia: testeable sin Unity y ampliable sin recompilar
 
 **Dos columnas de código, una por propiedad.**
 
@@ -400,7 +622,26 @@ Resultado real: PA 6, escudos 5, movimiento 4, habilidades [beam, barrier]."
 
 ---
 
-### Slide 14 — "Cada comportamiento tiene un test y un defecto declarado"
+### Slide 19 — "No se testea el patrón: se testea la propiedad que promete"
+
+**Tabla (7 filas):**
+
+| Patrón | Qué hace el test | Test |
+| --- | --- | --- |
+| ISP | Recorre los miembros por reflexión: si hay una mutación, falla | `IGridQueryService_ExposesNoMutating…` |
+| Observer | Se suscribe, reescribe el mismo valor, el contador queda en 0 | `SetCell_WithSameValue_DoesNotRaise…` |
+| Command + cola | Presentation controlada: asserta con el `Task` pendiente | `Submit_AppliesLogicBeforeTheAnimation…` |
+| OCP | Envía un comando nuevo por la misma interfaz | `Submit_NewCommandVariant_RequiresNo…` |
+| DI / DIP | Inyecta un doble por constructor que cuenta consultas | `…WithInjectedFakeCatalog_ResolvesModules…` |
+| Flyweight | Traduce el asset y compara los ocho campos | `ShipModuleAsset_MapsToDefinition_AllFields` |
+| Inmutable | Guarda la instancia original y la compara después | `TryEquip_ReturnsNewLoadout_WithoutMut…` |
+
+**Notas del orador (70 s):** "No se testea el patrón, se testea la propiedad que promete." Se
+desarrolla fila por fila en 20 segundos y cierra con por qué el único Play Mode es el adaptador de P2.
+
+---
+
+### Slide 20 — "Cada comportamiento tiene un test y un defecto declarado"
 
 **Visual:** una tabla de 3 filas (una por prototipo), recortada de `docs/04-trazabilidad.md`.
 
@@ -423,7 +664,7 @@ Unity invoque al adaptador."
 
 ---
 
-### Slide 15 — "Esto es lo que dejé afuera, y por qué"
+### Slide 21 — "Esto es lo que dejé afuera, y por qué"
 
 **Tabla (5 filas máximo):**
 
@@ -443,7 +684,7 @@ hacer, y cada una tiene por dónde crecer."
 
 ---
 
-### Slide 16 — "Qué cambié, y qué descubrí al implementar"
+### Slide 22 — "Qué cambié, y qué descubrí al implementar"
 
 **Tabla superior (3 filas), los cambios del TP1:**
 
@@ -470,7 +711,7 @@ en el código. El del pivote enseña algo: agoté hipótesis de arquitectura ant
 
 ---
 
-### Slide 17 — Cierre
+### Slide 23 — Cierre
 
 **Tres líneas, nada más:**
 

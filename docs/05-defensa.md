@@ -26,12 +26,12 @@ Cada bloque repite el mismo orden: **problema declarado → promesa → evidenci
 
 | Tiempo | Bloque | Contenido | Evidencia |
 | --- | --- | --- | --- |
-| 0:00–2:00 | Marco | Tres prototipos = los tres desafíos del TP1, cada uno con su prototipo y su suite | Tabla desafío → solución → prototipo |
-| 2:00–7:00 | **P1 ISP + Observer** | Problema (God Object / polling) → dos contratos segregados → demo: mutar una celda (1 redibujo), reescribirla igual (0 redibujos) → test de reflexión que prueba que el publisher **solo** tiene eventos → exclusión (event bus) | Escena P1 + 2 tests |
-| 7:00–13:00 | **P2 Pipeline async** | Problema (mover→atacar→mover con animaciones) → comando inmutable valida y ejecuta al instante; la animación espera después → demo: el estado ya cambió mientras la animación está pendiente → cola impide intercalar → `ShieldCommand` nuevo sin tocar el pipeline | Escena P2 + Test Runner |
-| 13:00–17:00 | **P3 DI + Data-driven** | Problema (GameManager.Instance / Service Locator) → `LifetimeScope` inyecta `IEquipmentService` → demo: equipar MK I, reemplazar por MK II, quitar → test con catálogo falso (DIP) → crear un MK III como asset, sin recompilar | Escena P3 + test |
-| 17:00–19:00 | Cierre | Matriz de trazabilidad: cada comportamiento tiene test y defecto declarado. Ajustes vs TP1 | `04-trazabilidad.md` |
-| 19:00–20:00 | Cierre | Qué aprendí al implementar (2 frases) y qué dejaría fuera | — |
+| 0:00–2:30 | Marco | Tres prototipos = los tres desafíos del TP1; las tres escenas reales | Tabla desafío → solución → prototipo + capturas |
+| 2:30–7:30 | **P1 ISP + Observer** | Problema (God Object / polling) → dos contratos segregados → **código de las tres interfaces y del evento** → demo: mutar una celda (1 redibujo), reescribirla igual (0 redibujos) → test de reflexión → exclusión (event bus) | Slide de código + escena P1 + 2 tests |
+| 7:30–12:30 | **P2 Pipeline async** | Problema (mover→atacar→mover) → **`ICommand` y el núcleo del procesador con la cola** → demo: el estado ya cambió mientras la animación está pendiente → `ShieldCommand` nuevo sin tocar el pipeline | Slide de código + escena P2 + Test Runner |
+| 12:30–17:00 | **P3 DI + Data-driven** | Problema (GameManager.Instance / Service Locator) → **`LifetimeScope`, `[Inject]`, constructor con la interfaz** → **Flyweight: asset → `ModuleDefinition`, loadout inmutable** → demo: MK I → MK II, quitar, crear un MK III como asset | Slides de código + escena P3 + test |
+| 17:00–19:00 | **Cómo se testea** | Tabla patrón → propiedad verificada → test, y por qué el único Play Mode es el adaptador de P2 | Slide 19 + `04-trazabilidad.md` |
+| 19:00–20:00 | Cierre | Lo que quedó afuera con su ruta de extensión; qué aprendí al implementar | Slides 21–23 |
 
 ## 4. Demos en vivo (ensayadas)
 
@@ -68,6 +68,7 @@ Cada bloque repite el mismo orden: **problema declarado → promesa → evidenci
 | ¿Por qué VContainer y no un Singleton? | El Singleton oculta dependencias y bloquea tests; VContainer inyecta por constructor y permite dobles |
 | ¿Por qué no Service Locator? | Mantiene dependencias ocultas dentro de las clases; es el mismo problema con otro nombre |
 | ¿Cómo probás DIP? | `EquipmentService` recibe `IModuleCatalog`; el test inyecta `FakeCatalog` y cuenta las consultas |
+| ¿Cómo testean un patrón? | No se testea el patrón: se testea la propiedad que promete. ISP por reflexión, Observer con contador de eventos, Command con el `Task` pendiente, DI con un doble, Flyweight comparando los campos |
 | ¿Qué es el Flyweight acá? | Un asset por módulo, compartido por todas las naves; el dominio solo copia datos |
 | ¿Por qué el SO no está en el dominio? | Arrastra `UnityEngine`; es un adaptador. El dominio recibe `ModuleDefinition` |
 | ¿Por qué un slot por tipo? | Hace imposible el estado inválido "módulo en slot incompatible"; se elimina en vez de testearse |
