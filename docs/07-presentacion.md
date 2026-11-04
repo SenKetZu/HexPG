@@ -1,16 +1,17 @@
 # 07 — Presentación TP2 (guion de slides)
 
 > **Deck generado:** [`presentacion/TP2-VoidHex-Tactics.pptx`](./presentacion/TP2-VoidHex-Tactics.pptx)
-> — 26 slides 16:9 con diagramas nativos, capturas reales de las tres escenas, el código de cada
-> patrón aplicado, el código de un test por prototipo y notas del orador. Los diagramas y las
-> capturas también están como PNG en
-> [`presentacion/assets/`](./presentacion/assets). Para regenerar: `python tools/ppt/build_deck.py`.
+> — 20 slides 16:9 con capturas reales de las tres escenas, el código de cada patrón aplicado, el
+> código de un test por prototipo y notas del orador. Los diagramas y las capturas también están
+> como PNG en [`presentacion/assets/`](./presentacion/assets). Para regenerar:
+> `python tools/ppt/build_deck.py`.
 > **El generador (`tools/ppt/build_deck.py`) define el layout real del deck**; este documento es la
 > referencia de contenido y guion. Si cambia un caso, se actualizan los dos.
 >
-> **Para qué sirve este archivo:** es el contenido listo para PowerPoint.
-> Cada bloque = una slide. Copiá el *título*, los *bullets* y el *visual*; las **notas del orador**
-> van en el recuadro de notas, no en la slide.
+> **Criterio de este deck (04/11):** el TP1 ya explicó los problemas y las soluciones. Acá no se
+> repiten: el peso está en **cómo se verifica** cada decisión. Cada bloque muestra el código del
+> patrón y el código del test que lo sostiene.
+>
 > **Regla que ordena todo:** la devolución del TP1 dijo *"los problemas y soluciones están bien…
 > en las slides no dejás las cosas muy claras"*. Por eso cada slide sostiene **una sola afirmación**
 > con **una evidencia visible**. Si una slide necesita que la expliques para entenderse, está mal.
@@ -39,33 +40,35 @@ la propiedad. Si un patrón no aparece acá, no se declara en la defensa.
 
 | Patrón | Slide | Código que se muestra | Test que lo respalda |
 | --- | --- | --- | --- |
-| ISP | 6 | las tres interfaces de P1 | `IGridQueryService_ExposesNoMutatingMembers` |
-| Observer | 6 | `SetCell` + suscripción del presentador | `SetCell_WithSameValue_DoesNotRaiseChange` |
-| Command | 11 | `ICommand` + `MoveCommand.Execute` | `Submit_NewCommandVariant_RequiresNoPipelineChange` |
-| Cola serializada | 11 | `SemaphoreSlim` en `SubmitAsync` | `Submit_SecondCommand_QueuesUntilTheFirstAnimationCompletes` |
-| OCP | 11 y 13 | comando nuevo por la misma interfaz | mismo test del Command |
-| DI (contenedor) | 16 | `LifetimeScope.Configure` + `[Inject]` | `EquipmentService_WithInjectedFakeCatalog_ResolvesModulesById` |
-| DIP | 16 | constructor con `IModuleCatalog` | mismo test (fake inyectado) |
-| Flyweight | 17 | `ShipModuleAsset.ToDefinition` | `ShipModuleAsset_MapsToDefinition_AllFields` |
-| Inmutable | 17 | `Loadout.TryEquip` sobre copia | `TryEquip_ReturnsNewLoadout_WithoutMutatingTheOriginal` |
-| Adapter (SO → dominio) | 17 | el mismo `ToDefinition` | mismo test del Flyweight |
+| ISP | 5 | las tres interfaces de P1 | `IGridQueryService_ExposesNoMutatingMembers` |
+| Observer | 5 | `SetCell` + suscripción del presentador | `SetCell_WithSameValue_DoesNotRaiseChange` |
+| Command | 7 | `ICommand` + `MoveCommand.Execute` | `Submit_NewCommandVariant_RequiresNoPipelineChange` |
+| Cola serializada | 7 | `SemaphoreSlim` en `SubmitAsync` | `Submit_SecondCommand_QueuesUntilTheFirstAnimationCompletes` |
+| OCP | 7 y 9 | comando nuevo por la misma interfaz | mismo test del Command |
+| DI (contenedor) | 10 | `LifetimeScope.Configure` + `[Inject]` | `EquipmentService_WithInjectedFakeCatalog_ResolvesModulesById` |
+| DIP | 10 | constructor con `IModuleCatalog` | mismo test (fake inyectado) |
+| Flyweight | 11 | `ShipModuleAsset.ToDefinition` | `ShipModuleAsset_MapsToDefinition_AllFields` |
+| Inmutable | 11 | `Loadout.TryEquip` sobre copia | `TryEquip_ReturnsNewLoadout_WithoutMutatingTheOriginal` |
+| Adapter (SO → dominio) | 11 | el mismo `ToDefinition` | mismo test del Flyweight |
 
-La slide 19 condensa esto en una tabla: **patrón → propiedad verificada → test**.
+La slide 4 resume las técnicas: **patrón → cómo se verifica → defecto que detectaría**.
 
 ---
 
-## 1. Mapa de tiempos (20 min)
+## 1. Mapa de tiempos (~16 min, tope 20)
 
 | Slides | Bloque | Minutos |
 | --- | --- | --- |
-| 1–2 | Marco: qué entrego | 2:00 |
-| 3–6 | **P1** ISP + Observer | 5:00 |
-| 7–10 | **P2** Pipeline async | 5:30 |
-| 11–13 | **P3** DI + Data-driven | 4:00 |
-| 14–16 | Tests, exclusiones y ajustes | 2:30 |
-| 17 | Cierre | 1:00 |
+| 1–4 | Marco: qué entrego, las escenas y la estrategia de testeo | 2:30 |
+| 5–6 | **P1** ISP + Observer: código y test | 2:30 |
+| 7–9 | **P2** Command + cola: código, test y OCP | 3:00 |
+| 10–12 | **P3** DI + DIP + Flyweight: código y tests | 3:30 |
+| 13–15 | Aislamiento, Edit vs Play Mode y mutación | 2:15 |
+| 16–17 | Alcance y hallazgos | 1:20 |
+| 18 | Cierre | 0:20 |
 
-Quedan ~0:30 de colchón. Si te pasás, recortá la slide 6 y la 16 (no las de evidencia).
+Sobra margen real: si el jurado pregunta, hay colchón para responder sin cortar el final. Si hace
+falta recortar, la slide 9 (OCP) y la 17 (hallazgos) son las más prescindibles.
 
 ---
 
@@ -82,32 +85,32 @@ Quedan ~0:30 de colchón. Si te pasás, recortá la slide 6 y la 16 (no las de e
 ```text
 Programación de Videojuegos III · 2026
 Matias Andres Fahler
-Unity 6000.5.9f1 · tag tp2
+Unity 6000.5.9f1 · 81 tests verdes (80 Edit Mode + 1 Play Mode)
 ```
 
 **Visual:** las tres carpetas del repo (`P1_GridState`, `P2_CommandPipeline`, `P3_Loadout`) como
 tres bloques, sin adornos.
 
-**Notas del orador (15 s):** "Tres problemas técnicos del TP1, la solución que declaré para cada
-uno, y la evidencia de que funciona."
+**Notas del orador (15 s):** "Tres decisiones de arquitectura del TP1, ya implementadas, y la
+evidencia de que funcionan."
 
 ---
 
-### Slide 2 — "Cada desafío del TP1 tiene su prototipo y su suite"
+### Slide 2 — "Tres prototipos, cada uno con la suite que lo verifica"
 
 **Tabla (única de la slide):**
 
-| Desafío del TP1 | Solución declarada | Dónde vive |
+| Desafío del TP1 | Solución implementada | Prototipo · tests |
 | --- | --- | --- |
-| Exponer el mapa sin God Object ni polling | ISP + Observer | `P1_GridState` |
-| Alternar PA con animaciones async | Pipeline `ICommand` + async | `P2_CommandPipeline` |
-| Servicios sin singletons + módulos MK I–III | VContainer + ScriptableObjects | `P3_Loadout` |
+| Exponer el mapa sin God Object ni polling | ISP + Observer | `P1_GridState` · 5 |
+| Alternar PA con animaciones async | Pipeline `ICommand` + async | `P2_CommandPipeline` · 7 + 1 |
+| Servicios sin singletons + módulos MK I–III | VContainer + ScriptableObjects | `P3_Loadout` · 9 |
 
-**Visual:** una fila por prototipo; nada más.
+**Pie:** "El diagnóstico de cada desafío ya está en el TP1. Hoy lo que se muestra es cómo se
+implementó y cómo se verifica."
 
-**Notas del orador (45 s):** "Estos tres desafíos son los que declaré en el TP1. El TP2 no cambia el
-diagnóstico: cambia que ahora está implementado y testeado. Cada prototipo es una carpeta
-independiente, con su escena y su suite."
+**Notas del orador (30 s):** "No vuelvo sobre los problemas: están planteados en el TP1. Lo que
+cambia es que ahora está implementado y que cada propiedad tiene un test que la verifica."
 
 ---
 
@@ -130,52 +133,29 @@ comandos; en P3 el loadout da 6 / 5 / 4."
 
 ---
 
-### Slide 4 — P1 · El problema
+### Slide 4 — "Cada patrón se verifica con una técnica concreta"
 
-**Título:** "Exponer el mapa sin God Object ni polling en `Update()`"
+**Tabla (7 filas + encabezado):**
 
-**Dos columnas:**
+| Patrón | Cómo se verifica | Defecto que detectaría |
+| --- | --- | --- |
+| ISP | Reflexión sobre los miembros del tipo | Agregar `SetCell` a la interfaz de lectura |
+| Observer | Contador de eventos en el test | Polling disfrazado de reactividad |
+| Command + cola | `TaskCompletionSource` controlado por el test | Regla acoplada al tiempo del arte |
+| OCP | Se envía un comando nuevo por la misma interfaz | Un `switch` por tipo en el procesador |
+| DI / DIP | Doble inyectado por constructor | Servicio que busca sus dependencias |
+| Flyweight | Comparación campo por campo contra el asset | Duplicar datos entre instancias |
+| Inmutable | Se conserva la instancia previa y se compara | Aliasing y doble conteo |
 
-| Lo que NO quiero | Por qué |
-| --- | --- |
-| Un `GridManager` que sabe todo | God Object: nadie sabe quién muta el estado |
-| `Update()` consultando el mapa | CPU por frame y acoplamiento al motor |
-| Event Bus global | Dependencias ocultas, imposible de depurar |
+**Cómo cerrar:** *"No se testea el patrón: se testea la propiedad que promete, y debe fallar por ese
+motivo."*
 
-**Notas del orador (45 s):** "El mapa lo necesitan tres consumidores con necesidades distintas: la IA
-lee, los comandos validan, la UI dibuja. Si les doy el mismo objeto, la UI puede cambiar reglas y la
-IA queda escuchando eventos visuales."
-
----
-
-### Slide 5 — P1 · La solución: dos contratos, ningún consumidor puede hacer lo del otro
-
-**Visual (diagrama):**
-
-```mermaid
-flowchart LR
-    Q["IGridQueryService<br/>lectura síncrona"]
-    P["IGridStatePublisher<br/>eventos"]
-    M["GridModel<br/>único dueño del estado"]
-    IA["Pathfinding / IA"] --> Q
-    UI["GridPresenter"] --> P
-    M --> Q
-    M --> P
-    M -.->|"mutaciones NO están en las interfaces"| M
-```
-
-**Bullets (3):**
-
-- La IA y el pathfinding dependen de `IGridQueryService`: **no tienen forma de mutar**
-- La vista depende de `IGridStatePublisher`: **no tiene forma de alterar reglas**
-- Solo `GridModel` muta, y esos métodos **no están en ningún contrato**
-
-**Notas del orador (60 s):** "Esto no es una convención de estilo: es el tipo del constructor. El
-`Pathfinder` recibe `IGridQueryService`. Aunque quisiera, no puede escribir el mapa."
+**Notas del orador (60 s):** esta slide ordena el resto. Cada patrón tiene una técnica distinta y un
+defecto concreto que el test detectaría; si el test no puede fallar por ese motivo, no sirve.
 
 ---
 
-### Slide 6 — P1 · Patrón · ISP + Observer (código)
+### Slide 5 — P1 · Patrón · ISP + Observer (código)
 
 **Título:** "Tres contratos y un evento: nadie hace lo que no le toca"
 
@@ -227,7 +207,7 @@ no declara mutaciones, así que el `Pathfinder` no tiene forma de escribir el ma
 
 ---
 
-### Slide 7 — P1 · La evidencia: reactivo de verdad
+### Slide 6 — P1 · La evidencia: reactivo de verdad
 
 **Números grandes (los protagonistas):**
 
@@ -273,71 +253,7 @@ es polling disfrazado de reactividad."
 
 ---
 
-### Slide 8 — P1 · Lo que dejé afuera (y por qué)
-
-**Título:** "El A* es el sustrato, no la tesis"
-
-**Bullets:**
-
-- El informe largo del TP1 desarrolla grilla y pathfinding; el **desafío declarado** es la exposición del estado
-- La geometría y el A* existen para tener algo real que consultar
-- Excluido: mapas 3D, niebla de guerra, unidades con turnos, optimización de mapas grandes
-- **Event Bus global: descartado**, no es una omisión
-
-**Notas del orador (45 s):** "Si alguien pregunta por qué no hay niebla de guerra: porque es un
-sistema de conocimiento, no de exposición de estado. Lo dejé afuera con una ruta de extensión
-documentada, no porque no supiera cómo hacerlo."
-
-> **Nota interna:** esta slide es la que corrige la ambigüedad del TP1. No la saltees: explica por
-> qué el prototipo implementa ISP y no "la matemática hexagonal".
-
----
-
-### Slide 9 — P2 · El problema
-
-**Título:** "Mover → Atacar → Mover, sin que la animación decida las reglas"
-
-**Dos columnas:**
-
-| Lo que NO quiero | Por qué |
-| --- | --- |
-| `TurnManager` con corrutinas | `WaitForSeconds` mete el tiempo del arte dentro de la regla |
-| FSM con un estado por acción | Explota en combinaciones al agregar módulos |
-| Un comando por cada orden posible | Toca el controlador central cada vez |
-
-**Notas del orador (40 s):** "El jugador puede intercalar acciones. La pregunta difícil no es
-'¿puede moverse?', es **cuándo** se aplica el efecto: antes o después de la animación."
-
----
-
-### Slide 10 — P2 · La solución: la regla se aplica al instante, la animación espera después
-
-**Visual (diagrama de flujo):**
-
-```mermaid
-flowchart LR
-    C["ICommand<br/>inmutable"] --> V["Validate(model)"]
-    V -->|"rechaza"| R["CommandOutcome<br/>con motivo"]
-    V -->|"permite"| E["Execute(model)<br/>instantáneo"]
-    E --> N["notifica<br/>estado ya cambiado"]
-    N --> A["await presentación<br/>animación"]
-    A --> P["Phase = PlayerTurn"]
-```
-
-**Bullets (3):**
-
-- `CommandProcessor` es el **único dueño** del estado
-- Una cola serializa comandos: dos envíos seguidos **no se intercalan**
-- Solo tres fases: `PlayerTurn`, `Executing`, `EnemyTurn`
-
-**Notas del orador (70 s):** "Mirá el orden: cuando el pipeline vuelve de `Execute`, el estado ya
-cambió. La animación arranca después y no puede condicionar la regla. Si el jugador pulsa dos veces,
-el segundo comando espera en la cola; no hay estado a medio aplicar."
-
----
-
-### Slide 11 — P2 · Patrón · Command + cola (código)
-
+### Slide 7 — P2 · Patrón · Command + cola (código)
 **Título:** "Cada acción es un objeto; el pipeline no tiene un switch"
 
 **Columna izquierda — Command (OCP).**
@@ -381,7 +297,7 @@ El `SemaphoreSlim` impide que dos comandos se intercalen y es lo que testea
 
 ---
 
-### Slide 12 — P2 · La evidencia: el estado cambia antes de que termine la animación
+### Slide 8 — P2 · La evidencia: el estado cambia antes de que termine la animación
 
 **Tres aserciones, en texto grande (columna izquierda):**
 
@@ -427,7 +343,7 @@ intercalar dos comandos y corromper el estado.
 
 ---
 
-### Slide 13 — P2 · Extensible sin tocar el pipeline
+### Slide 9 — P2 · Extensible sin tocar el pipeline
 
 **Título:** "Agregar una habilidad es crear una clase, no modificar el sistema"
 
@@ -449,47 +365,7 @@ mueve la nave enemiga, y el pipeline no se entera. Plan B si no compila en vivo:
 
 ---
 
-### Slide 14 — P3 · El problema
-
-**Título:** "Sin `GameManager.Instance` y sin Service Locator"
-
-| Lo que NO quiero | Por qué |
-| --- | --- |
-| `GameManager.Instance` | Dependencias ocultas y estado global mutable |
-| Service Locator | Mismo problema con otro nombre: la clase pide, no recibe |
-| Stats calculadas dentro del `ScriptableObject` | El cálculo queda atado al motor y no se puede testear |
-
-**Notas del orador (40 s):** "El síntoma es fácil de ver: si para testear tengo que abrir una escena,
-la dependencia está mal puesta."
-
----
-
-### Slide 15 — P3 · La solución: dependencias por constructor, datos como assets
-
-**Visual (diagrama):**
-
-```mermaid
-flowchart TB
-    S["EquipmentLifetimeScope<br/>(composición, 1 por escena)"]
-    S -->|"registra"| C["ModuleCatalogAsset<br/>Flyweight"]
-    S -->|"registra"| G["ShipConfig"]
-    S -->|"registra"| E["IEquipmentService"]
-    D["LoadoutDemo<br/>[Inject]"] --> E
-    E --> C
-```
-
-**Bullets:**
-
-- `EquipmentService` recibe `IModuleCatalog` por constructor: **no busca nada**
-- El `ScriptableObject` es **adaptador**, no modelo: el dominio recibe `ModuleDefinition`
-- Un asset por módulo = **una instancia compartida** (Flyweight)
-
-**Notas del orador (60 s):** "El contenedor vive en la capa de presentación. El servicio ni sabe que
-existe VContainer: recibe una interfaz por constructor. Eso es lo que permite testearlo sin escena."
-
----
-
-### Slide 16 — P3 · Patrón · DI por constructor (código)
+### Slide 10 — P3 · Patrón · DI por constructor (código)
 
 **Título:** "El contenedor compone; el servicio no busca nada"
 
@@ -534,7 +410,7 @@ servicio con `FakeCatalog`, equipa `laser-mk1` y asserta que el catálogo recibi
 
 ---
 
-### Slide 17 — P3 · Patrón · Flyweight + inmutable (código)
+### Slide 11 — P3 · Patrón · Flyweight + inmutable (código)
 
 **Título:** "Un asset por módulo; equipar devuelve un loadout nuevo"
 
@@ -572,7 +448,7 @@ public EquipResult TryEquip(ModuleDefinition module)
 
 ---
 
-### Slide 18 — P3 · La evidencia: testeable sin Unity y ampliable sin recompilar
+### Slide 12 — P3 · La evidencia: testeable sin Unity y ampliable sin recompilar
 
 **Dos columnas de código, una por propiedad.**
 
@@ -622,49 +498,85 @@ Resultado real: PA 6, escudos 5, movimiento 4, habilidades [beam, barrier]."
 
 ---
 
-### Slide 19 — "No se testea el patrón: se testea la propiedad que promete"
+### Slide 13 — "Dobles escritos a mano: nada de frameworks de mock"
 
-**Tabla (7 filas):**
+**Izquierda — doble de catálogo.**
 
-| Patrón | Qué hace el test | Test |
-| --- | --- | --- |
-| ISP | Recorre los miembros por reflexión: si hay una mutación, falla | `IGridQueryService_ExposesNoMutating…` |
-| Observer | Se suscribe, reescribe el mismo valor, el contador queda en 0 | `SetCell_WithSameValue_DoesNotRaise…` |
-| Command + cola | Presentation controlada: asserta con el `Task` pendiente | `Submit_AppliesLogicBeforeTheAnimation…` |
-| OCP | Envía un comando nuevo por la misma interfaz | `Submit_NewCommandVariant_RequiresNo…` |
-| DI / DIP | Inyecta un doble por constructor que cuenta consultas | `…WithInjectedFakeCatalog_ResolvesModules…` |
-| Flyweight | Traduce el asset y compara los ocho campos | `ShipModuleAsset_MapsToDefinition_AllFields` |
-| Inmutable | Guarda la instancia original y la compara después | `TryEquip_ReturnsNewLoadout_WithoutMut…` |
+```csharp
+private sealed class FakeCatalog : IModuleCatalog
+{
+    public int Queries { get; private set; }
 
-**Notas del orador (70 s):** "No se testea el patrón, se testea la propiedad que promete." Se
-desarrolla fila por fila en 20 segundos y cierra con por qué el único Play Mode es el adaptador de P2.
+    public bool TryGet(string id, out ModuleDefinition module)
+    {
+        Queries++;   // el dato que el servicio no publica
+        return _modules.TryGetValue(id, out module);
+    }
+}
+```
+
+**Derecha — presentación controlada.**
+
+```csharp
+private sealed class ControlledPresentation : ICommandPresentation
+{
+    private readonly Queue<TaskCompletionSource<bool>> _pending = new();
+
+    public Task PlayAsync(CommandExecution execution)
+    {
+        var tcs = new TaskCompletionSource<bool>();
+        _pending.Enqueue(tcs);
+        return tcs.Task;      // no termina hasta que el test lo suelte
+    }
+
+    public void CompleteNext() => _pending.Dequeue().SetResult(true);
+}
+```
+
+**Por qué a mano:** son diez líneas, no agregan dependencias y el framework de mock sería más código
+que el doble. El `FakeCatalog` además **cuenta** las consultas: eso es lo que prueba que el servicio
+usó el catálogo inyectado y no una copia interna.
+
+**Notas del orador (50 s):** el doble de presentación convierte el tiempo en una decisión del test:
+sin esperas, sin flakiness, y permite afirmar sobre un estado intermedio.
 
 ---
 
-### Slide 20 — "Cada comportamiento tiene un test y un defecto declarado"
+### Slide 14 — "Todo lo que se puede probar sin Play Mode, se prueba sin Play Mode"
 
-**Visual:** una tabla de 3 filas (una por prototipo), recortada de `docs/04-trazabilidad.md`.
-
-| Comportamiento | Test | Error que detectaría |
+| Modo | Qué cubre | Por qué ahí |
 | --- | --- | --- |
-| El evento solo se emite si hay mutación real | `SetCell_WithSameValue_DoesNotRaiseChange` | Polling disfrazado de reactividad |
-| El estado cambia antes de la animación | `Submit_AppliesLogicBeforeTheAnimationCompletes` | Regla acoplada al tiempo del arte |
-| Reemplazar un módulo no duplica stats | `TryEquip_ReplacingModule_DoesNotDoubleCount` | Sumar el módulo viejo y el nuevo |
+| Edit Mode · 80 | Reglas, contratos y composición: grid, comandos, loadout, bucle | No necesitan frames ni ciclo de vida |
+| Play Mode · 1 | Que Unity invoque al adaptador de la vista | Solo un `[UnityTest]` espera frames |
 
-**Bullets (1):** 81 tests: 80 en Edit Mode, 1 en Play Mode (el único que depende del ciclo de vida de Unity).
-Reparto Edit Mode: P1 5 · P2 7 · P3 9 · bucle jugable 59.
+**Chips:** P1 · 5 (contrato + observación) · P2 · 7 + 1 (pipeline + adaptador) · P3 · 9 (dominio + DI) ·
+bucle · 59 (escena jugable).
 
-**Notas del orador (50 s):** "No tengo un test por método: tengo un test por regla, y cada uno
-responde qué error detectaría. El único Play Mode es el de P2, porque es el único donde importa que
-Unity invoque al adaptador."
+**Pie:** 81 verdes, corridos el 04/11 con el editor abierto ([`evidencia/`](./evidencia)). Sin orden
+manual ni preparación previa.
 
-> **Números ya verificados:** 80 en Edit Mode y 1 en Play Mode (81), corridos el 04/11/2026 y
-> guardados en [`evidencia/`](./evidencia). Reproducible con
-> `Window → General → Test Runner → Run All`.
+**Notas del orador (50 s):** "Si algo se puede probar sin entrar en Play Mode, se prueba así." El único
+Play Mode es el driver de P2: lo que se verifica es que **Unity** invoque al adaptador y que las
+animaciones se completen en el ciclo de vida real.
 
 ---
 
-### Slide 21 — "Esto es lo que dejé afuera, y por qué"
+### Slide 15 — "Rompo una línea y el test se pone rojo"
+
+| Prototipo | Línea que rompo | Test que falla |
+| --- | --- | --- |
+| P1 | Emitir el evento aunque el valor no cambie | `SetCell_WithSameValue_DoesNotRaiseChange` |
+| P2 | Esperar la animación antes de mutar el estado | `Submit_AppliesLogicBeforeTheAnimation…` |
+| P3 | Sumar el módulo anterior y el nuevo | `TryEquip_ReplacingModule_DoesNotDoubleCount` |
+
+**Cómo se hace:** `git stash` → editar una línea → correr el test → mostrar rojo → `git checkout .`
+
+**Notas del orador (35 s):** responde "¿los tests detectan defectos reales?". Un test que nunca falló
+no es evidencia: es otra afirmación.
+
+---
+
+### Slide 16 — "Esto es lo que dejé afuera, y por qué"
 
 **Tabla (5 filas máximo):**
 
@@ -684,7 +596,7 @@ hacer, y cada una tiene por dónde crecer."
 
 ---
 
-### Slide 22 — "Qué cambié, y qué descubrí al implementar"
+### Slide 17 — "Qué cambié, y qué descubrí al implementar"
 
 **Tabla superior (3 filas), los cambios del TP1:**
 
@@ -711,7 +623,7 @@ en el código. El del pivote enseña algo: agoté hipótesis de arquitectura ant
 
 ---
 
-### Slide 23 — Cierre
+### Slide 18 — Cierre
 
 **Tres líneas, nada más:**
 
@@ -728,17 +640,7 @@ lo habilita. Pero eso es otro prototipo, no una deuda escondida."
 
 ## 3. Slides de respaldo (no se muestran, se usan si preguntan)
 
-### B1 — Mutation demo
-
-| Prototipo | Línea que rompo | Test que se pone rojo |
-| --- | --- | --- |
-| P1 | Emitir el evento aunque el valor no cambie | `SetCell_WithSameValue_DoesNotRaiseChange` |
-| P2 | Esperar la animación antes de mutar el estado | `Submit_AppliesLogicBeforeTheAnimationCompletes` |
-| P3 | Sumar el módulo anterior y el nuevo | `TryEquip_ReplacingModule_DoesNotDoubleCount` |
-
-**Cómo se hace:** `git stash` → editar una línea → correr el test → mostrar rojo → `git checkout .`
-
-### B2 — Contratos y decisiones de código
+### B1 — Contratos y decisiones de código
 
 | Pregunta | Respuesta |
 | --- | --- |
@@ -775,20 +677,20 @@ En el editor: `VoidHex → Build Prototype Scenes`, luego `Window → General �
 
 ## 4. Checklist de ensayo
 
-- [ ] Los números de tests (81 = 80 + 1) están respaldados por `Logs/tests-*.json`.
+- [ ] Los números de tests (81 = 80 + 1) están respaldados por [`evidencia/`](./evidencia).
 - [ ] Verificar que cada slide se entienda **sin** leer las notas del orador.
 - [ ] Un solo mensaje por slide: si hay dos, se parte o se recorta.
-- [ ] Las 6 demos ensayadas dos veces, con plan B (test en lugar de escena).
-- [ ] Cronometrado dos veces ≤ 20 min.
-- [ ] Practicar la transición de la slide 6 (la que corrige el malentendido del TP1).
+- [ ] Las tres demos ensayadas dos veces, con plan B (test en lugar de escena).
+- [ ] Cronometrado dos veces: el deck completo no debería pasar de 18 min.
 - [ ] Tener a mano `docs/04-trazabilidad.md` para responder "¿qué error detectaría?".
-- [ ] Fuente ≥ 20 pt en texto; el código de los tests puede ir más chico, pero legible desde el fondo.
+- [ ] Fuente ≥ 20 pt en texto; el código de 8–9 pt se lee desde el fondo del aula.
 - [ ] El código que se muestra es un test completo y real, no un fragmento inventado.
 
 ## 5. Lo que NO va en la presentación
 
 | Tentación | Por qué no |
 | --- | --- |
+| Re-explicar los problemas del TP1 | Ya están presentados y defendidos; acá se muestra la verificación |
 | Mostrar el GDD completo | Ya está en el repo; la defensa es sobre el código y los tests |
 | Diagramas de 10 cajas | El TP1 ya perdió claridad por esto |
 | Explicar SOLID en abstracto | Se demuestra con ISP, OCP y DIP aplicados, no con definiciones |

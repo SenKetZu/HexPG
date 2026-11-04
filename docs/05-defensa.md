@@ -20,18 +20,21 @@ doble (2/3). Cada slide debe sostener **una sola afirmación con una evidencia**
 6. **La exclusión va en la slide**, no solo en la doc: demuestra criterio de alcance.
 7. **Ensayo cronometrado 2 veces.**
 
-## 3. Guion de 20 minutos
+## 3. Guion (~16 min, tope 20)
 
-Cada bloque repite el mismo orden: **problema declarado → promesa → evidencia → decisión → exclusión**.
+El TP1 ya presentó los problemas y las soluciones: acá no se repiten. El eje es **cómo se verifica**.
 
 | Tiempo | Bloque | Contenido | Evidencia |
 | --- | --- | --- | --- |
-| 0:00–2:30 | Marco | Tres prototipos = los tres desafíos del TP1; las tres escenas reales | Tabla desafío → solución → prototipo + capturas |
-| 2:30–7:30 | **P1 ISP + Observer** | Problema (God Object / polling) → dos contratos segregados → **código de las tres interfaces y del evento** → demo: mutar una celda (1 redibujo), reescribirla igual (0 redibujos) → test de reflexión → exclusión (event bus) | Slide de código + escena P1 + 2 tests |
-| 7:30–12:30 | **P2 Pipeline async** | Problema (mover→atacar→mover) → **`ICommand` y el núcleo del procesador con la cola** → demo: el estado ya cambió mientras la animación está pendiente → `ShieldCommand` nuevo sin tocar el pipeline | Slide de código + escena P2 + Test Runner |
-| 12:30–17:00 | **P3 DI + Data-driven** | Problema (GameManager.Instance / Service Locator) → **`LifetimeScope`, `[Inject]`, constructor con la interfaz** → **Flyweight: asset → `ModuleDefinition`, loadout inmutable** → demo: MK I → MK II, quitar, crear un MK III como asset | Slides de código + escena P3 + test |
-| 17:00–19:00 | **Cómo se testea** | Tabla patrón → propiedad verificada → test, y por qué el único Play Mode es el adaptador de P2 | Slide 19 + `04-trazabilidad.md` |
-| 19:00–20:00 | Cierre | Lo que quedó afuera con su ruta de extensión; qué aprendí al implementar | Slides 21–23 |
+| 0:00–2:30 | Marco | Tres prototipos = los tres desafíos del TP1; las tres escenas reales; **tabla de técnica por patrón** | Slides 1–4 |
+| 2:30–5:00 | **P1 ISP + Observer** | **Código de las tres interfaces y del evento** → demo: mutar una celda (1 redibujo), reescribirla igual (0) → **el test que lo sostiene** | Slides 5–6 + escena P1 |
+| 5:00–8:00 | **P2 Command + cola** | **`ICommand` y el núcleo del procesador** → **test con la presentación controlada** → `ShieldCommand` nuevo sin tocar el pipeline | Slides 7–9 + escena P2 |
+| 8:00–11:30 | **P3 DI + Flyweight** | **`LifetimeScope`, `[Inject]`, constructor con la interfaz** → **asset → `ModuleDefinition`, loadout inmutable** → los dos tests | Slides 10–12 + escena P3 |
+| 11:30–13:45 | **Cómo se testea** | Dobles escritos a mano → Edit Mode vs Play Mode y por qué 80 + 1 → mutación: rompo una línea y se pone rojo | Slides 13–15 |
+| 13:45–15:05 | Alcance y hallazgos | Lo que quedó afuera con su ruta de extensión; qué aprendí al implementar | Slides 16–17 |
+| 15:05–15:30 | Cierre | Tres suites que verifican tres decisiones | Slide 18 |
+
+Sobran ~4 minutos de colchón para preguntas sin cortar el final.
 
 ## 4. Demos en vivo (ensayadas)
 
