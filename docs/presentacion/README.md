@@ -68,7 +68,8 @@ requiere un proyecto de Google Cloud y credenciales OAuth. Para 20 slides no con
 ## Antes de presentar
 
 - [ ] Correr `python tools/ppt/verify_deck.py`: debe dar `problemas: 0`.
-- [ ] Reemplazar el número de tests de la slide 14 y la 17 por el real del Test Runner.
+- [x] Número de tests de las slides 14 y 17: **81** (80 Edit Mode + 1 Play Mode), verificado el
+      04/11 en [`../evidencia/`](../evidencia).
 - [ ] Copiar la captura del Test Runner como respaldo de esos números.
 - [ ] Ensayar dos veces con cronómetro (≤ 20 min).
 - [ ] Probar el archivo en la máquina donde vas a exponer (el docente ofrece la suya).

@@ -26,7 +26,8 @@ Diseño de referencia (TP1): [`GDD.md`](./GDD.md) · [`DIAGRAMS.md`](./DIAGRAMS.
 
 ## Estado
 
-Se actualiza el mismo día que cambia el código. Última verificación: **28/10/2026**.
+Se actualiza el mismo día que cambia el código. Última verificación: **04/11/2026**
+(`docs/evidencia/tests-editmode.json` 80/80 y `docs/evidencia/tests-playmode.json` 1/1).
 
 | Prototipo | Estructura | Dominio | Escena | Tests Edit | Tests Play |
 | --- | --- | --- | --- | --- | --- |

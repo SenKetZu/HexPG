@@ -141,10 +141,10 @@ flowchart LR
 | --- | --- |
 | Celda cambia de verdad | **1** |
 | Se escribe el mismo valor | **0** |
-| Mapa 12×12 con 4 obstáculos | **4 redibujos** |
+| Terreno inicial (2 asteroides + 2 nebulosas) | **4** |
 
 **Caso real de la escena:** asteroides y cristales del Kenney Space Kit; ruta de **21 celdas**
-con costo **20**; el contador de eventos queda exactamente en 4, la cantidad de obstáculos.
+con costo **20**; el contador de eventos queda en 4, una por cada celda de terreno inicial.
 
 **Código en la slide: `SetCell_WithSameValue_DoesNotRaiseChange`, tal como está en el repo:**
 
@@ -187,7 +187,7 @@ es polling disfrazado de reactividad."
 
 - El informe largo del TP1 desarrolla grilla y pathfinding; el **desafío declarado** es la exposición del estado
 - La geometría y el A* existen para tener algo real que consultar
-- Excluido: mapas 3D, niebla de guerra, unidades como bloqueos, optimización de mapas grandes
+- Excluido: mapas 3D, niebla de guerra, unidades con turnos, optimización de mapas grandes
 - **Event Bus global: descartado**, no es una omisión
 
 **Notas del orador (45 s):** "Si alguien pregunta por qué no hay niebla de guerra: porque es un
@@ -299,10 +299,12 @@ interfaz `ICommand`. Un recuadro aparte: `TractorBeamCommand` marcado como **"en
 
 - `ShieldCommand` ya existe (2 PA, +4 escudo): **cero cambios** en `CommandProcessor`
 - Test que lo respalda: `Submit_NewCommandVariant_RequiresNoPipelineChange`
-- Diferido: Undo/Redo (el TP1 lo menciona como capacidad habilitada, no como requisito)
+- `CommandProcessor` no tiene un `switch` por tipo: valida, ejecuta y notifica. Nada que tocar
+- Diferido: Undo/Redo, que el mismo pipeline habilita
 
 **Notas del orador (50 s):** "Si quieren, agrego un `TractorBeamCommand` ahora mismo: valida PA,
-mueve la nave enemiga, y el pipeline no se entera."
+mueve la nave enemiga, y el pipeline no se entera. Plan B si no compila en vivo: mostrar que
+`CommandProcessor` no tiene un `switch` por tipo y correr el test del comando nuevo."
 
 **Demo asociada:** D4.
 
@@ -371,21 +373,21 @@ Assert.That(catalog.Queries, Is.EqualTo(1),
 Data-driven · reemplazo en el slot — `TryEquip_ReplacingModule_DoesNotDoubleCount`:
 
 ```csharp
-var loadout = Loadout.Empty()
-    .TryEquip(LaserMk2).Loadout;
-
+var withMk1 = Loadout.Empty().TryEquip(LaserMk1).Loadout;
+var result = withMk1.TryEquip(LaserMk2);
 var stats = ShipStatsCalculator.Calculate(
-    BaseStats, loadout.Modules);
+    BaseStats, result.Loadout.Modules);
 
-Assert.That(stats.Movement, Is.EqualTo(3));
-Assert.That(stats.ActionPoints, Is.EqualTo(6));
-Assert.That(stats.Shields, Is.EqualTo(2));
-Assert.That(loadout.Modules, Has.Count.EqualTo(1),
+Assert.That(result.Loadout.Modules, Has.Count.EqualTo(1),
     "El reemplazo no acumula módulos.");
+Assert.That(result.Loadout.TryGetModule(SlotType.Weapon, out var weapon),
+    Is.True);
+Assert.That(weapon.Id, Is.EqualTo("laser-mk2"));
+Assert.That(stats.Shields, Is.EqualTo(2));
 ```
 
 **Pie de la slide:** MK II reemplaza a MK I en el mismo slot: escudos 2, movimiento 3, un módulo
-contado. Ambos corren en Edit Mode: sin escena, sin Play Mode y sin abrir el editor.
+contado. Ambos corren en Edit Mode: sin cargar una escena y sin entrar en Play Mode.
 
 **Notas del orador (60 s):** "El código de la izquierda demuestra DIP: el servicio recibe el catálogo
 y el fake cuenta las consultas. Si mañana el catálogo viene de un servidor, el servicio no cambia.
@@ -415,8 +417,9 @@ Reparto Edit Mode: P1 5 · P2 7 · P3 9 · bucle jugable 59.
 responde qué error detectaría. El único Play Mode es el de P2, porque es el único donde importa que
 Unity invoque al adaptador."
 
-> **Números ya verificados:** 80 en Edit Mode y 1 en Play Mode (81), corridos el 28/10 antes de
-> crear el tag. Reproducible con `Window → General → Test Runner → Run All`.
+> **Números ya verificados:** 80 en Edit Mode y 1 en Play Mode (81), corridos el 04/11/2026 y
+> guardados en [`evidencia/`](./evidencia). Reproducible con
+> `Window → General → Test Runner → Run All`.
 
 ---
 
@@ -462,8 +465,8 @@ hacer, y cada una tiene por dónde crecer."
 **Bonus si preguntan por los tests:** una aserción propia estaba mal (la ruta costaba 3, no 4). Se
 detectó ejecutando la lógica pura fuera del editor. Los tests también pueden estar equivocados.
 
-**Notas del orador (45 s):** "Los cuatro cambios están en `docs/01 §5`; los cuatro hallazgos, en el
-código. El del pivote enseña algo: agoté hipótesis de arquitectura antes de mirar el asset."
+**Notas del orador (45 s):** "Tres de los siete ajustes están en `docs/01 §5`; los cuatro hallazgos,
+en el código. El del pivote enseña algo: agoté hipótesis de arquitectura antes de mirar el asset."
 
 ---
 

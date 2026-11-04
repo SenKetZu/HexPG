@@ -432,7 +432,7 @@ y el asmdef lo impide hacia el dominio.
 
     stats = [("1", "evento", "por cada mutación real", GREEN),
              ("0", "eventos", "al reescribir el mismo valor", TEXT),
-             ("4", "redibujos", "en un mapa 12×12 con 4 obstáculos", MUTED)]
+             ("4", "eventos", "al cargar 2 asteroides y 2 nebulosas", MUTED)]
     for i, (big, label, detail, color) in enumerate(stats):
         cy = 1.95 + i * 1.18
         write(s, MARGIN, cy - 0.08, 0.85, 0.72, big, 36, color, bold=True)
@@ -467,7 +467,7 @@ y el asmdef lo impide hacia el dominio.
     notes(s, """
 60 s. Escena real: mapa 12×12 con asteroides y cristales del Kenney Space Kit.
 La ruta al destino es de 21 celdas y costo 20; el contador de eventos queda en 4,
-que es exactamente la cantidad de obstáculos colocados.
+que son las 4 celdas de terreno inicial: 2 asteroides que bloquean y 2 nebulosas de costo 2.
 
 El código de la derecha es el test que sostiene el 0: escribir el mismo valor no emite evento.
 Los dos tests de contrato usan reflexión: verifican que el contrato de publicación solo
@@ -485,10 +485,10 @@ a la interfaz de lectura, el test se pone rojo antes de que llegue a la UI.
         ["Fuera de alcance", "Justificación"],
         ["Mapas 3D multicapa", "El desafío es de exposición de estado, no de geometría"],
         ["Niebla de guerra", "Es un sistema de conocimiento, ajeno a la exposición"],
-        ["Unidades como bloqueos", "Necesita el modelo de turnos, que es P2"],
+        ["Unidades con turnos", "P1 ya expone la ocupación; el modelo de turnos vive en P2"],
         ["Event Bus global", "Descartado en el TP1: dependencias ocultas"],
     ], [2.2, 5.4], row_h=0.62, font=12.5, accent=RED)
-    takeaway(s, "Cada exclusión tiene una ruta de extensión documentada, no es un olvido.", P1)
+    takeaway(s, "Cada exclusión está justificada en docs/03 y tiene su ruta de extensión.", P1)
     notes(s, """
 45 s. ESTA SLIDE ES LA QUE CORRIGE EL MALENTENDIDO DEL TP1. No la saltees.
 
@@ -597,17 +597,21 @@ Pregunta que invita: "¿qué error detectaría?"
     s = blank(deck, 10, total)
     head(s, "P2 · Extensibilidad", "Agregar una habilidad es crear una clase, no modificar el sistema", P2)
     diagram_ocp(s, MARGIN, 2.0, CONTENT_W)
-    write(s, MARGIN, 4.15, CONTENT_W, 0.4, "✓  Submit_NewCommandVariant_RequiresNoPipelineChange", 13,
+    write(s, MARGIN, 4.05, CONTENT_W, 0.4, "✓  Submit_NewCommandVariant_RequiresNoPipelineChange", 13,
           GREEN, font=MONO)
-    write(s, MARGIN, 4.75, CONTENT_W, 0.95,
-          "Diferido: Undo/Redo. El pipeline ya lo habilita; queda fuera del alcance del prototipo.",
+    write(s, MARGIN, 4.5, CONTENT_W, 0.5,
+          "CommandProcessor no tiene un switch por tipo: valida, ejecuta y notifica.",
           13, BODY, spacing=1.15)
+    write(s, MARGIN, 5.1, CONTENT_W, 0.5,
+          "Diferido: Undo/Redo, que el mismo pipeline habilita. TractorBeamCommand se escribe en vivo.",
+          12, MUTED, spacing=1.15)
     takeaway(s, "ShieldCommand ya existe y el pipeline no se enteró.", P2)
     notes(s, """
 50 s. En la escena, ShieldCommand cuesta 2 PA y suma 4 de escudo: el pipeline no cambió.
 
 Demo D4: agregar TractorBeamCommand en vivo. Valida PA, mueve la nave enemiga,
-y CommandProcessor no cambia una línea.
+y CommandProcessor no cambia una línea. Plan B: mostrar CommandProcessor.cs
+(no hay switch por tipo) y el test Submit_NewCommandVariant_RequiresNoPipelineChange.
 """)
 
     # ---------------------------------------------------------- 11 P3 problema
@@ -667,24 +671,24 @@ Eso es lo que permite testear el servicio sin escena.
     write(s, 6.9, 2.2, 5.81, 0.26,
           "TryEquip_ReplacingModule_DoesNotDoubleCount", 9.5, MUTED, font=MONO)
     code(s, 6.9, 2.5, 5.81, [
-        "var loadout = Loadout.Empty()",
-        "    .TryEquip(LaserMk2).Loadout;",
-        "",
+        "var withMk1 = Loadout.Empty().TryEquip(LaserMk1).Loadout;",
+        "var result = withMk1.TryEquip(LaserMk2);",
         "var stats = ShipStatsCalculator.Calculate(",
-        "    BaseStats, loadout.Modules);",
+        "    BaseStats, result.Loadout.Modules);",
         "",
-        "Assert.That(stats.Movement, Is.EqualTo(3));",
-        "Assert.That(stats.ActionPoints, Is.EqualTo(6));",
-        "Assert.That(stats.Shields, Is.EqualTo(2));",
-        "Assert.That(loadout.Modules, Has.Count.EqualTo(1),",
+        "Assert.That(result.Loadout.Modules, Has.Count.EqualTo(1),",
         '    "El reemplazo no acumula módulos.");',
+        "Assert.That(result.Loadout.TryGetModule(SlotType.Weapon,",
+        "    out var weapon), Is.True);",
+        'Assert.That(weapon.Id, Is.EqualTo("laser-mk2"));',
+        "Assert.That(stats.Shields, Is.EqualTo(2));",
     ], accent=BODY, size=9, line_h=0.18)
 
     write(s, MARGIN, 5.45, CONTENT_W, 0.35,
           "MK II reemplaza a MK I en el mismo slot: escudos 2, movimiento 3, un módulo contado.",
           12.5, BODY)
     write(s, MARGIN, 5.9, CONTENT_W, 0.35,
-          "Ambos corren en Edit Mode: sin escena, sin Play Mode y sin abrir el editor.",
+          "Ambos corren en Edit Mode: sin cargar una escena y sin entrar en Play Mode.",
           11.5, MUTED)
 
     takeaway(s, "Un slot por tipo: el estado inválido “módulo en slot incompatible” no puede existir.", P3)
@@ -714,8 +718,8 @@ Demos: D5 (reemplazo MK I → MK II) y D6 (equipar el MK III).
           13, BODY, spacing=1.15)
     takeaway(s, "No hay un test por método: hay un test por regla, y cada uno responde qué error detectaría.", TEXT)
     notes(s, """
-50 s. 80 en Edit Mode y 1 en Play Mode: 81, corridos y verdes dos veces (antes y después
- del rediseño de UI y de los assets). Reparto: P1 5, P2 7, P3 9 y 59 del bucle jugable.
+50 s. 80 en Edit Mode y 1 en Play Mode: 81, corridos el 04/11; la salida está en docs/evidencia.
+Reparto Edit Mode: P1 5, P2 7, P3 9 y 59 del bucle jugable.
 
 El único Play Mode es P2 porque es el único donde importa que Unity invoque al adaptador.
 
@@ -770,7 +774,7 @@ con clips; el movimiento es por transform.
         write(s, MARGIN + 0.30, cy, CONTENT_W - 0.4, 0.24, what, 11.5, TEXT, bold=True)
         write(s, MARGIN + 0.30, cy + 0.21, CONTENT_W - 0.4, 0.22, detail, 9.5, MUTED)
 
-    takeaway(s, "Los cuatro cambios del TP1 están en docs/01 §5; estos cuatro hallazgos, en el código.", P2)
+    takeaway(s, "Tres de los siete ajustes de docs/01 §5; estos cuatro hallazgos, en el código.", P2)
     notes(s, """
 45 s. Cuatro hallazgos reales, del código y de los assets.
 

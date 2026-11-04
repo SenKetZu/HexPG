@@ -79,7 +79,8 @@
 ## 5. Checklist de mínimos (§3.1)
 
 - [x] Scaffolding de los 3 prototipos con asmdefs y dominio sin `UnityEngine`.
-- [x] Suite verde: **80 tests EditMode** (P1 5 · P2 7 · P3 9 · GameLoop 59) y **1 PlayMode** (P2).
+- [x] Suite verde: **80 tests EditMode** (P1 5 · P2 7 · P3 9 · GameLoop 59) y **1 PlayMode** (P2),
+      corrida el 04/11; salida en `docs/evidencia/`.
 - [x] Comportamientos marcados en §1–§3, todos con test.
 - [x] Escenas generadas y verificadas (`VoidHex/Build Prototype Scenes` + `check_scenes.py`).
 - [x] Separaciones de capas verificadas por `tools/verify/check_layers.py` (R1, R2, R3).
