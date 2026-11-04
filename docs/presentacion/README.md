@@ -6,35 +6,38 @@ Contenido listo para exponer, generado desde [`docs/07-presentacion.md`](../07-p
 
 | Archivo | Qué es |
 | --- | --- |
-| `TP2-VoidHex-Tactics.pptx` | Deck de 26 slides, 16:9, con diagramas **nativos** (vectores editables), capturas reales de las tres escenas, el código de cada patrón aplicado, el código de los tests y notas del orador |
+| `TP2-VoidHex-Tactics.pptx` | Deck de 20 slides, 16:9: capturas reales de las tres escenas, el código de cada patrón aplicado, el código de los tests, y notas del orador |
 | `assets/escena-p1.png` | Captura real de `P1_GridState` en Play (4 eventos, 144 celdas, costo 20) |
 | `assets/escena-p2.png` | Captura real de `P2_CommandPipeline` en Play (PA 6 → 1, hull 6 → 3) |
 | `assets/escena-p3.png` | Captura real de `P3_Loadout` en Play (PA 6 · escudos 5 · movimiento 4) |
-| `assets/diagrama-p1-isp-observer.png` | P1: dos contratos segregados sobre un único `GridModel` |
-| `assets/diagrama-p2-pipeline.png` | P2: `ICommand` → validar → ejecutar → notificar → animar |
-| `assets/diagrama-p2-ocp.png` | P2: comandos intercambiables sin tocar el pipeline |
-| `assets/diagrama-p3-di.png` | P3: `LifetimeScope` registrando e inyectando dependencias |
 
 Los PNG son para usar en Google Slides, Keynote o cualquier editor que no abra el `.pptx` con fidelidad.
 
 Las tres capturas `escena-*` salen del editor (`capture_game_view`), no son mockups. Si cambia una
 escena, se vuelven a tomar y se pisan esos archivos: `build_deck.py` las lee de ahí.
 
+## Criterio del deck
+
+El TP1 ya presentó los problemas y las soluciones. Este deck **no los repite**: está centrado en
+**cómo se verifica** cada decisión. Cada bloque muestra el código del patrón y el código del test
+que lo sostiene.
+
 ## Estructura del deck
 
 | Slides | Bloque | Tiempo |
 | --- | --- | --- |
-| 1–3 | Marco: qué entrego y qué se puede abrir | 2:30 |
-| 4–8 | **P1** ISP + Observer | 5:00 |
-| 9–13 | **P2** Pipeline async | 5:00 |
-| 14–18 | **P3** DI + Data-driven | 4:30 |
-| 19–22 | Cómo se testea, trazabilidad, exclusiones y ajustes | 2:30 |
-| 23 | Cierre | 0:30 |
-| 24–26 | **Respaldo** (no se muestran salvo que pregunten) | — |
+| 1–4 | Marco: qué entrego, las tres escenas y la estrategia de testeo | 2:30 |
+| 5–6 | **P1** ISP + Observer: código y test | 2:30 |
+| 7–9 | **P2** Command + cola: código, test y OCP | 3:00 |
+| 10–12 | **P3** DI + DIP + Flyweight: código y tests | 3:30 |
+| 13–15 | Aislamiento con dobles, Edit vs Play Mode, mutación | 2:15 |
+| 16–17 | Alcance y hallazgos | 1:20 |
+| 18 | Cierre | 0:20 |
+| 19–20 | **Respaldo** (no se muestran salvo que pregunten) | — |
 
-Slides de **código de patrón**: 6 (ISP + Observer), 11 (Command + cola), 16 (DI + DIP),
-17 (Flyweight + inmutable). Slides de **código de test**: 7, 12 y 18. La 19 explica **cómo se
-testea cada patrón**, que es la pregunta que suele venir después.
+Código de patrón: 5 (ISP + Observer), 7 (Command + cola), 10 (DI + DIP), 11 (Flyweight + inmutable).
+Código de test: 6, 8 y 12. Estrategia de testeo: 4 (técnica por patrón), 13 (dobles), 14 (Edit vs
+Play Mode), 15 (mutación).
 
 Cada slide tiene **notas del orador** con lo que hay que decir y cuánto tiempo tomar.
 

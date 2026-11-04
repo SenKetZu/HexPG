@@ -258,89 +258,6 @@ def takeaway(slide, text, accent):
 # ---------------------------------------------------------------- diagramas
 
 
-def diagram_p1(slide, x, y, w, h):
-    mid = x + w / 2
-    rect(slide, mid - 1.15, y + h / 2 - 0.44, 2.3, 0.88, fill=PANEL_HI, line=P1, width=1.5, radius=0.1)
-    write(slide, mid - 1.15, y + h / 2 - 0.36, 2.3, 0.32, "GridModel", 14, P1, bold=True, align=PP_ALIGN.CENTER)
-    write(slide, mid - 1.15, y + h / 2 + 0.0, 2.3, 0.3, "único dueño del estado", 9.5, MUTED,
-          align=PP_ALIGN.CENTER)
-
-    left_x, right_x = x + 0.05, x + w - 2.55
-    rect(slide, left_x, y + 0.05, 2.5, 0.95, fill=PANEL, line=BORDER)
-    write(slide, left_x + 0.14, y + 0.17, 2.22, 0.3, "IGridQueryService", 11.5, TEXT, bold=True)
-    write(slide, left_x + 0.14, y + 0.5, 2.22, 0.4, "lectura síncrona", 10, MUTED)
-
-    rect(slide, right_x, y + 0.05, 2.5, 0.95, fill=PANEL, line=BORDER)
-    write(slide, right_x + 0.14, y + 0.17, 2.22, 0.3, "IGridStatePublisher", 11.5, TEXT, bold=True)
-    write(slide, right_x + 0.14, y + 0.5, 2.22, 0.4, "eventos C#", 10, MUTED)
-
-    ia_y = y + h - 0.98
-    rect(slide, left_x, ia_y, 2.5, 0.85, fill=RGBColor(0x14, 0x2B, 0x2E), line=P1, width=1.2)
-    write(slide, left_x + 0.14, ia_y + 0.12, 2.22, 0.3, "Pathfinding / IA", 11.5, P1, bold=True)
-    write(slide, left_x + 0.14, ia_y + 0.44, 2.22, 0.3, "no puede mutar", 9.5, MUTED)
-
-    ui_y = y + h - 0.98
-    rect(slide, right_x, ui_y, 2.5, 0.85, fill=RGBColor(0x14, 0x2B, 0x2E), line=P1, width=1.2)
-    write(slide, right_x + 0.14, ui_y + 0.12, 2.22, 0.3, "GridPresenter", 11.5, P1, bold=True)
-    write(slide, right_x + 0.14, ui_y + 0.44, 2.22, 0.3, "no puede alterar reglas", 9.5, MUTED)
-
-    arrow(slide, left_x + 1.25, ia_y - 0.02, left_x + 1.25, y + 1.06, P1)
-    arrow(slide, right_x + 1.25, ia_y - 0.02, right_x + 1.25, y + 1.06, P1)
-    arrow(slide, mid - 1.15, y + h / 2, left_x + 2.52, y + h / 2, MUTED)
-    arrow(slide, mid + 1.15, y + h / 2, right_x - 0.02, y + h / 2, MUTED)
-
-
-def diagram_p2(slide, x, y, w):
-    steps = [
-        ("ICommand", "inmutable", P2),
-        ("Validate", "¿PA / objetivo?", P2),
-        ("Execute", "instantáneo", GREEN),
-        ("Notifica", "estado ya cambiado", GREEN),
-        ("await vista", "animación", MUTED),
-    ]
-    bw = (w - 0.34 * (len(steps) - 1)) / len(steps)
-    for i, (name, detail, color) in enumerate(steps):
-        cx = x + i * (bw + 0.34)
-        rect(slide, cx, y, bw, 0.92, fill=PANEL, line=color, width=1.4)
-        write(slide, cx, y + 0.16, bw, 0.3, name, 12.5, color, bold=True, align=PP_ALIGN.CENTER)
-        write(slide, cx, y + 0.5, bw, 0.28, detail, 9.5, MUTED, align=PP_ALIGN.CENTER)
-        if i < len(steps) - 1:
-            arrow(slide, cx + bw + 0.03, y + 0.46, cx + bw + 0.31, y + 0.46, MUTED)
-
-    # rechazo
-    rx = x + bw + 0.17 - 1.35
-    arrow(slide, x + bw * 1.5 + 0.34, y + 0.94, x + bw * 1.5 + 0.34, y + 1.34, RED)
-    rect(slide, x + bw + 0.05, y + 1.36, 2.25, 0.55, fill=RGBColor(0x2E, 0x15, 0x15), line=RED, width=1.0)
-    write(slide, x + bw + 0.05, y + 1.46, 2.25, 0.3, "rechazo con motivo", 10.5, RED,
-          align=PP_ALIGN.CENTER)
-
-
-def diagram_p3(slide, x, y, w, h):
-    sc = (x + 0.1, y + 0.05, 2.55, 1.0)
-    rect(slide, *sc, fill=PANEL_HI, line=P3, width=1.5, radius=0.08)
-    write(slide, sc[0] + 0.16, sc[1] + 0.14, sc[2] - 0.3, 0.3, "EquipmentLifetimeScope", 11, P3, bold=True)
-    write(slide, sc[0] + 0.16, sc[1] + 0.48, sc[2] - 0.3, 0.28, "composición · 1 por escena", 9, MUTED)
-
-    targets = [
-        ("ModuleCatalogAsset", "Flyweight", P2),
-        ("ShipConfig", "stats base", MUTED),
-        ("IEquipmentService", "contrato", GREEN),
-    ]
-    tx = x + w - 3.0
-    for i, (name, detail, color) in enumerate(targets):
-        ty = y + 0.05 + i * 0.86
-        rect(slide, tx, ty, 2.95, 0.72, fill=PANEL, line=color, width=1.2)
-        write(slide, tx + 0.16, ty + 0.1, 2.6, 0.28, name, 10.5, color, bold=True)
-        write(slide, tx + 0.16, ty + 0.4, 2.6, 0.26, detail, 9, MUTED)
-        arrow(slide, sc[0] + sc[2] + 0.05, sc[1] + 0.5, tx - 0.05, ty + 0.36, BORDER)
-
-    dy = y + h - 0.92
-    rect(slide, x + w / 2 - 1.5, dy, 3.0, 0.78, fill=RGBColor(0x1A, 0x24, 0x18), line=GREEN, width=1.2)
-    write(slide, x + w / 2 - 1.5, dy + 0.12, 3.0, 0.28, "LoadoutDemo  [Inject]", 10.5, GREEN,
-          bold=True, align=PP_ALIGN.CENTER)
-    write(slide, x + w / 2 - 1.5, dy + 0.44, 3.0, 0.26, "no busca: recibe", 9, MUTED, align=PP_ALIGN.CENTER)
-
-
 def diagram_ocp(slide, x, y, w):
     labels = [("MoveCommand", P2), ("AttackCommand", P2), ("ShieldCommand", P2),
               ("TractorBeamCommand", GREEN)]
@@ -365,7 +282,7 @@ def build():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     ASSET_DIR.mkdir(parents=True, exist_ok=True)
 
-    total = 26
+    total = 20
     deck = new_deck()
     numbers = iter(range(1, total + 1))
 
@@ -397,24 +314,22 @@ Tiempo total objetivo: 18-19 minutos, dejando margen para preguntas.
 
     # ---------------------------------------------------------- 2 mapa
     s = blank(deck, next(numbers), total)
-    head(s, "Qué entrego", "Cada desafío del TP1 tiene su prototipo y su suite", P1)
+    head(s, "Qué entrego", "Tres prototipos, cada uno con la suite que lo verifica", P1)
     grid(s, MARGIN, 1.95, CONTENT_W, [
-        ["Desafío declarado en el TP1", "Solución declarada", "Prototipo"],
-        ["Exponer el mapa sin God Object ni polling en Update()", "ISP + Observer", "P1_GridState"],
-        ["Alternar PA con animaciones asíncronas", "Pipeline ICommand + async", "P2_CommandPipeline"],
-        ["Servicios sin singletons + módulos MK I–III", "VContainer + ScriptableObjects", "P3_Loadout"],
-    ], [3.4, 2.6, 2.0], row_h=0.78, font=13, accent=P1)
-    write(s, MARGIN, 5.2, CONTENT_W, 0.7,
-          "Una escena real por prototipo, con modelos 3D (Kenney CC0) y UI nativa: se puede jugar la prueba.",
-          13, MUTED)
-    write(s, MARGIN, 5.9, CONTENT_W, 0.4,
-          "El código de cada patrón y el test que lo verifica: slides 6, 11, 16, 17 y 19.",
-          11.5, MUTED)
-    takeaway(s, "La evidencia de cada decisión es un test que corre en Edit Mode, sin abrir una escena.", P1)
+        ["Desafío declarado en el TP1", "Solución implementada", "Prototipo · tests"],
+        ["Exponer el mapa sin God Object ni polling en Update()", "ISP + Observer", "P1_GridState · 5"],
+        ["Alternar PA con animaciones asíncronas", "Pipeline ICommand + async", "P2_CommandPipeline · 7 + 1"],
+        ["Servicios sin singletons + módulos MK I–III", "VContainer + ScriptableObjects", "P3_Loadout · 9"],
+    ], [3.3, 2.5, 2.2], row_h=0.78, font=13, accent=P1)
+    write(s, MARGIN, 5.3, CONTENT_W, 0.7,
+          "El diagnóstico de cada desafío ya está en el TP1. Hoy lo que se muestra es cómo se implementó y cómo se verifica.",
+          13, BODY, spacing=1.15)
+    takeaway(s, "La evidencia de cada decisión es un test que corre sin abrir una escena.", P1)
     notes(s, """
-45 s. Estos tres desafíos son los que declaré en el TP1. El TP2 no cambia el diagnóstico:
-cambia que ahora está implementado y testeado. Cada prototipo es una carpeta independiente,
-con su escena y su suite.
+30 s. No vuelvo sobre los problemas: están planteados en el TP1. Lo que cambia es que ahora está
+implementado y que cada propiedad tiene un test que la verifica.
+
+Las tres columnas: desafío declarado, solución implementada, y cuántos tests la sostienen.
 """)
 
     # ---------------------------------------------------------- 3 las tres escenas
@@ -450,39 +365,31 @@ Si preguntan por los modelos: Kenney Space Kit, CC0, cargados en runtime; la esc
 primitivas si falta un FBX.
 """)
 
-    # ---------------------------------------------------------- 4 P1 problema
+    # ---------------------------------------------------------- 4 qué se testea
     s = blank(deck, next(numbers), total)
-    head(s, "P1 · Desafío 1", "Exponer el mapa sin God Object ni polling en Update()", P1)
-    grid(s, MARGIN, 1.95, CONTENT_W, [
-        ["Lo que NO quiero", "Por qué es un problema"],
-        ["Un GridManager que sabe todo", "God Object: nadie sabe quién muta el estado"],
-        ["Update() consultando el mapa", "CPU por frame y acoplamiento al motor"],
-        ["Un Event Bus global", "Dependencias ocultas, imposible de depurar"],
-    ], [2.3, 3.9], row_h=0.72, font=13.5, accent=RED)
-    write(s, MARGIN, 4.9, CONTENT_W, 1.2,
-          "Tres consumidores, tres necesidades:\nla IA lee · los comandos validan · la UI dibuja.",
-          15, BODY, spacing=1.2)
+    head(s, "Estrategia", "Cada patrón se verifica con una técnica concreta", P2)
+    grid(s, MARGIN, 1.9, CONTENT_W, [
+        ["Patrón", "Cómo se verifica", "Defecto que detectaría"],
+        ["ISP", "Reflexión sobre los miembros del tipo", "Agregar SetCell a la interfaz de lectura"],
+        ["Observer", "Contador de eventos en el test", "Polling disfrazado de reactividad"],
+        ["Command + cola", "TaskCompletionSource controlado por el test", "Regla acoplada al tiempo del arte"],
+        ["OCP", "Se envía un comando nuevo por la misma interfaz", "Un switch por tipo en el procesador"],
+        ["DI / DIP", "Doble inyectado por constructor", "Servicio que busca sus dependencias"],
+        ["Flyweight", "Comparación campo por campo contra el asset", "Duplicar datos entre instancias"],
+        ["Inmutable", "Se conserva la instancia previa y se compara", "Aliasing y doble conteo"],
+    ], [2.2, 3.3, 3.5], row_h=0.52, font=10.5, head_font=10, accent=P2)
+    takeaway(s, "No se testea el patrón: se testea la propiedad que promete, y debe fallar por ese motivo.", P2)
     notes(s, """
-45 s. Si les doy el mismo objeto a los tres, la UI puede cambiar reglas
-y la IA termina escuchando eventos visuales. Ese es el problema real.
+60 s. Esta slide ordena todo lo que viene después: cada patrón tiene una técnica de testeo distinta,
+y un defecto concreto que el test detectaría.
+
+El criterio es: si el test no puede fallar por ese motivo, no sirve. No hay un test por método.
+
+Los tres bloques que siguen (P1, P2, P3) muestran el código del patrón y después el código del
+test que lo sostiene.
 """)
 
-    # ---------------------------------------------------------- 4 P1 solución
-    s = blank(deck, next(numbers), total)
-    head(s, "P1 · Solución", "Dos contratos: ningún consumidor puede hacer lo del otro", P1)
-    diagram_p1(s, MARGIN, 1.95, CONTENT_W, 3.35)
-    write(s, MARGIN, 5.55, CONTENT_W, 0.9,
-          "Solo GridModel muta, y esos métodos no están en ningún contrato: es el tipo del constructor, no una convención.",
-          13, BODY)
-    takeaway(s, "El Pathfinder recibe IGridQueryService. Aunque quisiera, no puede escribir el mapa.", P1)
-    notes(s, """
-60 s. Insistir: no es una convención de estilo. Es el tipo del constructor.
-
-Si preguntan "¿y si alguien castea?": tendría que romper una capa explícitamente,
-y el asmdef lo impide hacia el dominio.
-""")
-
-    # ---------------------------------------------------------- 5 P1 código
+    # ---------------------------------------------------------- 4 P1 código
     s = blank(deck, next(numbers), total)
     head(s, "P1 · Patrón · ISP + Observer", "Tres contratos y un evento: nadie hace lo que no le toca", P1)
 
@@ -594,67 +501,7 @@ tenga eventos y que el de lectura no tenga mutaciones. Si mañana alguien agrega
 a la interfaz de lectura, el test se pone rojo antes de que llegue a la UI.
 """)
 
-    # ---------------------------------------------------------- 6 P1 alcance
-    s = blank(deck, next(numbers), total)
-    head(s, "P1 · Alcance", "El A* es el sustrato, no la tesis", P1)
-    write(s, MARGIN, 1.95, CONTENT_W, 0.95,
-          "El informe largo del TP1 desarrolla grilla y pathfinding; el desafío declarado es la exposición del estado.",
-          15, BODY, spacing=1.2)
-    grid(s, MARGIN, 2.65, CONTENT_W, [
-        ["Fuera de alcance", "Justificación"],
-        ["Mapas 3D multicapa", "El desafío es de exposición de estado, no de geometría"],
-        ["Niebla de guerra", "Es un sistema de conocimiento, ajeno a la exposición"],
-        ["Unidades con turnos", "P1 ya expone la ocupación; el modelo de turnos vive en P2"],
-        ["Event Bus global", "Descartado en el TP1: dependencias ocultas"],
-    ], [2.2, 5.4], row_h=0.62, font=12.5, accent=RED)
-    takeaway(s, "Cada exclusión está justificada en docs/03 y tiene su ruta de extensión.", P1)
-    notes(s, """
-45 s. ESTA SLIDE ES LA QUE CORRIGE EL MALENTENDIDO DEL TP1. No la saltees.
-
-Si el jurado espera "problema 1 = matemática hexagonal" y ve ISP,
-sin esta slide parece que me fui del tema. Con esta slide, es una decisión fundamentada.
-""")
-
-    # ---------------------------------------------------------- 7 P2 problema
-    s = blank(deck, next(numbers), total)
-    head(s, "P2 · Desafío 2", "Mover → Atacar → Mover, sin que la animación decida las reglas", P2)
-    grid(s, MARGIN, 1.95, CONTENT_W, [
-        ["Lo que NO quiero", "Por qué es un problema"],
-        ["TurnManager con corrutinas", "WaitForSeconds mete el tiempo del arte dentro de la regla"],
-        ["FSM con un estado por acción", "Explota en combinaciones al agregar módulos"],
-        ["Un comando por cada orden", "Obliga a tocar el controlador central cada vez"],
-    ], [2.3, 4.6], row_h=0.72, font=13, accent=RED)
-    write(s, MARGIN, 4.9, CONTENT_W, 1.1,
-          "La pregunta difícil no es “¿puede moverse?”.\nEs cuándo se aplica el efecto: antes o después de la animación.",
-          15, BODY, spacing=1.2)
-    notes(s, """
-40 s. El jugador puede intercalar acciones. El riesgo real es que el tiempo del arte
-termine gobernando la regla del juego.
-""")
-
-    # ---------------------------------------------------------- 8 P2 solución
-    s = blank(deck, next(numbers), total)
-    head(s, "P2 · Solución", "La regla se aplica al instante, la animación espera después", P2)
-    diagram_p2(s, MARGIN, 2.05, CONTENT_W)
-    items = [
-        ("Único dueño del estado", "CommandProcessor. Nadie más lo reemplaza."),
-        ("Cola serializada", "Dos envíos seguidos no se intercalan."),
-        ("Solo tres fases", "PlayerTurn · Executing · EnemyTurn."),
-    ]
-    for i, (title, detail) in enumerate(items):
-        cx = MARGIN + i * 4.06
-        rect(s, cx, 4.3, 3.82, 1.15, fill=PANEL, line=BORDER)
-        write(s, cx + 0.24, 4.44, 3.4, 0.3, title, 12.5, P2, bold=True)
-        write(s, cx + 0.24, 4.8, 3.4, 0.5, detail, 10.5, BODY)
-    takeaway(s, "Cuando el pipeline vuelve de Execute, el estado ya cambió. La animación no puede condicionarlo.", P2)
-    notes(s, """
-70 s. Mirar el orden del diagrama: Validate → Execute → notifica → await.
-
-Si el jugador pulsa dos veces, el segundo comando espera en la cola:
-no hay estado a medio aplicar.
-""")
-
-    # ---------------------------------------------------------- 9 P2 código
+    # ---------------------------------------------------------- 7 P2 código
     s = blank(deck, next(numbers), total)
     head(s, "P2 · Patrón · Command + cola", "Cada acción es un objeto; el pipeline no tiene un switch", P2)
 
@@ -795,39 +642,7 @@ y CommandProcessor no cambia una línea. Plan B: mostrar CommandProcessor.cs
 (no hay switch por tipo) y el test Submit_NewCommandVariant_RequiresNoPipelineChange.
 """)
 
-    # ---------------------------------------------------------- 11 P3 problema
-    s = blank(deck, next(numbers), total)
-    head(s, "P3 · Desafío 3", "Sin GameManager.Instance y sin Service Locator", P3)
-    grid(s, MARGIN, 1.95, CONTENT_W, [
-        ["Lo que NO quiero", "Por qué es un problema"],
-        ["GameManager.Instance", "Dependencias ocultas y estado global mutable"],
-        ["Service Locator", "Mismo problema con otro nombre: la clase pide, no recibe"],
-        ["Stats calculadas dentro del SO", "El cálculo queda atado al motor y no se puede testear"],
-    ], [2.5, 4.7], row_h=0.72, font=13, accent=RED)
-    write(s, MARGIN, 4.9, CONTENT_W, 1.0,
-          "El síntoma es fácil de ver: si para testear tengo que abrir una escena, la dependencia está mal puesta.",
-          15, BODY, spacing=1.2)
-    notes(s, """
-40 s. Ese es el diagnóstico en una frase: si el test necesita una escena,
-la dependencia está mal puesta.
-""")
-
-    # ---------------------------------------------------------- 12 P3 solución
-    s = blank(deck, next(numbers), total)
-    head(s, "P3 · Solución", "Dependencias por constructor, datos como assets", P3)
-    diagram_p3(s, MARGIN, 1.95, CONTENT_W, 3.35)
-    write(s, MARGIN, 5.55, CONTENT_W, 0.95,
-          "El contenedor vive en Presentación. El servicio ni sabe que existe VContainer: recibe una interfaz.",
-          13, BODY, spacing=1.15)
-    takeaway(s, "ScriptableObject es adaptador, no modelo: el dominio recibe ModuleDefinition.", P3)
-    notes(s, """
-60 s. El LifetimeScope es composición: registra catálogo, config y servicio.
-LoadoutDemo no busca nada, recibe IEquipmentService por [Inject].
-
-Eso es lo que permite testear el servicio sin escena.
-""")
-
-    # ---------------------------------------------------------- 13 P3 DI
+    # ---------------------------------------------------------- 10 P3 DI
     s = blank(deck, next(numbers), total)
     head(s, "P3 · Patrón · DI por constructor", "El contenedor compone; el servicio no busca nada", P3)
 
@@ -1004,56 +819,118 @@ Resultado real: PA 6, escudos 5, movimiento 4, habilidades [beam, barrier].
 Demos: D5 (reemplazo MK I → MK II) y D6 (equipar el MK III).
 """)
 
-    # ---------------------------------------------------------- 16 cómo se testea
+    # ---------------------------------------------------------- 13 dobles
     s = blank(deck, next(numbers), total)
-    head(s, "Cómo se testea cada patrón", "No se testea el patrón: se testea la propiedad que promete", P2)
-    grid(s, MARGIN, 1.95, CONTENT_W, [
-        ["Patrón", "Qué hace el test", "Test"],
-        ["ISP", "Recorre los miembros por reflexión: si hay una mutación, falla", "IGridQueryService_ExposesNoMutating…"],
-        ["Observer", "Se suscribe, reescribe el mismo valor, el contador queda en 0", "SetCell_WithSameValue_DoesNotRaise…"],
-        ["Command + cola", "Presentation controlada: asserta con el Task pendiente", "Submit_AppliesLogicBeforeTheAnimation…"],
-        ["OCP", "Envía un comando nuevo por la misma interfaz", "Submit_NewCommandVariant_RequiresNo…"],
-        ["DI / DIP", "Inyecta un doble por constructor que cuenta consultas", "…WithInjectedFakeCatalog_ResolvesModules…"],
-        ["Flyweight", "Traduce el asset y compara los ocho campos", "ShipModuleAsset_MapsToDefinition_AllFields"],
-        ["Inmutable", "Guarda la instancia original y la compara después", "TryEquip_ReturnsNewLoadout_WithoutMut…"],
-    ], [1.6, 4.4, 4.3], row_h=0.54, font=10, head_font=10, accent=P2)
-    takeaway(s, "Todos corren en Edit Mode; el único Play Mode es el adaptador de P2.", P2)
+    head(s, "Aislamiento", "Dobles escritos a mano: nada de frameworks de mock", GREEN)
+
+    write(s, MARGIN, 1.95, 5.85, 0.28, "Doble de catálogo · cuenta lo que el real no expone", 12, P3, bold=True)
+    left_h = code(s, MARGIN, 2.28, 5.85, [
+        "private sealed class FakeCatalog : IModuleCatalog",
+        "{",
+        "    public int Queries { get; private set; }",
+        "",
+        "    public bool TryGet(string id, out ModuleDefinition module)",
+        "    {",
+        "        Queries++;   // el dato que el servicio no publica",
+        "        return _modules.TryGetValue(id, out module);",
+        "    }",
+        "}",
+    ], accent=BODY, size=8.8, line_h=0.16)
+    write(s, MARGIN, 2.28 + left_h + 0.16, 5.85, 0.9,
+          "Se inyecta por constructor: el servicio no distingue el asset del doble.",
+          10, MUTED, spacing=1.15)
+
+    write(s, 6.86, 1.95, 5.85, 0.28, "Presentación controlada · el tiempo lo maneja el test", 12, P2, bold=True)
+    right_h = code(s, 6.86, 2.28, 5.85, [
+        "private sealed class ControlledPresentation : ICommandPresentation",
+        "{",
+        "    private readonly Queue<TaskCompletionSource<bool>> _pending = new();",
+        "",
+        "    public Task PlayAsync(CommandExecution execution)",
+        "    {",
+        "        var tcs = new TaskCompletionSource<bool>();",
+        "        _pending.Enqueue(tcs);",
+        "        return tcs.Task;      // no termina hasta que el test lo suelte",
+        "    }",
+        "",
+        "    public void CompleteNext() => _pending.Dequeue().SetResult(true);",
+        "}",
+    ], accent=BODY, size=8.8, line_h=0.16)
+    write(s, 6.86, 2.28 + right_h + 0.16, 5.85, 1.1,
+          "Reemplaza una animación de 300 ms por una decisión del test: sin esperas ni flakiness, "
+          "y permite afirmar sobre un estado intermedio.",
+          10, MUTED, spacing=1.15)
+
+    takeaway(s, "El doble reemplaza al motor y al reloj; la regla queda sola en el test.", GREEN)
     notes(s, """
-70 s. Esta es la slide que responde "¿cómo testean un patrón?".
+50 s. Los dos dobles del TP, escritos a mano y sin librería.
 
-La respuesta corta: no se testea el patrón, se testea la propiedad que el patrón promete.
-ISP promete que el que lee no escribe → se verifica por reflexión, sobre los miembros del tipo.
-Observer promete no notificar sin cambio → contador de eventos.
-Command promete que la regla no espera la animación → se asserta con el Task pendiente.
-OCP promete no tocar el procesador → se envía una implementación nueva.
-DI/DIP promete sustituir dependencias → se inyecta un fake y se verifica que se usó.
-Flyweight promete una instancia y datos completos → se compara campo por campo.
-Inmutable promete no mutar → se compara la instancia anterior.
+FakeCatalog implementa la interfaz que el servicio pide y **cuenta** las consultas. Ese contador
+es la prueba de que el servicio usó el catálogo inyectado, no una copia interna.
 
-Ese es también el argumento de por qué el único Play Mode es P2: solo ahí importa que Unity
-invoque al adaptador; el resto es lógica pura y corre en Edit Mode en milisegundos.
+ControlledPresentation devuelve un Task que el test libera cuando quiere. Eso convierte el tiempo
+(el riesgo de flakiness) en una decisión determinista, y además permite assertar sobre un estado
+intermedio: la animación no terminó, pero la regla ya se aplicó.
+
+Por qué a mano: son diez líneas, no agregan dependencias y el framework de mock sería más código
+que el doble.
 """)
 
-    # ---------------------------------------------------------- 17 trazabilidad
+    # ---------------------------------------------------------- 14 dónde vive cada test
     s = blank(deck, next(numbers), total)
-    head(s, "Trazabilidad", "Cada comportamiento tiene un test y un defecto declarado", TEXT)
+    head(s, "Dónde vive cada test", "Todo lo que se puede probar sin Play Mode, se prueba sin Play Mode", P2)
     grid(s, MARGIN, 1.95, CONTENT_W, [
-        ["Comportamiento", "Test", "Error que detectaría"],
-        ["El evento solo se emite si hay mutación real", "SetCell_WithSameValue_…", "Polling disfrazado de reactividad"],
-        ["El estado cambia antes de la animación", "Submit_AppliesLogicBefore…", "Regla acoplada al tiempo del arte"],
-        ["Reemplazar un módulo no duplica stats", "TryEquip_ReplacingModule_…", "Sumar el módulo viejo y el nuevo"],
-    ], [3.1, 2.8, 3.0], row_h=0.86, font=12, accent=BORDER)
-    write(s, MARGIN, 5.5, CONTENT_W, 0.9,
-          "80 tests en Edit Mode (P1 5 · P2 7 · P3 9 · bucle 59)  ·  1 en Play Mode  ·  el único Play Mode es P2, porque es el único donde importa que Unity invoque al adaptador.",
-          13, BODY, spacing=1.15)
-    takeaway(s, "No hay un test por método: hay un test por regla, y cada uno responde qué error detectaría.", TEXT)
+        ["Modo", "Qué cubre", "Por qué ahí"],
+        ["Edit Mode · 80", "Reglas, contratos y composición: grid, comandos, loadout, bucle", "No necesitan frames ni ciclo de vida"],
+        ["Play Mode · 1", "Que Unity invoque al adaptador de la vista", "Solo un [UnityTest] espera frames"],
+    ], [2.0, 4.5, 2.8], row_h=0.8, font=11.5, accent=P2)
+
+    blocks = [("P1 · 5", "contrato + observación", P1),
+              ("P2 · 7 + 1", "pipeline + adaptador", P2),
+              ("P3 · 9", "dominio + DI", P3),
+              ("bucle · 59", "escena jugable", TEXT)]
+    for i, (name, detail, color) in enumerate(blocks):
+        cx = MARGIN + i * 3.07
+        rect(s, cx, 4.5, 2.86, 1.0, fill=PANEL, line=color, width=1.2)
+        write(s, cx + 0.2, 4.63, 2.5, 0.28, name, 12.5, color, bold=True)
+        write(s, cx + 0.2, 4.97, 2.5, 0.4, detail, 10, MUTED)
+
+    write(s, MARGIN, 5.72, CONTENT_W, 0.5,
+          "81 verdes, corridos el 04/11 con el editor abierto (docs/evidencia). Sin orden manual ni preparación previa.",
+          12.5, BODY)
+    takeaway(s, "Un test que necesita una escena para correr ya dice que la dependencia está mal puesta.", P2)
     notes(s, """
-50 s. 80 en Edit Mode y 1 en Play Mode: 81, corridos el 04/11; la salida está en docs/evidencia.
-Reparto Edit Mode: P1 5, P2 7, P3 9 y 59 del bucle jugable.
+50 s. La regla que ordena la suite: si algo se puede probar sin entrar en Play Mode, se prueba así.
 
-El único Play Mode es P2 porque es el único donde importa que Unity invoque al adaptador.
+Edit Mode cubre 80: grid y pathfinding, comandos con su cola, cálculo de stats y loadout, y el
+bucle jugable completo (59). Play Mode queda en uno: el driver de P2, porque ahí lo que se verifica
+es que **Unity** invoque al adaptador y que las animaciones se completen en el ciclo de vida real.
+Un Edit Mode no puede demostrar eso.
 
-Cada test responde qué error detectaría; la matriz de docs/04 tiene la columna completa.
+Los 81 se corrieron el 04/11 y la salida está en docs/evidencia.
+""")
+
+    # ---------------------------------------------------------- 15 mutación
+    s = blank(deck, next(numbers), total)
+    head(s, "La prueba de que sirven", "Rompo una línea y el test se pone rojo", RED)
+    grid(s, MARGIN, 1.95, CONTENT_W, [
+        ["Prototipo", "Línea que rompo", "Test que falla"],
+        ["P1", "Emitir el evento aunque el valor no cambie", "SetCell_WithSameValue_DoesNotRaiseChange"],
+        ["P2", "Esperar la animación antes de mutar el estado", "Submit_AppliesLogicBeforeTheAnimation…"],
+        ["P3", "Sumar el módulo anterior y el nuevo", "TryEquip_ReplacingModule_DoesNotDoubleCount"],
+    ], [1.2, 3.3, 3.6], row_h=0.72, font=11.5, accent=RED)
+    write(s, MARGIN, 4.95, CONTENT_W, 0.45,
+          "Una mutación por prototipo: el rojo aparece en el test que lo declara, no en otro.",
+          12.5, BODY, spacing=1.15)
+    code(s, MARGIN, 5.5, CONTENT_W, [
+        "# git stash  →  editar una línea  →  correr el test  →  mostrar rojo  →  git checkout .",
+    ], accent=MUTED, size=11)
+    takeaway(s, "Un test que nunca falló no es evidencia: es otra afirmación.", RED)
+    notes(s, """
+35 s. Responde "¿los tests detectan defectos reales?".
+
+Cada prototipo tiene una línea elegida: romperla produce exactamente el rojo esperado, en el test
+que lo declara. Se revierte siempre con git checkout . antes de seguir.
 """)
 
     # ---------------------------------------------------------- 15 exclusiones
@@ -1066,7 +943,8 @@ Cada test responde qué error detectaría; la matriz de docs/04 tiene la columna
         ["Animación con clips", "Los modelos se mueven por transform, sin Animator", "Animator sobre el modelo actual"],
         ["Modificadores multiplicativos", "Ningún módulo del alcance los usa", "StatModifier con operación"],
         ["Mapas 3D / niebla de guerra", "Otro sistema, no exposición de estado", "Capa sobre IGridQueryService"],
-    ], [2.4, 3.2, 3.3], row_h=0.68, font=11.5, accent=RED)
+        ["Unidades con turnos", "P1 ya expone la ocupación; el turno vive en P2", "Capa de turnos sobre ICommand"],
+    ], [2.4, 3.2, 3.3], row_h=0.6, font=11, accent=RED)
     takeaway(s, "No son las cosas que no llegué a hacer: son las que decidí no hacer.", RED)
     notes(s, """
 45 s. Cada fila tiene por dónde crecer: no son las cosas que no llegué a hacer,
@@ -1142,23 +1020,6 @@ Los tests también pueden estar equivocados; por eso el auditor existe.
     notes(s, """
 20 s. Con más tiempo, el siguiente paso sería Undo/Redo, porque el pipeline ya lo habilita.
 Pero eso es otro prototipo, no una deuda escondida.
-""")
-
-    # ---------------------------------------------------------- 19 backup mutation
-    s = blank(deck, 0, 0)
-    head(s, "Respaldo · Si preguntan", "Mutation demo: rompo una línea y el test se pone rojo", RED)
-    grid(s, MARGIN, 1.95, CONTENT_W, [
-        ["Prototipo", "Línea que rompo", "Test que falla"],
-        ["P1", "Emitir el evento aunque el valor no cambie", "SetCell_WithSameValue_DoesNotRaiseChange"],
-        ["P2", "Esperar la animación antes de mutar el estado", "Submit_AppliesLogicBeforeTheAnimation…"],
-        ["P3", "Sumar el módulo anterior y el nuevo", "TryEquip_ReplacingModule_DoesNotDoubleCount"],
-    ], [1.2, 3.3, 3.6], row_h=0.86, font=11.5, accent=RED)
-    code(s, MARGIN, 5.55, CONTENT_W, [
-        "# git stash  →  editar una línea  →  correr el test  →  mostrar rojo  →  git checkout .",
-    ], accent=MUTED, size=12)
-    notes(s, """
-Se usa solo si preguntan "¿los tests detectan defectos reales?".
-Revertir siempre con git checkout . antes de seguir.
 """)
 
     # ---------------------------------------------------------- 20 backup contratos
