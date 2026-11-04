@@ -155,20 +155,6 @@ def rect(slide, x, y, w, h, *, fill=PANEL, line=BORDER, radius=0.06, width=1.0):
     return shape
 
 
-def card(slide, x, y, w, h, title, lines, accent, *, body_size=12.5, title_size=13):
-    rect(slide, x, y, w, h)
-    write(slide, x + 0.26, y + 0.2, w - 0.5, 0.3, title, title_size, accent, bold=True)
-    box = textbox(slide, x + 0.26, y + 0.62, w - 0.5, h - 0.85)
-    tf = box.text_frame
-    for i, line in enumerate(lines):
-        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-        p.space_after = Pt(7)
-        p.line_spacing = 1.05
-        run = p.add_run()
-        run.text = f"·  {line}"
-        style_run(run, body_size, BODY)
-
-
 def grid(slide, x, y, w, rows, ratios, *, row_h=0.6, font=12, head_font=10.5,
          accent=BORDER, bold_first_col=False):
     """Tabla dibujada con formas: control total del estilo, sin tema del deck."""
@@ -252,23 +238,6 @@ def takeaway(slide, text, accent):
 
 
 # ---------------------------------------------------------------- diagramas
-
-
-def diagram_layers(slide, x, y, w):
-    labels = [
-        ("Presentación", "MonoBehaviour · VContainer · Assets SO", P1),
-        ("Aplicación", "Pipeline · Servicio de equipamiento", P2),
-        ("Dominio", "Reglas · Contratos · Cálculo puro", P3),
-    ]
-    bw, bh = w * 0.62, 0.92
-    cx = x + (w - bw) / 2
-    for i, (name, detail, color) in enumerate(labels):
-        cy = y + i * (bh + 0.42)
-        rect(slide, cx, cy, bw, bh, fill=PANEL, line=color, radius=0.08, width=1.5)
-        write(slide, cx, cy + 0.16, bw, 0.3, name, 14.5, color, bold=True, align=PP_ALIGN.CENTER)
-        write(slide, cx, cy + 0.5, bw, 0.28, detail, 10.5, MUTED, align=PP_ALIGN.CENTER)
-        if i < len(labels) - 1:
-            arrow(slide, x + w / 2, cy + bh + 0.05, x + w / 2, cy + bh + 0.37, MUTED, width=1.5)
 
 
 def diagram_p1(slide, x, y, w, h):
@@ -378,7 +347,7 @@ def build():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     ASSET_DIR.mkdir(parents=True, exist_ok=True)
 
-    total = 21
+    total = 20
     deck = new_deck()
 
     # ---------------------------------------------------------- 1 portada
@@ -389,7 +358,7 @@ def build():
     write(s, MARGIN, 3.55, CONTENT_W, 0.4, "Void Hex Tactics · TP2", 20, P2, bold=True)
 
     chips = [("P1_GridState", "ISP + Observer · 5 tests", P1),
-             ("P2_CommandPipeline", "Pipeline async · 8 tests", P2),
+             ("P2_CommandPipeline", "Pipeline async · 7 + 1 PlayMode", P2),
              ("P3_Loadout", "DI + Data-driven · 9 tests", P3)]
     for i, (folder, tag, color) in enumerate(chips):
         cx = MARGIN + i * 4.06
@@ -400,15 +369,15 @@ def build():
     write(s, MARGIN, 6.15, CONTENT_W, 0.6,
           "Matias Andres Fahler   ·   Unity 6000.5.9f1   ·   tag tp2   ·   81 tests verdes", 13, MUTED)
     notes(s, """
-15 s. No voy a mostrar un juego. Voy a mostrar tres problemas técnicos del TP1,
-la solución declarada para cada uno, y la evidencia de que funciona.
+15 s. Tres problemas técnicos del TP1, la solución declarada para cada uno,
+y la evidencia de que funciona.
 
 Tiempo total objetivo: 18-19 minutos, dejando margen para preguntas.
 """)
 
     # ---------------------------------------------------------- 2 mapa
     s = blank(deck, 2, total)
-    head(s, "Qué entrego", "No es un juego: son tres decisiones verificables", P1)
+    head(s, "Qué entrego", "Cada desafío del TP1 tiene su prototipo y su suite", P1)
     grid(s, MARGIN, 1.95, CONTENT_W, [
         ["Desafío declarado en el TP1", "Solución declarada", "Prototipo"],
         ["Exponer el mapa sin God Object ni polling en Update()", "ISP + Observer", "P1_GridState"],
@@ -418,40 +387,15 @@ Tiempo total objetivo: 18-19 minutos, dejando margen para preguntas.
     write(s, MARGIN, 5.2, CONTENT_W, 0.7,
           "Una escena real por prototipo, con modelos 3D (Kenney CC0) y UI nativa: se puede jugar la prueba.",
           13, MUTED)
-    takeaway(s, "La consigna pide 3 pruebas de concepto pulidas, no un juego completo.", P1)
+    takeaway(s, "La evidencia de cada decisión es un test que corre en Edit Mode, sin abrir una escena.", P1)
     notes(s, """
-45 s. El TP2 no cambia el diagnóstico del TP1: cambia que ahora está implementado y testeado.
-
-Si preguntan "¿por qué no un juego completo?": la consigna (§4.1) pide 3 pruebas de concepto
-técnicamente pulidas. Agregar contenido no demuestra ninguna propiedad de diseño.
+45 s. Estos tres desafíos son los que declaré en el TP1. El TP2 no cambia el diagnóstico:
+cambia que ahora está implementado y testeado. Cada prototipo es una carpeta independiente,
+con su escena y su suite.
 """)
 
-    # ---------------------------------------------------------- 3 capas
+    # ---------------------------------------------------------- 3 P1 problema
     s = blank(deck, 3, total)
-    head(s, "Regla de dependencia", "La arquitectura la impone el compilador, no la disciplina", P2)
-    diagram_layers(s, MARGIN, 2.0, 4.6)
-    code(s, 6.05, 2.0, 5.6, [
-        "{",
-        '  "name": "VoidHex.P2.Domain",',
-        '  "references": [],',
-        '  "noEngineReferences": true',
-        "}",
-        "",
-        "// using UnityEngine;  →  no compila",
-    ], accent=P2, size=13)
-    write(s, 6.05, 4.5, 5.6, 1.1,
-          "Podría prometer que el dominio es independiente del motor.\nMejor: lo demuestro rompiendo una línea en vivo.",
-          13, BODY, spacing=1.15)
-    takeaway(s, "Si alguien agrega using UnityEngine en el dominio, el proyecto no compila. Sin excepciones.", P2)
-    notes(s, """
-60 s. Esta regla es la base de los tres prototipos.
-
-Demo D2 (opcional): escribir using UnityEngine; en un archivo del dominio y mostrar el error.
-Plan B: captura del error ya tomada.
-""")
-
-    # ---------------------------------------------------------- 4 P1 problema
-    s = blank(deck, 4, total)
     head(s, "P1 · Desafío 1", "Exponer el mapa sin God Object ni polling en Update()", P1)
     grid(s, MARGIN, 1.95, CONTENT_W, [
         ["Lo que NO quiero", "Por qué es un problema"],
@@ -467,8 +411,8 @@ Plan B: captura del error ya tomada.
 y la IA termina escuchando eventos visuales. Ese es el problema real.
 """)
 
-    # ---------------------------------------------------------- 5 P1 solución
-    s = blank(deck, 5, total)
+    # ---------------------------------------------------------- 4 P1 solución
+    s = blank(deck, 4, total)
     head(s, "P1 · Solución", "Dos contratos: ningún consumidor puede hacer lo del otro", P1)
     diagram_p1(s, MARGIN, 1.95, CONTENT_W, 3.35)
     write(s, MARGIN, 5.55, CONTENT_W, 0.9,
@@ -482,41 +426,57 @@ Si preguntan "¿y si alguien castea?": tendría que romper una capa explícitame
 y el asmdef lo impide hacia el dominio.
 """)
 
-    # ---------------------------------------------------------- 6 P1 evidencia
-    s = blank(deck, 6, total)
+    # ---------------------------------------------------------- 5 P1 evidencia
+    s = blank(deck, 5, total)
     head(s, "P1 · Evidencia", "Reactivo de verdad: sin mutación real, no hay trabajo", P1)
 
     stats = [("1", "evento", "por cada mutación real", GREEN),
              ("0", "eventos", "al reescribir el mismo valor", TEXT),
              ("4", "redibujos", "en un mapa 12×12 con 4 obstáculos", MUTED)]
     for i, (big, label, detail, color) in enumerate(stats):
-        cx = MARGIN + i * 4.06
-        rect(s, cx, 1.95, 3.82, 1.62, fill=PANEL, line=BORDER)
-        write(s, cx + 0.26, 2.02, 3.3, 0.7, big, 40, color, bold=True)
-        write(s, cx + 0.26, 2.72, 3.3, 0.3, label, 13, TEXT, bold=True)
-        write(s, cx + 0.26, 3.05, 3.3, 0.3, detail, 10.5, MUTED)
+        cy = 1.95 + i * 1.18
+        write(s, MARGIN, cy - 0.08, 0.85, 0.72, big, 36, color, bold=True)
+        write(s, MARGIN + 0.85, cy + 0.04, 3.4, 0.3, label, 13, TEXT, bold=True)
+        write(s, MARGIN + 0.85, cy + 0.36, 3.4, 0.5, detail, 10.5, MUTED)
 
-    tests = ["IGridStatePublisher_ExposesOnlyEvents",
-             "IGridQueryService_ExposesNoMutatingMembers",
-             "SetCell_WithSameValue_DoesNotRaiseChange"]
-    for i, name in enumerate(tests):
-        ty = 3.95 + i * 0.44
-        write(s, MARGIN, ty, 0.3, 0.3, "✓", 14, GREEN, bold=True)
-        write(s, MARGIN + 0.32, ty, CONTENT_W - 0.4, 0.32, name, 12.5, BODY, font=MONO)
+    write(s, MARGIN, 5.5, 4.2, 0.9,
+          "Los dos tests de contrato usan reflexión: si alguien agrega SetCell a la interfaz de lectura, se ponen rojos.",
+          11, MUTED, spacing=1.15)
 
-    takeaway(s, "Los dos primeros no prueban comportamiento: prueban forma, por reflexión.", P1)
+    write(s, 5.25, 1.95, 7.45, 0.3, "SetCell_WithSameValue_DoesNotRaiseChange", 11.5, GREEN,
+          bold=True, font=MONO)
+    code(s, 5.25, 2.32, 7.45, [
+        "[Test]",
+        "public void SetCell_WithSameValue_DoesNotRaiseChange()",
+        "{",
+        "    var grid = new GridModel(4, 4);",
+        "    var raised = 0;",
+        "    IGridStatePublisher publisher = grid;",
+        "    publisher.Changed += _ => raised++;",
+        "",
+        "    var unchanged = grid.GetCell(HexCoordinates.Origin);",
+        "    var mutated = grid.SetCell(unchanged);",
+        "",
+        "    Assert.That(mutated, Is.False);",
+        "    Assert.That(raised, Is.Zero,",
+        '        "Una escritura sin cambio real no debe notificar a la vista.");',
+        "}",
+    ], accent=BODY, size=9.5, line_h=0.18)
+
+    takeaway(s, "El evento solo se emite si la celda cambió de verdad: el polling disfrazado se cae.", P1)
     notes(s, """
 60 s. Escena real: mapa 12×12 con asteroides y cristales del Kenney Space Kit.
 La ruta al destino es de 21 celdas y costo 20; el contador de eventos queda en 4,
 que es exactamente la cantidad de obstáculos colocados.
 
-Los dos primeros tests usan reflexión: verifican que el contrato de publicación solo
+El código de la derecha es el test que sostiene el 0: escribir el mismo valor no emite evento.
+Los dos tests de contrato usan reflexión: verifican que el contrato de publicación solo
 tenga eventos y que el de lectura no tenga mutaciones. Si mañana alguien agrega SetCell
 a la interfaz de lectura, el test se pone rojo antes de que llegue a la UI.
 """)
 
-    # ---------------------------------------------------------- 7 P1 alcance
-    s = blank(deck, 7, total)
+    # ---------------------------------------------------------- 6 P1 alcance
+    s = blank(deck, 6, total)
     head(s, "P1 · Alcance", "El A* es el sustrato, no la tesis", P1)
     write(s, MARGIN, 1.95, CONTENT_W, 0.95,
           "El informe largo del TP1 desarrolla grilla y pathfinding; el desafío declarado es la exposición del estado.",
@@ -536,8 +496,8 @@ Si el jurado espera "problema 1 = matemática hexagonal" y ve ISP,
 sin esta slide parece que me fui del tema. Con esta slide, es una decisión fundamentada.
 """)
 
-    # ---------------------------------------------------------- 8 P2 problema
-    s = blank(deck, 8, total)
+    # ---------------------------------------------------------- 7 P2 problema
+    s = blank(deck, 7, total)
     head(s, "P2 · Desafío 2", "Mover → Atacar → Mover, sin que la animación decida las reglas", P2)
     grid(s, MARGIN, 1.95, CONTENT_W, [
         ["Lo que NO quiero", "Por qué es un problema"],
@@ -553,8 +513,8 @@ sin esta slide parece que me fui del tema. Con esta slide, es una decisión fund
 termine gobernando la regla del juego.
 """)
 
-    # ---------------------------------------------------------- 9 P2 solución
-    s = blank(deck, 9, total)
+    # ---------------------------------------------------------- 8 P2 solución
+    s = blank(deck, 8, total)
     head(s, "P2 · Solución", "La regla se aplica al instante, la animación espera después", P2)
     diagram_p2(s, MARGIN, 2.05, CONTENT_W)
     items = [
@@ -575,52 +535,72 @@ Si el jugador pulsa dos veces, el segundo comando espera en la cola:
 no hay estado a medio aplicar.
 """)
 
-    # ---------------------------------------------------------- 10 P2 evidencia
-    s = blank(deck, 10, total)
+    # ---------------------------------------------------------- 9 P2 evidencia
+    s = blank(deck, 9, total)
     head(s, "P2 · Evidencia", "El estado cambia antes de que termine la animación", P2)
-
-    rect(s, MARGIN, 1.95, CONTENT_W, 0.82, fill=PANEL_HI, line=P2, width=1.4, radius=0.1)
-    write(s, MARGIN + 0.3, 1.95, CONTENT_W - 0.6, 0.82,
-          "Submit_AppliesLogicBeforeTheAnimationCompletes", 15, P2, bold=True, font=MONO,
-          anchor=MSO_ANCHOR.MIDDLE)
 
     checks = [("1", "Posición y PA ya cambiaron", "el efecto lógico está aplicado"),
               ("2", "Phase == Executing", "la animación está en curso"),
               ("3", "El Task sigue pendiente", "todavía no terminó")]
     for i, (n, title, detail) in enumerate(checks):
-        cy = 3.05 + i * 0.86
-        write(s, MARGIN, cy, 0.45, 0.4, n, 18, P2, bold=True)
-        write(s, MARGIN + 0.5, cy + 0.02, 5.0, 0.32, title, 14, TEXT, bold=True)
-        write(s, MARGIN + 0.5, cy + 0.34, 5.0, 0.3, detail, 10.5, MUTED)
-
-    rect(s, 7.1, 3.0, 5.6, 1.05, fill=PANEL, line=GREEN, width=1.2)
-    write(s, 7.32, 3.14, 5.2, 0.3, "Segundo test", 10.5, GREEN, bold=True)
-    write(s, 7.32, 3.42, 5.2, 0.6, "Submit_SecondCommand_QueuesUntil\nTheFirstAnimationCompletes",
-          11, BODY, font=MONO)
+        cy = 1.95 + i * 0.72
+        write(s, MARGIN, cy - 0.02, 0.45, 0.4, n, 17, P2, bold=True)
+        write(s, MARGIN + 0.5, cy, 3.7, 0.3, title, 13, TEXT, bold=True)
+        write(s, MARGIN + 0.5, cy + 0.3, 3.7, 0.28, detail, 10, MUTED)
 
     # La corrida real de la demo, no un ejemplo genérico.
-    rect(s, 7.1, 4.25, 5.6, 1.62, fill=PANEL_HI, line=BORDER, width=1.1)
-    write(s, 7.32, 4.38, 5.2, 0.28, "CORRIDA REAL DE LA ESCENA", 10.5, P2, bold=True)
-    write(s, 7.32, 4.68, 5.2, 0.9,
-          "Mover (2,0) 2 PA → Atacar 2 PA → Mover (3,0) 1 PA", 11, BODY, font=MONO)
-    write(s, 7.32, 5.02, 5.2, 0.3, "PA 6 → 1   ·   hull enemigo 6 → 3", 11, GREEN, bold=True)
+    rect(s, MARGIN, 4.2, 4.2, 1.4, fill=PANEL_HI, line=BORDER, width=1.1)
+    write(s, MARGIN + 0.24, 4.33, 3.7, 0.28, "CORRIDA REAL DE LA ESCENA", 10.5, P2, bold=True)
+    write(s, MARGIN + 0.24, 4.63, 3.7, 0.55,
+          "Mover 2 PA → Atacar 2 PA →\nMover 1 PA", 10.5, BODY, font=MONO, spacing=1.15)
+    write(s, MARGIN + 0.24, 5.22, 3.7, 0.3, "PA 6 → 1   ·   hull 6 → 3", 11, GREEN, bold=True)
+
+    write(s, MARGIN, 5.85, 4.2, 0.55,
+          "Segundo test: la cola retiene el comando\nhasta que termina la animación.",
+          10.5, MUTED, spacing=1.15)
+
+    write(s, 5.1, 1.95, 7.6, 0.3, "Submit_AppliesLogicBeforeTheAnimationCompletes", 11.5, GREEN,
+          bold=True, font=MONO)
+    code(s, 5.1, 2.32, 7.6, [
+        "[Test]",
+        "public async Task Submit_AppliesLogicBeforeTheAnimationCompletes()",
+        "{",
+        "    var presentation = new ControlledPresentation();",
+        "    var processor = new CommandProcessor(ShipModel.Start(), presentation);",
+        "",
+        "    var pending = processor.SubmitAsync(new MoveCommand(new HexCoordinates(2, 0), 2));",
+        "",
+        "    Assert.That(processor.State.Position, Is.EqualTo(new HexCoordinates(2, 0)));",
+        "    Assert.That(processor.State.ActionPoints, Is.EqualTo(4));",
+        "    Assert.That(processor.Phase, Is.EqualTo(TurnPhase.Executing));",
+        "    Assert.That(pending.IsCompleted, Is.False,",
+        '        "Sin animación terminada, el comando sigue en curso.");',
+        "",
+        "    presentation.CompleteNext();",
+        "    await pending;",
+        "    Assert.That(processor.Phase, Is.EqualTo(TurnPhase.PlayerTurn));",
+        "}",
+    ], accent=BODY, size=9, line_h=0.18)
 
     takeaway(s, "Si alguien espera la animación antes de mutar el estado, este test falla.", P2)
     notes(s, """
 60 s. Este es el test que demuestra el desacoplamiento temporal.
 
+Las tres aserciones del medio se hacen con el Task todavía pendiente: el estado ya cambió
+aunque la vista no terminó. Al final, CompleteNext libera la animación y la fase vuelve sola.
+
 Pregunta que invita: "¿qué error detectaría?"
 → acoplar la regla al tiempo de la animación, o intercalar dos comandos y corromper el estado.
 """)
 
-    # ---------------------------------------------------------- 11 P2 OCP
-    s = blank(deck, 11, total)
+    # ---------------------------------------------------------- 10 P2 OCP
+    s = blank(deck, 10, total)
     head(s, "P2 · Extensibilidad", "Agregar una habilidad es crear una clase, no modificar el sistema", P2)
     diagram_ocp(s, MARGIN, 2.0, CONTENT_W)
     write(s, MARGIN, 4.15, CONTENT_W, 0.4, "✓  Submit_NewCommandVariant_RequiresNoPipelineChange", 13,
           GREEN, font=MONO)
     write(s, MARGIN, 4.75, CONTENT_W, 0.95,
-          "Diferido: Undo/Redo. El TP1 lo menciona como capacidad que el patrón habilita, no como requisito del prototipo.",
+          "Diferido: Undo/Redo. El pipeline ya lo habilita; queda fuera del alcance del prototipo.",
           13, BODY, spacing=1.15)
     takeaway(s, "ShieldCommand ya existe y el pipeline no se enteró.", P2)
     notes(s, """
@@ -630,8 +610,8 @@ Demo D4: agregar TractorBeamCommand en vivo. Valida PA, mueve la nave enemiga,
 y CommandProcessor no cambia una línea.
 """)
 
-    # ---------------------------------------------------------- 12 P3 problema
-    s = blank(deck, 12, total)
+    # ---------------------------------------------------------- 11 P3 problema
+    s = blank(deck, 11, total)
     head(s, "P3 · Desafío 3", "Sin GameManager.Instance y sin Service Locator", P3)
     grid(s, MARGIN, 1.95, CONTENT_W, [
         ["Lo que NO quiero", "Por qué es un problema"],
@@ -647,8 +627,8 @@ y CommandProcessor no cambia una línea.
 la dependencia está mal puesta.
 """)
 
-    # ---------------------------------------------------------- 13 P3 solución
-    s = blank(deck, 13, total)
+    # ---------------------------------------------------------- 12 P3 solución
+    s = blank(deck, 12, total)
     head(s, "P3 · Solución", "Dependencias por constructor, datos como assets", P3)
     diagram_p3(s, MARGIN, 1.95, CONTENT_W, 3.35)
     write(s, MARGIN, 5.55, CONTENT_W, 0.95,
@@ -662,40 +642,66 @@ LoadoutDemo no busca nada, recibe IEquipmentService por [Inject].
 Eso es lo que permite testear el servicio sin escena.
 """)
 
-    # ---------------------------------------------------------- 14 P3 evidencia
-    s = blank(deck, 14, total)
+    # ---------------------------------------------------------- 13 P3 evidencia
+    s = blank(deck, 13, total)
     head(s, "P3 · Evidencia", "Testeable sin Unity y ampliable sin recompilar", P3)
 
-    card(s, MARGIN, 1.95, 5.95, 2.15, "DIP: catálogo inyectado", [
-        "EquipmentService recibe IModuleCatalog",
-        "El test inyecta FakeCatalog y cuenta consultas",
-        "Corre en Edit Mode, sin escena",
-    ], P3)
-    card(s, MARGIN + 6.18, 1.95, 5.95, 2.15, "Data-driven: sin código", [
-        "laser-mk1 → laser-mk2 reemplaza en el slot",
-        "laser-mk3 se agregó como asset, no como clase",
-        "Stats: PA 6 · escudos 5 · movimiento 4",
-    ], GREEN)
+    write(s, MARGIN, 1.95, 5.85, 0.28, "DIP · catálogo inyectado", 12.5, P3, bold=True)
+    write(s, MARGIN, 2.2, 5.85, 0.26,
+          "EquipmentService_WithInjectedFakeCatalog_ResolvesModulesById", 9.5, MUTED, font=MONO)
+    code(s, MARGIN, 2.5, 5.85, [
+        "var catalog = new FakeCatalog(LaserMk1);",
+        "var service = new EquipmentService(",
+        "    new ShipConfig(BaseStats), catalog);",
+        "",
+        'var result = service.Equip("laser-mk1");',
+        "",
+        "Assert.That(result.IsSuccess, Is.True);",
+        "Assert.That(service.CurrentStats.Abilities,",
+        "    Has.Count.EqualTo(1));",
+        "Assert.That(catalog.Queries, Is.EqualTo(1),",
+        '    "El servicio consulta el catálogo inyectado.");',
+    ], accent=BODY, size=9, line_h=0.18)
 
-    for i, name in enumerate(["TryEquip_ReplacingModule_DoesNotDoubleCount",
-                              "EquipmentService_WithInjectedFakeCatalog_ResolvesModulesById"]):
-        ty = 4.35 + i * 0.46
-        write(s, MARGIN, ty, 0.3, 0.3, "✓", 13, GREEN, bold=True)
-        write(s, MARGIN + 0.32, ty, CONTENT_W - 0.4, 0.32, name, 11.5, BODY, font=MONO)
+    write(s, 6.9, 1.95, 5.81, 0.28, "Data-driven · reemplazo en el slot", 12.5, GREEN, bold=True)
+    write(s, 6.9, 2.2, 5.81, 0.26,
+          "TryEquip_ReplacingModule_DoesNotDoubleCount", 9.5, MUTED, font=MONO)
+    code(s, 6.9, 2.5, 5.81, [
+        "var loadout = Loadout.Empty()",
+        "    .TryEquip(LaserMk2).Loadout;",
+        "",
+        "var stats = ShipStatsCalculator.Calculate(",
+        "    BaseStats, loadout.Modules);",
+        "",
+        "Assert.That(stats.Movement, Is.EqualTo(3));",
+        "Assert.That(stats.ActionPoints, Is.EqualTo(6));",
+        "Assert.That(stats.Shields, Is.EqualTo(2));",
+        "Assert.That(loadout.Modules, Has.Count.EqualTo(1),",
+        '    "El reemplazo no acumula módulos.");',
+    ], accent=BODY, size=9, line_h=0.18)
+
+    write(s, MARGIN, 5.45, CONTENT_W, 0.35,
+          "MK II reemplaza a MK I en el mismo slot: escudos 2, movimiento 3, un módulo contado.",
+          12.5, BODY)
+    write(s, MARGIN, 5.9, CONTENT_W, 0.35,
+          "Ambos corren en Edit Mode: sin escena, sin Play Mode y sin abrir el editor.",
+          11.5, MUTED)
 
     takeaway(s, "Un slot por tipo: el estado inválido “módulo en slot incompatible” no puede existir.", P3)
     notes(s, """
-60 s. La escena equipa laser-mk1, lo reemplaza por laser-mk2, suma thruster-mk1 y shield-mk1.
-Resultado real: PA 6, escudos 5, movimiento 4, habilidades [beam, barrier].
+60 s. El código de la izquierda demuestra DIP: el servicio recibe el catálogo y el fake cuenta
+las consultas. Si mañana el catálogo viene de un servidor, el servicio no cambia.
 
-Columna izquierda demuestra DIP: si el catálogo viene de un servidor, el servicio no cambia.
-Columna derecha demuestra data-driven: el MK III existe como asset, sin una clase nueva.
+El de la derecha demuestra data-driven: el MK II ocupa el slot del MK I y no se suman los dos.
+
+La escena equipa laser-mk1, lo reemplaza por laser-mk2, suma thruster-mk1 y shield-mk1.
+Resultado real: PA 6, escudos 5, movimiento 4, habilidades [beam, barrier].
 
 Demos: D5 (reemplazo MK I → MK II) y D6 (equipar el MK III).
 """)
 
-    # ---------------------------------------------------------- 15 trazabilidad
-    s = blank(deck, 15, total)
+    # ---------------------------------------------------------- 14 trazabilidad
+    s = blank(deck, 14, total)
     head(s, "Trazabilidad", "Cada comportamiento tiene un test y un defecto declarado", TEXT)
     grid(s, MARGIN, 1.95, CONTENT_W, [
         ["Comportamiento", "Test", "Error que detectaría"],
@@ -703,7 +709,7 @@ Demos: D5 (reemplazo MK I → MK II) y D6 (equipar el MK III).
         ["El estado cambia antes de la animación", "Submit_AppliesLogicBefore…", "Regla acoplada al tiempo del arte"],
         ["Reemplazar un módulo no duplica stats", "TryEquip_ReplacingModule_…", "Sumar el módulo viejo y el nuevo"],
     ], [3.1, 2.8, 3.0], row_h=0.86, font=12, accent=BORDER)
-    write(s, MARGIN, 5.35, CONTENT_W, 0.9,
+    write(s, MARGIN, 5.5, CONTENT_W, 0.9,
           "80 tests en Edit Mode (P1 5 · P2 7 · P3 9 · bucle 59)  ·  1 en Play Mode  ·  el único Play Mode es P2, porque es el único donde importa que Unity invoque al adaptador.",
           13, BODY, spacing=1.15)
     takeaway(s, "No hay un test por método: hay un test por regla, y cada uno responde qué error detectaría.", TEXT)
@@ -713,11 +719,11 @@ Demos: D5 (reemplazo MK I → MK II) y D6 (equipar el MK III).
 
 El único Play Mode es P2 porque es el único donde importa que Unity invoque al adaptador.
 
-Si preguntan qué detectaría cada uno, la matriz de docs/04 tiene la columna completa.
+Cada test responde qué error detectaría; la matriz de docs/04 tiene la columna completa.
 """)
 
-    # ---------------------------------------------------------- 16 exclusiones
-    s = blank(deck, 16, total)
+    # ---------------------------------------------------------- 15 exclusiones
+    s = blank(deck, 15, total)
     head(s, "Alcance", "Esto es lo que dejé afuera, y por qué", RED)
     grid(s, MARGIN, 1.95, CONTENT_W, [
         ["Excluido", "Justificación", "Ruta de extensión"],
@@ -729,15 +735,15 @@ Si preguntan qué detectaría cada uno, la matriz de docs/04 tiene la columna co
     ], [2.4, 3.2, 3.3], row_h=0.68, font=11.5, accent=RED)
     takeaway(s, "No son las cosas que no llegué a hacer: son las que decidí no hacer.", RED)
     notes(s, """
-45 s. La consigna dice que excluir un caso necesita justificación (§4.1).
-Cada fila tiene por dónde crecer.
+45 s. Cada fila tiene por dónde crecer: no son las cosas que no llegué a hacer,
+son las que decidí no hacer.
 
 Ojo: sí hay arte 3D real (modelos del Kenney Space Kit). Lo excluido es la animación
 con clips; el movimiento es por transform.
 """)
 
-    # ---------------------------------------------------------- 17 cambios
-    s = blank(deck, 17, total)
+    # ---------------------------------------------------------- 16 cambios
+    s = blank(deck, 16, total)
     head(s, "Ajustes y hallazgos", "Qué cambié, y qué descubrí al implementar", P2)
     grid(s, MARGIN, 1.85, CONTENT_W, [
         ["TP1", "TP2", "Motivo"],
@@ -766,7 +772,7 @@ con clips; el movimiento es por transform.
 
     takeaway(s, "Los cuatro cambios del TP1 están en docs/01 §5; estos cuatro hallazgos, en el código.", P2)
     notes(s, """
-45 s. Esto responde "qué descubriste al implementar", que la consigna pide explícitamente (§4.1).
+45 s. Cuatro hallazgos reales, del código y de los assets.
 
 El más útil para contar: el del pivote. Perdí tiempo buscando en la arquitectura algo que
 era un problema de importación de assets. Enseña a agotar la hipótesis barata antes.
@@ -779,8 +785,8 @@ Un quinto caso, si preguntan por los tests: una aserción mía estaba mal escrit
 Los tests también pueden estar equivocados; por eso el auditor existe.
 """)
 
-    # ---------------------------------------------------------- 18 cierre
-    s = blank(deck, 18, total)
+    # ---------------------------------------------------------- 17 cierre
+    s = blank(deck, 17, total)
     write(s, MARGIN, 1.6, CONTENT_W, 0.3, "CIERRE", 11, GREEN, bold=True)
     write(s, MARGIN, 2.05, CONTENT_W, 1.2, "Tres problemas, tres soluciones,\ntres suites que las verifican",
           36, TEXT, bold=True, spacing=1.05)
@@ -812,8 +818,8 @@ Pero eso es otro prototipo, no una deuda escondida.
         ["P1", "Emitir el evento aunque el valor no cambie", "SetCell_WithSameValue_DoesNotRaiseChange"],
         ["P2", "Esperar la animación antes de mutar el estado", "Submit_AppliesLogicBeforeTheAnimation…"],
         ["P3", "Sumar el módulo anterior y el nuevo", "TryEquip_ReplacingModule_DoesNotDoubleCount"],
-    ], [1.2, 3.3, 3.6], row_h=0.9, font=11.5, accent=RED)
-    code(s, MARGIN, 5.35, CONTENT_W, [
+    ], [1.2, 3.3, 3.6], row_h=0.86, font=11.5, accent=RED)
+    code(s, MARGIN, 5.55, CONTENT_W, [
         "# git stash  →  editar una línea  →  correr el test  →  mostrar rojo  →  git checkout .",
     ], accent=MUTED, size=12)
     notes(s, """
@@ -831,10 +837,9 @@ Revertir siempre con git checkout . antes de seguir.
         ["¿Quién puede mutar?", "GridModel el mapa, CommandProcessor la nave, EquipmentService el loadout. Nadie más."],
         ["¿Por qué estructuras inmutables?", "Permiten comparar antes/después y razonar sobre undo sin deriva."],
     ], [2.5, 6.0], row_h=0.82, font=11.5, accent=P1)
-    takeaway(s, "La consigna evalúa decisiones, no cantidad de patrones.", P1)
+    takeaway(s, "Cada respuesta es una decisión de código verificable, no una preferencia de estilo.", P1)
     notes(s, """
-Esta slide responde el punto §4.4 de la consigna (contratos, null, mutabilidad,
-transparencia referencial, excepciones).
+Respaldo: contratos, null, mutabilidad, transparencia referencial y excepciones.
 """)
 
     # ---------------------------------------------------------- 21 backup cómo correr
@@ -850,7 +855,7 @@ transparencia referencial, excepciones).
         "",
         "# Evidencia visual de las tres escenas",
         'unity command --project-path . capture_game_view --source screen --save_path captura.png',
-    ], accent=GREEN, size=11.5, line_h=0.32)
+    ], accent=GREEN, size=11.5, line_h=0.26)
     write(s, MARGIN, 5.05, CONTENT_W, 0.85,
           "Tres verificadores propios: referencias de asmdef, integridad de escenas y auditoría de la lógica pura sin Unity.",
           13, BODY, spacing=1.15)
@@ -915,24 +920,7 @@ def build_png_assets():
                                      linestyle="--" if dash else "-",
                                      shrinkA=0, shrinkB=0))
 
-    # 1 capas  ·  x 0..10  y 0..7
-    fig, ax = canvas(10, 7.0)
-    layers = [
-        ("Presentación", "MonoBehaviour · VContainer · Assets SO", c1),
-        ("Aplicación", "Pipeline de comandos · Servicio de equipamiento", c2),
-        ("Dominio", "Reglas · Contratos · Cálculo puro (sin UnityEngine)", c3),
-    ]
-    for i, (name, detail, color) in enumerate(layers):
-        y = 5.35 - i * 1.95
-        box(ax, 1.5, y, 7.0, 1.4, name, detail, color, size=13, dsize=8.5)
-        if i < len(layers) - 1:
-            arr(ax, (5.0, y - 0.04), (5.0, y - 0.47), muted, 1.8)
-    ax.text(5.0, 0.45, "using UnityEngine;  →  no compila en el dominio",
-            ha="center", va="center", color=c3, fontsize=9.5, style="italic")
-    fig.savefig(ASSET_DIR / "diagrama-capas.png", facecolor=bg)
-    plt.close(fig)
-
-    # 2 P1  ·  x 0..10  y 0..7.2
+    # 1 P1  ·  x 0..10  y 0..7.2
     fig, ax = canvas(10, 7.2)
     box(ax, 3.4, 3.35, 3.2, 1.3, "GridModel", "único dueño del estado", c1, size=13, dsize=8.5)
     box(ax, 0.25, 5.6, 3.2, 1.3, "IGridQueryService", "lectura síncrona", border, size=10, dsize=8,
@@ -954,7 +942,7 @@ def build_png_assets():
     fig.savefig(ASSET_DIR / "diagrama-p1-isp-observer.png", facecolor=bg)
     plt.close(fig)
 
-    # 3 P2  ·  x 0..11  y 0..5
+    # 2 P2  ·  x 0..11  y 0..5
     fig, ax = canvas(11, 5.0)
     steps = [("ICommand", "inmutable", c2), ("Validate", "¿PA / objetivo?", c2),
              ("Execute", "instantáneo", green), ("Notifica", "ya cambiado", green),
@@ -979,7 +967,7 @@ def build_png_assets():
     fig.savefig(ASSET_DIR / "diagrama-p2-pipeline.png", facecolor=bg)
     plt.close(fig)
 
-    # 4 P3  ·  x 0..10  y 0..6.6
+    # 3 P3  ·  x 0..10  y 0..6.6
     fig, ax = canvas(10, 6.6)
     box(ax, 0.3, 3.6, 3.3, 1.45, "EquipmentLifetimeScope", "composición · 1 por escena",
         c3, size=9.5, dsize=7.5)
@@ -999,7 +987,7 @@ def build_png_assets():
     fig.savefig(ASSET_DIR / "diagrama-p3-di.png", facecolor=bg)
     plt.close(fig)
 
-    # 5 OCP  ·  x 0..10  y 0..4.2
+    # 4 OCP  ·  x 0..10  y 0..4.2
     fig, ax = canvas(10, 4.2)
     names = [("MoveCommand", c2, "implementado"), ("AttackCommand", c2, "implementado"),
              ("ShieldCommand", c2, "implementado"), ("TractorBeam", green, "Command · en vivo")]
