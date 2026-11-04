@@ -17,6 +17,6 @@ MonoBehaviour:
   slot: 0
   tier: 3
   bonusActionPoints: 1
-  bonusShields: 0
-  bonusMovement: 4
+  bonusShields: 2
+  bonusMovement: 0
   grantedAbilityId: beam-iii

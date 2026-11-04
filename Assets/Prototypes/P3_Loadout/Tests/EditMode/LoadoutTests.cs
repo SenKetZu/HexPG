@@ -61,14 +61,21 @@ namespace VoidHex.P3.Tests
         [Test]
         public void TryEquip_ReplacingModule_DoesNotDoubleCount()
         {
-            var loadout = Loadout.Empty().TryEquip(LaserMk2).Loadout;
+            var withMk1 = Loadout.Empty().TryEquip(LaserMk1).Loadout;
 
-            var stats = ShipStatsCalculator.Calculate(BaseStats, loadout.Modules);
+            var result = withMk1.TryEquip(LaserMk2);
+            var stats = ShipStatsCalculator.Calculate(BaseStats, result.Loadout.Modules);
 
-            Assert.That(stats.Movement, Is.EqualTo(3));
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Loadout.Modules, Has.Count.EqualTo(1),
+                "El reemplazo no debe acumular módulos: si se sumara el MK I, habría dos en el slot.");
+            Assert.That(result.Loadout.TryGetModule(SlotType.Weapon, out var weapon), Is.True);
+            Assert.That(weapon.Id, Is.EqualTo("laser-mk2"), "El slot debe quedar con el módulo nuevo.");
+
             Assert.That(stats.ActionPoints, Is.EqualTo(6));
-            Assert.That(stats.Shields, Is.EqualTo(2));
-            Assert.That(loadout.Modules, Has.Count.EqualTo(1), "El reemplazo no debe acumular módulos.");
+            Assert.That(stats.Shields, Is.EqualTo(2), "Solo cuentan los escudos del MK II.");
+            Assert.That(stats.Movement, Is.EqualTo(3));
+            CollectionAssert.AreEqual(new[] { "beam" }, stats.Abilities, "La habilidad no se duplica.");
         }
 
         [Test]

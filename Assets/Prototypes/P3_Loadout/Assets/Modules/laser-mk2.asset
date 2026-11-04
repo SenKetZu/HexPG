@@ -17,6 +17,6 @@ MonoBehaviour:
   slot: 0
   tier: 2
   bonusActionPoints: 0
-  bonusShields: 0
-  bonusMovement: 2
+  bonusShields: 2
+  bonusMovement: 0
   grantedAbilityId: beam
