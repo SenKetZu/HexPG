@@ -6,8 +6,7 @@ Contenido listo para exponer, generado desde [`docs/07-presentacion.md`](../07-p
 
 | Archivo | Qué es |
 | --- | --- |
-| `TP2-VoidHex-Tactics.pptx` | Deck de 21 slides, 16:9, con diagramas **nativos** (vectores editables) y notas del orador |
-| `assets/diagrama-capas.png` | Capas Presentación → Aplicación → Dominio |
+| `TP2-VoidHex-Tactics.pptx` | Deck de 20 slides, 16:9, con diagramas **nativos** (vectores editables), el código real de un test por prototipo y notas del orador |
 | `assets/diagrama-p1-isp-observer.png` | P1: dos contratos segregados sobre un único `GridModel` |
 | `assets/diagrama-p2-pipeline.png` | P2: `ICommand` → validar → ejecutar → notificar → animar |
 | `assets/diagrama-p2-ocp.png` | P2: comandos intercambiables sin tocar el pipeline |
@@ -19,13 +18,16 @@ Los PNG son para usar en Google Slides, Keynote o cualquier editor que no abra e
 
 | Slides | Bloque | Tiempo |
 | --- | --- | --- |
-| 1–3 | Marco: qué entrego y cómo se sostiene | 2:00 |
-| 4–7 | **P1** ISP + Observer | 5:00 |
-| 8–11 | **P2** Pipeline async | 5:30 |
-| 12–14 | **P3** DI + Data-driven | 4:00 |
-| 15–17 | Tests, exclusiones y ajustes vs TP1 | 2:30 |
-| 18 | Cierre | 1:00 |
-| 19–21 | **Respaldo** (no se muestran salvo que pregunten) | — |
+| 1–2 | Marco: qué entrego | 2:00 |
+| 3–6 | **P1** ISP + Observer | 5:00 |
+| 7–10 | **P2** Pipeline async | 5:30 |
+| 11–13 | **P3** DI + Data-driven | 4:00 |
+| 14–16 | Tests, exclusiones y ajustes | 2:30 |
+| 17 | Cierre | 1:00 |
+| 18–20 | **Respaldo** (no se muestran salvo que pregunten) | — |
+
+Las slides de evidencia (5, 9 y 13) muestran el código del test que sostiene el número, copiado
+literalmente de `Assets/Prototypes/*/Tests`.
 
 Cada slide tiene **notas del orador** con lo que hay que decir y cuánto tiempo tomar.
 
@@ -60,13 +62,13 @@ están en el panel inferior o en *Vista → Página de notas*.
 > desde Google, regenerá con `DECK_FONT=Arial` para que no se muevan las líneas.
 
 **Google Slides por script:** es posible con Apps Script (`SlidesApp`) o con la Slides API, pero
-requiere un proyecto de Google Cloud y credenciales OAuth. Para 21 slides no conviene: el camino
+requiere un proyecto de Google Cloud y credenciales OAuth. Para 20 slides no conviene: el camino
 `.pptx → subir → abrir con Slides` hace lo mismo en dos clics y conserva los diagramas.
 
 ## Antes de presentar
 
 - [ ] Correr `python tools/ppt/verify_deck.py`: debe dar `problemas: 0`.
-- [ ] Reemplazar el número de tests de la slide 15 y la 18 por el real del Test Runner.
+- [ ] Reemplazar el número de tests de la slide 14 y la 17 por el real del Test Runner.
 - [ ] Copiar la captura del Test Runner como respaldo de esos números.
 - [ ] Ensayar dos veces con cronómetro (≤ 20 min).
 - [ ] Probar el archivo en la máquina donde vas a exponer (el docente ofrece la suya).

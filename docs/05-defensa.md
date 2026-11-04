@@ -13,7 +13,8 @@ doble (2/3). Cada slide debe sostener **una sola afirmación con una evidencia**
 1. **Título = afirmación.** ❌ "P1: GridState" → ✅ "La vista no puede tocar el mapa: no compila".
 2. **Una evidencia visible por slide:** nombre del test en verde, captura del Test Runner o una
    flecha del diagrama. Nunca "confiá en mí".
-3. **Cero muros de código.** Máximo 8 líneas, con la línea clave resaltada.
+3. **El código que se muestra es el test real y completo** (≤ 20 líneas), no un fragmento inventado.
+   Un test por prototipo, con sus aserciones y su mensaje de fallo.
 4. **Un diagrama por bloque.** Si necesita explicación, está mal hecho.
 5. **Números concretos:** "13 tests verdes", "3 PA gastados, 0 de deriva", "4 slots, 3 MK".
 6. **La exclusión va en la slide**, no solo en la doc: demuestra criterio de alcance.
@@ -25,7 +26,7 @@ Cada bloque repite el mismo orden: **problema declarado → promesa → evidenci
 
 | Tiempo | Bloque | Contenido | Evidencia |
 | --- | --- | --- | --- |
-| 0:00–2:00 | Marco | Tres prototipos = los tres desafíos del TP1. No es un juego: es arquitectura verificable. Capas: Presentación → Aplicación → Dominio, impuestas por asmdef | Diagrama de capas |
+| 0:00–2:00 | Marco | Tres prototipos = los tres desafíos del TP1, cada uno con su prototipo y su suite | Tabla desafío → solución → prototipo |
 | 2:00–7:00 | **P1 ISP + Observer** | Problema (God Object / polling) → dos contratos segregados → demo: mutar una celda (1 redibujo), reescribirla igual (0 redibujos) → test de reflexión que prueba que el publisher **solo** tiene eventos → exclusión (event bus) | Escena P1 + 2 tests |
 | 7:00–13:00 | **P2 Pipeline async** | Problema (mover→atacar→mover con animaciones) → comando inmutable valida y ejecuta al instante; la animación espera después → demo: el estado ya cambió mientras la animación está pendiente → cola impide intercalar → `ShieldCommand` nuevo sin tocar el pipeline | Escena P2 + Test Runner |
 | 13:00–17:00 | **P3 DI + Data-driven** | Problema (GameManager.Instance / Service Locator) → `LifetimeScope` inyecta `IEquipmentService` → demo: equipar MK I, reemplazar por MK II, quitar → test con catálogo falso (DIP) → crear un MK III como asset, sin recompilar | Escena P3 + test |
@@ -53,7 +54,7 @@ Cada bloque repite el mismo orden: **problema declarado → promesa → evidenci
 
 | Pregunta | Respuesta corta |
 | --- | --- |
-| ¿Por qué no un juego completo? | La consigna pide 3 pruebas de concepto pulidas (§4.1); el contenido no demuestra ninguna propiedad |
+| ¿Por qué no un juego completo? | El alcance declarado son 3 pruebas de concepto pulidas; agregar contenido no demuestra ninguna propiedad de diseño |
 | ¿Cómo garantizás que el dominio no usa Unity? | `noEngineReferences: true`: si aparece `using UnityEngine`, no compila (demo D2) |
 | ¿Qué gana ISP acá? | La IA recibe un contrato sin mutaciones y la vista uno sin reglas; ningún consumidor puede hacer lo del otro |
 | ¿Por qué no un Event Bus global? | Dependencias ocultas, difícil de depurar y no resuelve las lecturas síncronas de la IA (descartado en el TP1) |

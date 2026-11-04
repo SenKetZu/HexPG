@@ -1,7 +1,8 @@
 # 07 — Presentación TP2 (guion de slides)
 
 > **Deck generado:** [`presentacion/TP2-VoidHex-Tactics.pptx`](./presentacion/TP2-VoidHex-Tactics.pptx)
-> — 21 slides 16:9 con diagramas nativos y notas del orador. Los diagramas también están como PNG en
+> — 20 slides 16:9 con diagramas nativos, el código real de un test por prototipo y notas del orador.
+> Los diagramas también están como PNG en
 > [`presentacion/assets/`](./presentacion/assets). Para regenerar: `python tools/ppt/build_deck.py`.
 > **El generador (`tools/ppt/build_deck.py`) define el layout real del deck**; este documento es la
 > referencia de contenido y guion. Si cambia un caso, se actualizan los dos.
@@ -34,14 +35,14 @@ monoespaciada con máximo 8 líneas. Nada de animaciones.
 
 | Slides | Bloque | Minutos |
 | --- | --- | --- |
-| 1–3 | Marco: qué entrego y cómo se sostiene | 2:00 |
-| 4–7 | **P1** ISP + Observer | 5:00 |
-| 8–11 | **P2** Pipeline async | 5:30 |
-| 12–14 | **P3** DI + Data-driven | 4:00 |
-| 15–17 | Tests, exclusiones y ajustes | 2:30 |
-| 18 | Cierre | 1:00 |
+| 1–2 | Marco: qué entrego | 2:00 |
+| 3–6 | **P1** ISP + Observer | 5:00 |
+| 7–10 | **P2** Pipeline async | 5:30 |
+| 11–13 | **P3** DI + Data-driven | 4:00 |
+| 14–16 | Tests, exclusiones y ajustes | 2:30 |
+| 17 | Cierre | 1:00 |
 
-Quedan ~0:30 de colchón. Si te pasás, recortá la slide 7 y la 17 (no las de evidencia).
+Quedan ~0:30 de colchón. Si te pasás, recortá la slide 6 y la 16 (no las de evidencia).
 
 ---
 
@@ -64,12 +65,12 @@ Unity 6000.5.9f1 · tag tp2
 **Visual:** las tres carpetas del repo (`P1_GridState`, `P2_CommandPipeline`, `P3_Loadout`) como
 tres bloques, sin adornos.
 
-**Notas del orador (15 s):** "No voy a mostrar un juego. Voy a mostrar tres problemas técnicos del
-TP1, la solución que declaré para cada uno, y la evidencia de que funciona."
+**Notas del orador (15 s):** "Tres problemas técnicos del TP1, la solución que declaré para cada
+uno, y la evidencia de que funciona."
 
 ---
 
-### Slide 2 — "No entrego un juego: entrego tres decisiones verificables"
+### Slide 2 — "Cada desafío del TP1 tiene su prototipo y su suite"
 
 **Tabla (única de la slide):**
 
@@ -85,37 +86,9 @@ TP1, la solución que declaré para cada uno, y la evidencia de que funciona."
 diagnóstico: cambia que ahora está implementado y testeado. Cada prototipo es una carpeta
 independiente, con su escena y su suite."
 
-**Pregunta que invita:** *"¿por qué no un juego completo?"* → Slide 2 responde: la consigna pide 3
-pruebas de concepto pulidas; el contenido no demuestra ninguna propiedad de diseño.
-
 ---
 
-### Slide 3 — "La arquitectura la impone el compilador, no la disciplina"
-
-**Contenido:**
-
-- Capas: **Presentación → Aplicación → Dominio**
-- El dominio declara `"noEngineReferences": true`
-- Si alguien escribe `using UnityEngine;` en el dominio, **el proyecto no compila**
-
-**Visual:** diagrama de capas (3 cajas con flechas hacia abajo) + un recorte de 4 líneas del
-`.asmdef`:
-
-```json
-"references": [],
-"noEngineReferences": true
-```
-
-**Notas del orador (60 s):** "Podría prometerles que el dominio es independiente de Unity. No lo voy
-a prometer: lo voy a demostrar borrando una línea y mostrando que no compila. Esta regla es la base
-de los tres prototipos."
-
-**Demo asociada:** D2 (romper el dominio en vivo) — solo si hay tiempo; si no, mostrar la captura
-del error ya tomada.
-
----
-
-### Slide 4 — P1 · El problema
+### Slide 3 — P1 · El problema
 
 **Título:** "Exponer el mapa sin God Object ni polling en `Update()`"
 
@@ -133,7 +106,7 @@ IA queda escuchando eventos visuales."
 
 ---
 
-### Slide 5 — P1 · La solución: dos contratos, ningún consumidor puede hacer lo del otro
+### Slide 4 — P1 · La solución: dos contratos, ningún consumidor puede hacer lo del otro
 
 **Visual (diagrama):**
 
@@ -160,7 +133,7 @@ flowchart LR
 
 ---
 
-### Slide 6 — P1 · La evidencia: reactivo de verdad
+### Slide 5 — P1 · La evidencia: reactivo de verdad
 
 **Números grandes (los protagonistas):**
 
@@ -173,23 +146,40 @@ flowchart LR
 **Caso real de la escena:** asteroides y cristales del Kenney Space Kit; ruta de **21 celdas**
 con costo **20**; el contador de eventos queda exactamente en 4, la cantidad de obstáculos.
 
-**Tests en verde (3 nombres, sin código):**
+**Código en la slide: `SetCell_WithSameValue_DoesNotRaiseChange`, tal como está en el repo:**
 
-- `IGridStatePublisher_ExposesOnlyEvents`
-- `IGridQueryService_ExposesNoMutatingMembers`
-- `SetCell_WithSameValue_DoesNotRaiseChange`
+```csharp
+[Test]
+public void SetCell_WithSameValue_DoesNotRaiseChange()
+{
+    var grid = new GridModel(4, 4);
+    var raised = 0;
+    IGridStatePublisher publisher = grid;
+    publisher.Changed += _ => raised++;
 
-**Notas del orador (60 s):** "Los dos primeros no prueban comportamiento: prueban **forma**. Usan
-reflexión para verificar que el contrato de publicación solo tenga eventos y que el de lectura no
-tenga mutaciones. Si mañana alguien agrega un `SetCell` a la interfaz de lectura, el test se pone
-rojo antes de que llegue a la UI."
+    var unchanged = grid.GetCell(HexCoordinates.Origin);
+    var mutated = grid.SetCell(unchanged);
+
+    Assert.That(mutated, Is.False);
+    Assert.That(raised, Is.Zero,
+        "Una escritura sin cambio real no debe notificar a la vista.");
+}
+```
+
+**Debajo del código:** los otros dos tests de la suite (`IGridStatePublisher_ExposesOnlyEvents`,
+`IGridQueryService_ExposesNoMutatingMembers`) usan reflexión y se explican en las notas.
+
+**Notas del orador (60 s):** "El código prueba el número: escribir el mismo valor no emite evento.
+Los otros dos tests no prueban comportamiento, prueban **forma**. Usan reflexión para verificar que
+el contrato de publicación solo tenga eventos y que el de lectura no tenga mutaciones. Si mañana
+alguien agrega un `SetCell` a la interfaz de lectura, el test se pone rojo antes de que llegue a la UI."
 
 **Pregunta que invita:** *"¿qué error detectaría?"* → "Que el evento se dispare sin cambio real, que
 es polling disfrazado de reactividad."
 
 ---
 
-### Slide 7 — P1 · Lo que dejé afuera (y por qué)
+### Slide 6 — P1 · Lo que dejé afuera (y por qué)
 
 **Título:** "El A* es el sustrato, no la tesis"
 
@@ -209,7 +199,7 @@ documentada, no porque no supiera cómo hacerlo."
 
 ---
 
-### Slide 8 — P2 · El problema
+### Slide 7 — P2 · El problema
 
 **Título:** "Mover → Atacar → Mover, sin que la animación decida las reglas"
 
@@ -226,7 +216,7 @@ documentada, no porque no supiera cómo hacerlo."
 
 ---
 
-### Slide 9 — P2 · La solución: la regla se aplica al instante, la animación espera después
+### Slide 8 — P2 · La solución: la regla se aplica al instante, la animación espera después
 
 **Visual (diagrama de flujo):**
 
@@ -252,32 +242,53 @@ el segundo comando espera en la cola; no hay estado a medio aplicar."
 
 ---
 
-### Slide 10 — P2 · La evidencia: el estado cambia antes de que termine la animación
+### Slide 9 — P2 · La evidencia: el estado cambia antes de que termine la animación
 
-**Test protagonista (una línea, sin código):**
-
-> `Submit_AppliesLogicBeforeTheAnimationCompletes`
-
-**Tres aserciones, en texto grande:**
+**Tres aserciones, en texto grande (columna izquierda):**
 
 1. Posición y PA **ya cambiaron**
 2. `Phase == Executing`
 3. El `Task` de la animación **sigue pendiente**
 
-**Segundo test:** `Submit_SecondCommand_QueuesUntilTheFirstAnimationCompletes`
-
-**Corrida real de la escena:** mover (2,0) 2 PA → atacar 2 PA → mover (3,0) 1 PA.
+**Corrida real de la escena:** mover 2 PA → atacar 2 PA → mover 1 PA.
 Resultado: **PA 6 → 1**, **hull enemigo 6 → 3**.
 
-**Notas del orador (60 s):** "Este es el test que demuestra el desacoplamiento temporal. Si alguien
-implementa la lógica esperando la animación, este test falla: la posición no habría cambiado."
+**Código en la slide: `Submit_AppliesLogicBeforeTheAnimationCompletes`:**
+
+```csharp
+[Test]
+public async Task Submit_AppliesLogicBeforeTheAnimationCompletes()
+{
+    var presentation = new ControlledPresentation();
+    var processor = new CommandProcessor(ShipModel.Start(), presentation);
+
+    var pending = processor.SubmitAsync(new MoveCommand(new HexCoordinates(2, 0), 2));
+
+    Assert.That(processor.State.Position, Is.EqualTo(new HexCoordinates(2, 0)));
+    Assert.That(processor.State.ActionPoints, Is.EqualTo(4));
+    Assert.That(processor.Phase, Is.EqualTo(TurnPhase.Executing));
+    Assert.That(pending.IsCompleted, Is.False,
+        "Sin animación terminada, el comando sigue en curso.");
+
+    presentation.CompleteNext();
+    await pending;
+    Assert.That(processor.Phase, Is.EqualTo(TurnPhase.PlayerTurn));
+}
+```
+
+**Segundo test (referencia, en la columna izquierda):**
+`Submit_SecondCommand_QueuesUntilTheFirstAnimationCompletes`.
+
+**Notas del orador (60 s):** "Las tres aserciones del medio se hacen con el `Task` todavía pendiente:
+el estado ya cambió aunque la vista no terminó. Al final, `CompleteNext` libera la animación y la
+fase vuelve sola. Si alguien implementa la lógica esperando la animación, este test falla."
 
 **Pregunta que invita:** *"¿qué error detectaría?"* → acoplar la regla al tiempo de la animación, o
 intercalar dos comandos y corromper el estado.
 
 ---
 
-### Slide 11 — P2 · Extensible sin tocar el pipeline
+### Slide 10 — P2 · Extensible sin tocar el pipeline
 
 **Título:** "Agregar una habilidad es crear una clase, no modificar el sistema"
 
@@ -297,7 +308,7 @@ mueve la nave enemiga, y el pipeline no se entera."
 
 ---
 
-### Slide 12 — P3 · El problema
+### Slide 11 — P3 · El problema
 
 **Título:** "Sin `GameManager.Instance` y sin Service Locator"
 
@@ -312,7 +323,7 @@ la dependencia está mal puesta."
 
 ---
 
-### Slide 13 — P3 · La solución: dependencias por constructor, datos como assets
+### Slide 12 — P3 · La solución: dependencias por constructor, datos como assets
 
 **Visual (diagrama):**
 
@@ -337,30 +348,57 @@ existe VContainer: recibe una interfaz por constructor. Eso es lo que permite te
 
 ---
 
-### Slide 14 — P3 · La evidencia: testeable sin Unity y ampliable sin recompilar
+### Slide 13 — P3 · La evidencia: testeable sin Unity y ampliable sin recompilar
 
-**Dos columnas:**
+**Dos columnas de código, una por propiedad.**
 
-| DIP (mock inyectado) | Data-driven (sin código) |
-| --- | --- |
-| `EquipmentService_WithInjectedFakeCatalog_ResolvesModulesById` | `laser-mk1` → `laser-mk2` reemplaza en el slot |
-| El fake **cuenta** las consultas al catálogo | `laser-mk3` existe como asset, no como clase |
-| Corre en Edit Mode, sin escena | Stats reales: **PA 6 · escudos 5 · movimiento 4** |
+DIP · catálogo inyectado — `EquipmentService_WithInjectedFakeCatalog_ResolvesModulesById`:
 
-**Bullets (2):**
+```csharp
+var catalog = new FakeCatalog(LaserMk1);
+var service = new EquipmentService(
+    new ShipConfig(BaseStats), catalog);
 
-- `TryEquip_ReplacingModule_DoesNotDoubleCount` — el reemplazo MK I → MK II no suma dos veces
-- Un slot por tipo ⇒ el estado inválido "módulo en slot incompatible" **no puede existir**
+var result = service.Equip("laser-mk1");
 
-**Notas del orador (60 s):** "La primera columna demuestra DIP: si mañana el catálogo viene de un
-servidor, el servicio no cambia. La segunda demuestra que el diseñador agrega contenido sin tocar
-C#."
+Assert.That(result.IsSuccess, Is.True);
+Assert.That(service.CurrentStats.Abilities,
+    Has.Count.EqualTo(1));
+Assert.That(catalog.Queries, Is.EqualTo(1),
+    "El servicio consulta el catálogo inyectado.");
+```
+
+Data-driven · reemplazo en el slot — `TryEquip_ReplacingModule_DoesNotDoubleCount`:
+
+```csharp
+var loadout = Loadout.Empty()
+    .TryEquip(LaserMk2).Loadout;
+
+var stats = ShipStatsCalculator.Calculate(
+    BaseStats, loadout.Modules);
+
+Assert.That(stats.Movement, Is.EqualTo(3));
+Assert.That(stats.ActionPoints, Is.EqualTo(6));
+Assert.That(stats.Shields, Is.EqualTo(2));
+Assert.That(loadout.Modules, Has.Count.EqualTo(1),
+    "El reemplazo no acumula módulos.");
+```
+
+**Pie de la slide:** MK II reemplaza a MK I en el mismo slot: escudos 2, movimiento 3, un módulo
+contado. Ambos corren en Edit Mode: sin escena, sin Play Mode y sin abrir el editor.
+
+**Notas del orador (60 s):** "El código de la izquierda demuestra DIP: el servicio recibe el catálogo
+y el fake cuenta las consultas. Si mañana el catálogo viene de un servidor, el servicio no cambia.
+El de la derecha demuestra data-driven: el MK II ocupa el slot del MK I y no se suman los dos.
+
+La escena equipa laser-mk1, lo reemplaza por laser-mk2, suma thruster-mk1 y shield-mk1.
+Resultado real: PA 6, escudos 5, movimiento 4, habilidades [beam, barrier]."
 
 **Demo asociada:** D5 y D6.
 
 ---
 
-### Slide 15 — "Cada comportamiento tiene un test y un defecto declarado"
+### Slide 14 — "Cada comportamiento tiene un test y un defecto declarado"
 
 **Visual:** una tabla de 3 filas (una por prototipo), recortada de `docs/04-trazabilidad.md`.
 
@@ -373,16 +411,16 @@ C#."
 **Bullets (1):** 81 tests: 80 en Edit Mode, 1 en Play Mode (el único que depende del ciclo de vida de Unity).
 Reparto Edit Mode: P1 5 · P2 7 · P3 9 · bucle jugable 59.
 
-**Notas del orador (50 s):** "La consigna pregunta qué error detectaría cada test. No tengo un test
-por método: tengo un test por regla, y cada uno responde esa pregunta. El único Play Mode es el de P2,
-porque es el único donde importa que Unity invoque al adaptador."
+**Notas del orador (50 s):** "No tengo un test por método: tengo un test por regla, y cada uno
+responde qué error detectaría. El único Play Mode es el de P2, porque es el único donde importa que
+Unity invoque al adaptador."
 
 > **Números ya verificados:** 80 en Edit Mode y 1 en Play Mode (81), corridos el 28/10 antes de
 > crear el tag. Reproducible con `Window → General → Test Runner → Run All`.
 
 ---
 
-### Slide 16 — "Esto es lo que dejé afuera, y por qué"
+### Slide 15 — "Esto es lo que dejé afuera, y por qué"
 
 **Tabla (5 filas máximo):**
 
@@ -394,15 +432,15 @@ porque es el único donde importa que Unity invoque al adaptador."
 | Modificadores multiplicativos | Ningún módulo del alcance los usa | `StatModifier` con operación |
 | Mapas 3D / niebla de guerra | Otro sistema, no exposición de estado | Capa sobre `IGridQueryService` |
 
-**Notas del orador (45 s):** "La consigna dice que excluir un caso necesita justificación. Estas no
-son las cosas que no llegué a hacer: son las que decidí no hacer, y cada una tiene por dónde crecer."
+**Notas del orador (45 s):** "Estas no son las cosas que no llegué a hacer: son las que decidí no
+hacer, y cada una tiene por dónde crecer."
 
 > **Aclaración necesaria:** sí hay arte 3D real (modelos del Kenney Space Kit). Lo excluido es la
 > **animación con clips**, no el arte. No digas "sin arte": es falso y se nota en la escena.
 
 ---
 
-### Slide 17 — "Qué cambié, y qué descubrí al implementar"
+### Slide 16 — "Qué cambié, y qué descubrí al implementar"
 
 **Tabla superior (3 filas), los cambios del TP1:**
 
@@ -412,7 +450,7 @@ son las cosas que no llegué a hacer: son las que decidí no hacer, y cada una t
 | `ShipModuleSO` entra al cálculo | El dominio recibe `ModuleDefinition` | Mantener el dominio libre de `UnityEngine` |
 | FSM con estados por acción | Tres fases | Evitar la explosión de combinaciones |
 
-**Hallazgos reales (la parte que pide §4.1: "qué descubriste al implementar"):**
+**Hallazgos reales (qué parecía cada uno y qué era en realidad):**
 
 | Qué parecía | Qué era |
 | --- | --- |
@@ -429,7 +467,7 @@ código. El del pivote enseña algo: agoté hipótesis de arquitectura antes de 
 
 ---
 
-### Slide 18 — Cierre
+### Slide 17 — Cierre
 
 **Tres líneas, nada más:**
 
@@ -465,6 +503,8 @@ lo habilita. Pero eso es otro prototipo, no una deuda escondida."
 | ¿Quién puede mutar? | `GridModel` el mapa, `CommandProcessor` la nave, `EquipmentService` el loadout. Nadie más |
 | ¿Por qué estructuras inmutables? | Permiten comparar antes/después y razonar sobre undo sin deriva |
 
+Respaldo: contratos, `null`, mutabilidad, transparencia referencial y excepciones.
+
 ### B3 — Cómo se corre (funciona con el editor abierto)
 
 ```powershell
@@ -496,10 +536,10 @@ En el editor: `VoidHex → Build Prototype Scenes`, luego `Window → General �
 - [ ] Un solo mensaje por slide: si hay dos, se parte o se recorta.
 - [ ] Las 6 demos ensayadas dos veces, con plan B (test en lugar de escena).
 - [ ] Cronometrado dos veces ≤ 20 min.
-- [ ] Practicar la transición de la slide 7 (la que corrige el malentendido del TP1).
+- [ ] Practicar la transición de la slide 6 (la que corrige el malentendido del TP1).
 - [ ] Tener a mano `docs/04-trazabilidad.md` para responder "¿qué error detectaría?".
-- [ ] Fuente ≥ 20 pt y ningún diagrama ilegible desde el fondo del aula.
-- [ ] Nada de código de más de 8 líneas en pantalla.
+- [ ] Fuente ≥ 20 pt en texto; el código de los tests puede ir más chico, pero legible desde el fondo.
+- [ ] El código que se muestra es un test completo y real, no un fragmento inventado.
 
 ## 5. Lo que NO va en la presentación
 
@@ -508,5 +548,5 @@ En el editor: `VoidHex → Build Prototype Scenes`, luego `Window → General �
 | Mostrar el GDD completo | Ya está en el repo; la defensa es sobre el código y los tests |
 | Diagramas de 10 cajas | El TP1 ya perdió claridad por esto |
 | Explicar SOLID en abstracto | Se demuestra con ISP, OCP y DIP aplicados, no con definiciones |
-| Listar todos los tests | Tres ejemplos con su defecto dicen más que veinte nombres |
-| Prometer lo que no está | La consigna evalúa el alcance, no la ambición |
+| Listar todos los tests | Tres ejemplos con su código y su defecto dicen más que veinte nombres |
+| Prometer lo que no está | El alcance se demuestra con lo que corre, no con lo que se anuncia |
